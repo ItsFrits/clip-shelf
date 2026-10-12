@@ -1,0 +1,34 @@
+appId: com.itsfrits.clipshelf
+productName: Clip Shelf
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!tests/**'
+  - '!.github/**'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+# ffmpeg and ffprobe are programs, so they cannot run from inside the app.asar archive.
+asarUnpack:
+  - resources/**
+  - node_modules/@ffmpeg-installer/**
+  - node_modules/@ffprobe-installer/**
+win:
+  executableName: clip-shelf
+  target:
+    - nsis
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+npmRebuild: false
+publish:
+  provider: github
+  owner: ItsFrits
+  repo: clip-shelf
+  # Publish straight away, not as a draft, so the auto updater can see it.
+  releaseType: release
