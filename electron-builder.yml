@@ -20,9 +20,13 @@ asarUnpack:
   - node_modules/@ffprobe-installer/**
 win:
   executableName: clip-shelf
+  icon: build/icon.ico
   target:
     - nsis
 nsis:
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
