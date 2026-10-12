@@ -55,6 +55,11 @@ export function Toasts(): React.JSX.Element {
               {t.actionLabel ?? 'Undo'}
             </button>
           )}
+          {t.sticky && (
+            <button className="btn small" onClick={() => dismiss(t.id)}>
+              Later
+            </button>
+          )}
         </div>
       ))}
     </div>

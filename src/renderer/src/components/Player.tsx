@@ -17,7 +17,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { effectiveKeymap, formatChord } from '@shared/keymap'
 import type { PreparedAudio } from '@shared/types'
-import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
+import { clipStatus, EMPTY_CLIP_USER, parentDir, trackProfileKey } from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
 import { baseName, fmtBytes, fmtDayTime, fmtDuration, fmtSeconds } from '../lib/format'
 import { registerPlayerAction } from '../lib/hotkeys'
@@ -103,12 +103,22 @@ export function Player(): React.JSX.Element {
       .prepareAudio(key)
       .then(async (p) => {
         if (cancelled) return
-        const saved = useApp.getState().user.settings.trackVolumes
-        await m.load(p, saved)
+        const st = useApp.getState()
+        const legacy = st.user.settings.trackVolumes
+        const first = st.clips.get(key)?.files[0]?.path ?? ''
+        const profile = st.user.settings.trackProfiles[trackProfileKey(parentDir(first), p.tracks.map((t) => t.label))] ?? {}
+        const levels = p.tracks.map((t) => ({
+          volume: profile[t.label]?.volume ?? legacy[t.label] ?? 1,
+          muted: profile[t.label]?.muted ?? false
+        }))
+        const volumeByLabel: Record<string, number> = {}
+        p.tracks.forEach((t, i) => (volumeByLabel[t.label] = levels[i].volume))
+        await m.load(p, volumeByLabel)
         if (cancelled) return
+        levels.forEach((l, i) => l.muted && m.setMuted(i, true))
         setPrepared(p)
-        setVolumes(p.tracks.map((t) => saved[t.label] ?? 1))
-        setMuted(p.tracks.map(() => false))
+        setVolumes(levels.map((l) => l.volume))
+        setMuted(levels.map((l) => l.muted))
         void video.play().catch(() => undefined)
       })
       .catch((e: Error) => {
@@ -260,16 +270,39 @@ export function Player(): React.JSX.Element {
   const editor = settings.editorName.trim() || 'editor'
   const chord = (id: string): string => formatChord(keymap[id]?.[0] ?? '')
 
+  // Clips in the same folder with the same tracks share their volume and mute settings.
+  const profileKey = prepared
+    ? trackProfileKey(parentDir(clip.files[0]?.path ?? ''), prepared.tracks.map((t) => t.label))
+    : null
+  const hasSavedLevels = !!profileKey && !!settings.trackProfiles[profileKey]
+
+  const saveLevel = (i: number, level: { volume: number; muted: boolean }): void => {
+    const label = prepared?.tracks[i]?.label
+    if (!label || !profileKey) return
+    const all = useApp.getState().user.settings.trackProfiles
+    updateSettings({ trackProfiles: { ...all, [profileKey]: { ...all[profileKey], [label]: level } } })
+  }
   const setTrackVolume = (i: number, v: number): void => {
     mixer?.setVolume(i, v)
     setVolumes((cur) => cur.map((x, j) => (j === i ? v : x)))
-    const label = prepared?.tracks[i]?.label
-    if (label) updateSettings({ trackVolumes: { ...useApp.getState().user.settings.trackVolumes, [label]: v } })
+    saveLevel(i, { volume: v, muted: !!muted[i] })
   }
   const toggleMute = (i: number): void => {
     const next = !muted[i]
     mixer?.setMuted(i, next)
     setMuted((cur) => cur.map((x, j) => (j === i ? next : x)))
+    saveLevel(i, { volume: volumes[i] ?? 1, muted: next })
+  }
+  const resetLevels = (): void => {
+    if (!prepared || !profileKey) return
+    prepared.tracks.forEach((_, i) => {
+      mixer?.setVolume(i, 1)
+      mixer?.setMuted(i, false)
+    })
+    setVolumes(prepared.tracks.map(() => 1))
+    setMuted(prepared.tracks.map(() => false))
+    const { [profileKey]: _gone, ...rest } = useApp.getState().user.settings.trackProfiles
+    updateSettings({ trackProfiles: rest })
   }
 
   const remove = async (): Promise<void> => {
@@ -413,8 +446,17 @@ export function Player(): React.JSX.Element {
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
               <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 20 }}>Audio tracks</h2>
               <span className="muted" style={{ fontSize: 13, flex: 1, minWidth: 240 }}>
-                All tracks play together. These sliders only change what you hear here, your files stay untouched.
+                All tracks play together. Volumes and mutes are remembered for clips in this folder with the same tracks. Your files stay untouched.
               </span>
+              {hasSavedLevels && (
+                <button
+                  className="btn small"
+                  title="Forget the volumes and mutes saved for clips in this folder with these tracks"
+                  onClick={resetLevels}
+                >
+                  Reset levels
+                </button>
+              )}
               <div className="seg" role="group" aria-label="Track labels">
                 <button className={settings.trackNames === 'names' ? 'on' : ''} onClick={() => updateSettings({ trackNames: 'names' })}>
                   Names

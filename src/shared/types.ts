@@ -83,6 +83,12 @@ export interface Project {
   createdAt: number
 }
 
+export interface TrackLevel {
+  /** 0 to 1 */
+  volume: number
+  muted: boolean
+}
+
 export interface Settings {
   editorName: string
   dragIncludeAudio: boolean
@@ -96,6 +102,11 @@ export interface Settings {
   trackNames: 'names' | 'numbers'
   /** Remembered volume (0 to 1) per track label, for example "Microphone". */
   trackVolumes: Record<string, number>
+  /**
+   * Volume and mute per track, remembered for clips that live in the same folder and have the
+   * same audio tracks. Keyed by the profile key (see trackProfileKey), then by track label.
+   */
+  trackProfiles: Record<string, Record<string, TrackLevel>>
   /** Only the actions the user changed. Missing actions use the defaults. */
   keymap: Record<string, string[]>
   ignorePatterns: string[]

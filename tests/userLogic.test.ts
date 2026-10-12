@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyPatch, clipStatus, EMPTY_CLIP_USER } from '../src/shared/userLogic'
+import { applyPatch, clipStatus, EMPTY_CLIP_USER, parentDir, trackProfileKey } from '../src/shared/userLogic'
 
 describe('applyPatch', () => {
   it('marks a clip as watched when it gets a tag', () => {
@@ -29,5 +29,19 @@ describe('applyPatch', () => {
     expect(next.watched).toBe(false)
     const seen = { ...EMPTY_CLIP_USER, watched: true }
     expect(applyPatch(seen, { set: { watched: false } }).watched).toBe(false)
+  })
+})
+
+describe('track profiles', () => {
+  it('finds the folder of a file', () => {
+    expect(parentDir("D:\\Video's\\OBS\\clip.mp4")).toBe("D:\\Video's\\OBS")
+    expect(parentDir('/home/me/OBS/clip.mp4')).toBe('/home/me/OBS')
+  })
+
+  it('shares settings between clips in the same folder with the same tracks only', () => {
+    const a = trackProfileKey("D:\\Video's\\OBS", ['Game audio', 'Discord'])
+    expect(trackProfileKey("d:/video's/obs", ['Game audio', 'Discord'])).toBe(a)
+    expect(trackProfileKey("D:\\Video's\\OBS", ['Discord', 'Game audio'])).not.toBe(a)
+    expect(trackProfileKey("D:\\Video's\\ReLive", ['Game audio', 'Discord'])).not.toBe(a)
   })
 })

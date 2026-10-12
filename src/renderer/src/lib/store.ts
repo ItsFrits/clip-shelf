@@ -24,6 +24,8 @@ export interface Toast {
   kind?: 'error'
   actionLabel?: string
   action?: () => void
+  /** Stays until the user dismisses it. */
+  sticky?: boolean
 }
 
 export interface ConfirmState {
@@ -152,7 +154,20 @@ export const useApp = create<AppState>((set, get) => ({
     })
     api.on('folders:changed', (folders) => set({ folders }))
     api.on('jobs:progress', (jobs) => set({ jobs }))
-    api.on('updater:status', (update) => set({ update }))
+    api.on('updater:status', (update) => {
+      const before = get().update.state
+      set({ update })
+      if (update.state === 'downloading' && before !== 'downloading') {
+        get().toast(`Update ${update.version ?? ''} found. Downloading it in the background.`)
+      }
+      if (update.state === 'ready' && before !== 'ready') {
+        get().toast(`Update ${update.version ?? ''} is ready to install.`, {
+          sticky: true,
+          actionLabel: 'Restart now',
+          action: () => void window.api.installUpdate()
+        })
+      }
+    })
     api.on('user:replaced', (user) => set({ user, tagById: tagMap(user.tags) }))
 
     const snap = await api.getSnapshot()
@@ -337,7 +352,7 @@ export const useApp = create<AppState>((set, get) => ({
   toast: (message, opts) => {
     const id = toastId++
     set((s) => ({ toasts: [...s.toasts.slice(-3), { id, message, ...opts }] }))
-    setTimeout(() => get().dismissToast(id), opts?.action ? 8000 : 4000)
+    if (!opts?.sticky) setTimeout(() => get().dismissToast(id), opts?.action ? 8000 : 4000)
   },
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
   ask: (opts) =>

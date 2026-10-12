@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS: Settings = {
   masterMuted: false,
   trackNames: 'names',
   trackVolumes: {},
+  trackProfiles: {},
   keymap: {},
   ignorePatterns: ['.sfk', 'thumb_cache', '*.tmp', '*.part'],
   autoBackup: true,
@@ -63,4 +64,17 @@ export function clipStatus(u: ClipUser): ClipStatus {
   if (u.tags.length > 0) return 'tagged'
   if (u.watched) return 'watched'
   return 'new'
+}
+
+/** The folder a file is in (works for both Windows and other paths). */
+export function parentDir(path: string): string {
+  return path.replace(/[\\/][^\\/]*$/, '')
+}
+
+/**
+ * Clips in the same folder with the same audio tracks share their volume and mute settings.
+ * The key is the folder plus the track labels in order.
+ */
+export function trackProfileKey(folder: string, labels: string[]): string {
+  return `${folder.replace(/\\/g, '/').toLowerCase()}|${labels.join('/')}`
 }
