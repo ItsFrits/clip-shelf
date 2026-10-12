@@ -4,7 +4,7 @@ import { dirname, join } from 'path'
 import type { AudioTrackInfo } from '../shared/types'
 
 /** Bump this when the probe reads more information, so old results are read again. */
-export const PROBE_REV = 2
+export const PROBE_REV = 3
 
 export interface ProbeInfo {
   rev?: number
@@ -81,6 +81,92 @@ export function trackName(tags: Record<string, unknown> | undefined): string | u
   return undefined
 }
 
+/**
+ * Track names that ffprobe does not show. OBS and other ffmpeg based recorders store a track's
+ * title in a "name" box inside the track (trak/udta/name), which the ffprobe we ship skips.
+ * Windows Photos reads that box, so we read it too. Returns one entry per audio track, in order.
+ */
+export async function readMp4AudioTrackNames(file: string): Promise<(string | undefined)[]> {
+  const MAX_MOOV = 64 * 1024 * 1024
+  const fh = await fsp.open(file, 'r')
+  try {
+    const { size } = await fh.stat()
+    // Find the moov box. It sits at the start or the end of the file, with the media data in between.
+    let pos = 0
+    let moov: Buffer | null = null
+    const head = Buffer.alloc(16)
+    while (pos + 8 <= size) {
+      const { bytesRead } = await fh.read(head, 0, 16, pos)
+      if (bytesRead < 8) break
+      let boxSize = head.readUInt32BE(0)
+      const type = head.toString('latin1', 4, 8)
+      let headerLen = 8
+      if (boxSize === 1 && bytesRead >= 16) {
+        boxSize = Number(head.readBigUInt64BE(8))
+        headerLen = 16
+      } else if (boxSize === 0) {
+        boxSize = size - pos
+      }
+      if (boxSize < headerLen) break
+      if (type === 'moov') {
+        const len = boxSize - headerLen
+        if (len > MAX_MOOV) return []
+        moov = Buffer.alloc(len)
+        await fh.read(moov, 0, len, pos + headerLen)
+        break
+      }
+      pos += boxSize
+    }
+    return moov ? namesFromMoov(moov) : []
+  } finally {
+    await fh.close()
+  }
+}
+
+function* boxes(buf: Buffer, start: number, end: number): Generator<{ type: string; from: number; to: number }> {
+  let pos = start
+  while (pos + 8 <= end) {
+    let size = buf.readUInt32BE(pos)
+    const type = buf.toString('latin1', pos + 4, pos + 8)
+    let header = 8
+    if (size === 1 && pos + 16 <= end) {
+      size = Number(buf.readBigUInt64BE(pos + 8))
+      header = 16
+    } else if (size === 0) {
+      size = end - pos
+    }
+    if (size < header || pos + size > end) return
+    yield { type, from: pos + header, to: pos + size }
+    pos += size
+  }
+}
+
+function namesFromMoov(moov: Buffer): (string | undefined)[] {
+  const names: (string | undefined)[] = []
+  for (const trak of boxes(moov, 0, moov.length)) {
+    if (trak.type !== 'trak') continue
+    let isAudio = false
+    let name: string | undefined
+    for (const child of boxes(moov, trak.from, trak.to)) {
+      if (child.type === 'mdia') {
+        for (const m of boxes(moov, child.from, child.to)) {
+          // hdlr: version/flags (4), predefined (4), handler type (4), ...
+          if (m.type === 'hdlr' && m.to - m.from >= 12) isAudio = moov.toString('latin1', m.from + 8, m.from + 12) === 'soun'
+        }
+      } else if (child.type === 'udta') {
+        for (const u of boxes(moov, child.from, child.to)) {
+          if (u.type === 'name') {
+            const text = moov.toString('utf8', u.from, u.to).replace(/\0/g, '').trim()
+            if (text && !name) name = text
+          }
+        }
+      }
+    }
+    if (isAudio) names.push(name && !GENERIC_TITLES.test(name) ? name : undefined)
+  }
+  return names
+}
+
 /** Thin wrapper around ffprobe and ffmpeg. */
 export class MediaTools {
   constructor(
@@ -101,6 +187,12 @@ export class MediaTools {
       const video = streams.find((s) => s.codec_type === 'video' && !s.disposition?.attached_pic)
       const audio = streams.filter((s) => s.codec_type === 'audio')
       const dur = Number(json.format?.duration ?? video?.duration)
+      let boxNames: (string | undefined)[] = []
+      try {
+        boxNames = await readMp4AudioTrackNames(file)
+      } catch {
+        /* not an mp4, or unreadable: the ffprobe tags are used instead */
+      }
       const info: ProbeInfo = {
         rev: PROBE_REV,
         durationMs: Number.isFinite(dur) && dur > 0 ? Math.round(dur * 1000) : undefined,
@@ -111,7 +203,7 @@ export class MediaTools {
           index: i,
           codec: String(s.codec_name ?? 'unknown'),
           channels: Number(s.channels ?? 2),
-          title: trackName(s.tags)
+          title: boxNames[i] ?? trackName(s.tags)
         }))
       }
       if (!video && audio.length === 0) return { rev: PROBE_REV, failed: true }

@@ -33,6 +33,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'focusTag', label: 'Add a tag', scope: 'player', defaults: ['T'] },
   { id: 'focusNote', label: 'Edit the note', scope: 'player', defaults: ['N'] },
   { id: 'toggleWatched', label: 'Mark as watched / not watched', scope: 'player', defaults: ['W'] },
+  { id: 'muteMaster', label: 'Mute / unmute everything', scope: 'player', defaults: ['M'] },
   { id: 'toggleLoop', label: 'Toggle loop', scope: 'player', defaults: ['O'] }
 ]
 

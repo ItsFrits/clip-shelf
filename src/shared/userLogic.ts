@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoplayNext: false,
   loop: true,
   masterVolume: 1,
+  masterMuted: false,
   trackNames: 'names',
   trackVolumes: {},
   keymap: {},
@@ -43,6 +44,13 @@ export function applyPatch(u: ClipUser, p: ClipBulkPatch): ClipUser {
   if (p.removeTags?.length) next.tags = next.tags.filter((t) => !p.removeTags!.includes(t))
   if (p.addTags?.length) {
     for (const t of p.addTags) if (!next.tags.includes(t)) next.tags.push(t)
+  }
+  // Tagging, rating or writing a note means you have seen the clip. An explicit watched value wins.
+  if (!next.watched && p.set?.watched === undefined) {
+    const addedTag = next.tags.length > u.tags.length
+    const rated = next.rating > 0 && next.rating !== u.rating
+    const noted = next.note.trim() !== '' && next.note !== u.note
+    if (addedTag || rated || noted) next.watched = true
   }
   return next
 }

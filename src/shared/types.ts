@@ -90,6 +90,8 @@ export interface Settings {
   loop: boolean
   /** Volume (0 to 1) that stays the same when switching clips. */
   masterVolume: number
+  /** Master mute. Stays on when you switch to another clip. */
+  masterMuted: boolean
   /** Show the track names stored in the file, or just "Track 1", "Track 2". */
   trackNames: 'names' | 'numbers'
   /** Remembered volume (0 to 1) per track label, for example "Microphone". */

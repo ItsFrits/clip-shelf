@@ -170,8 +170,8 @@ export class Mixer {
     this.videoGain.gain.value = 1
   }
 
-  setMaster(volume: number): void {
-    this.master.gain.value = volume
+  setMaster(volume: number, muted = false): void {
+    this.master.gain.value = muted ? 0 : volume
   }
 
   get trackCount(): number {

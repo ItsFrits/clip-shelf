@@ -11,14 +11,20 @@ export function tmpDir(prefix = 'clipshelf-'): string {
 }
 
 /** Make a tiny real mp4 with the given number of audio tracks (sine tones of different pitch). */
-export function makeMp4(file: string, audioTracks: number, seconds = 3, trackNames: string[] = []): void {
+export function makeMp4(
+  file: string,
+  audioTracks: number,
+  seconds = 3,
+  trackNames: string[] = [],
+  field: 'handler_name' | 'title' = 'handler_name'
+): void {
   const args = ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `testsrc=size=320x180:rate=30:duration=${seconds}`]
   for (let i = 0; i < audioTracks; i++) {
     args.push('-f', 'lavfi', '-i', `sine=frequency=${440 * (i + 1)}:duration=${seconds}`)
   }
   args.push('-map', '0:v')
   for (let i = 0; i < audioTracks; i++) args.push('-map', `${i + 1}:a`)
-  trackNames.forEach((n, i) => args.push(`-metadata:s:a:${i}`, `handler_name=${n}`))
+  trackNames.forEach((n, i) => args.push(`-metadata:s:a:${i}`, `${field}=${n}`))
   args.push('-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', file)
   execFileSync(tools.ffmpegPath, args)
 }

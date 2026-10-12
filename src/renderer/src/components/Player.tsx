@@ -75,7 +75,8 @@ export function Player(): React.JSX.Element {
     const video = videoRef.current
     if (!video) return
     const m = new Mixer(video)
-    m.setMaster(useApp.getState().user.settings.masterVolume)
+    const st = useApp.getState().user.settings
+    m.setMaster(st.masterVolume, st.masterMuted)
     mixerRef.current = m
     setMixer(m)
     return () => {
@@ -126,8 +127,8 @@ export function Player(): React.JSX.Element {
   }, [key])
 
   useEffect(() => {
-    mixer?.setMaster(settings.masterVolume)
-  }, [mixer, settings.masterVolume])
+    mixer?.setMaster(settings.masterVolume, settings.masterMuted)
+  }, [mixer, settings.masterVolume, settings.masterMuted])
 
   // Keep the video loop setting in line with the settings.
   useEffect(() => {
@@ -206,6 +207,7 @@ export function Player(): React.JSX.Element {
       registerPlayerAction('nextClip', () => stepPlayer(1)),
       registerPlayerAction('focusTag', () => tagRef.current?.focus()),
       registerPlayerAction('focusNote', () => noteRef.current?.focus()),
+      registerPlayerAction('muteMaster', () => updateSettings({ masterMuted: !useApp.getState().user.settings.masterMuted })),
       registerPlayerAction('toggleLoop', () => updateSettings({ loop: !useApp.getState().user.settings.loop })),
       registerPlayerAction('toggleWatched', () => {
         const k = useApp.getState().playerKey
@@ -403,7 +405,7 @@ export function Player(): React.JSX.Element {
               <span><span className="kbd">{chord('rate1')}–{chord('rate5')}</span> rate</span>
               <span><span className="kbd">{chord('focusTag')}</span> tag</span>
               <span><span className="kbd">{chord('random')}</span> random clip</span>
-              <span style={{ marginLeft: 'auto' }}>A clip counts as watched when it plays to the end.</span>
+              <span style={{ marginLeft: 'auto' }}>A clip counts as watched when it plays to the end, or when you tag, rate or write a note.</span>
             </div>
           </div>
 
@@ -423,12 +425,18 @@ export function Player(): React.JSX.Element {
               </div>
             </div>
             <div className="track-row" style={{ borderColor: 'var(--border-2)' }}>
-              <div className="btn icon" style={{ width: 36, height: 36, border: 0, background: 'transparent' }}>
-                <Volume2 size={18} />
-              </div>
+              <button
+                className="btn icon"
+                style={{ width: 36, height: 36 }}
+                aria-label={settings.masterMuted ? 'Unmute everything' : 'Mute everything'}
+                title={`${settings.masterMuted ? 'Unmute' : 'Mute'} everything (${chord('muteMaster')})`}
+                onClick={() => updateSettings({ masterMuted: !settings.masterMuted })}
+              >
+                {settings.masterMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
               <div className="info">
                 <div style={{ fontWeight: 600 }}>Master volume</div>
-                <div className="src">Stays the same for every clip</div>
+                <div className="src">{settings.masterMuted ? 'Muted' : 'Stays the same for every clip'}</div>
               </div>
               <input
                 type="range"
@@ -436,8 +444,8 @@ export function Player(): React.JSX.Element {
                 max={100}
                 value={Math.round(settings.masterVolume * 100)}
                 aria-label="Master volume"
-                style={{ flex: '1 1 180px', minWidth: 120 }}
-                onChange={(e) => updateSettings({ masterVolume: Number(e.target.value) / 100 })}
+                style={{ flex: '1 1 180px', minWidth: 120, opacity: settings.masterMuted ? 0.45 : 1 }}
+                onChange={(e) => updateSettings({ masterVolume: Number(e.target.value) / 100, masterMuted: false })}
               />
               <span className="mono" style={{ width: 44, textAlign: 'right' }}>
                 {Math.round(settings.masterVolume * 100)}%
@@ -484,7 +492,7 @@ export function Player(): React.JSX.Element {
               <span className="dot" style={{ background: STATUS_COLOR[status], width: 10, height: 10 }} />
               <b style={{ color: STATUS_COLOR[status] }}>{STATUS_LABEL[status]}</b>
               <span className="muted" style={{ fontSize: 12 }}>
-                {status === 'tagged' ? 'has at least one tag' : status === 'watched' ? 'played to the end, no tag yet' : ''}
+                {status === 'tagged' ? 'has at least one tag' : status === 'watched' ? 'seen, no tag yet' : ''}
               </span>
             </div>
             <label className="toggle-row">
