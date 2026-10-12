@@ -3,7 +3,11 @@ import { promises as fsp } from 'fs'
 import { dirname, join } from 'path'
 import type { AudioTrackInfo } from '../shared/types'
 
+/** Bump this when the probe reads more information, so old results are read again. */
+export const PROBE_REV = 2
+
 export interface ProbeInfo {
+  rev?: number
   durationMs?: number
   width?: number
   height?: number
@@ -62,7 +66,20 @@ function parseFps(rate: string | undefined): number | undefined {
   return Math.round((a / b) * 100) / 100
 }
 
-const GENERIC_TITLES = /^(soundhandler|sound handler|isom|mp4|audio|stereo|aac)$/i
+// Names that muxers write when nobody named the track.
+const GENERIC_TITLES = /^(.*handler.*|isom|mp4|audio|stereo|mono|aac|und|core media audio)$/i
+
+/** The name of an audio track as stored in the file (tag names differ between muxers). */
+export function trackName(tags: Record<string, unknown> | undefined): string | undefined {
+  if (!tags) return undefined
+  const lower: Record<string, string> = {}
+  for (const [k, v] of Object.entries(tags)) lower[k.toLowerCase()] = String(v ?? '').trim()
+  for (const key of ['title', 'name', 'handler_name']) {
+    const v = lower[key]
+    if (v && !GENERIC_TITLES.test(v)) return v
+  }
+  return undefined
+}
 
 /** Thin wrapper around ffprobe and ffmpeg. */
 export class MediaTools {
@@ -77,7 +94,7 @@ export class MediaTools {
       ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', file],
       60_000
     )
-    if (res.code !== 0) return { failed: true }
+    if (res.code !== 0) return { rev: PROBE_REV, failed: true }
     try {
       const json = JSON.parse(res.stdout)
       const streams: Record<string, any>[] = json.streams ?? []
@@ -85,24 +102,22 @@ export class MediaTools {
       const audio = streams.filter((s) => s.codec_type === 'audio')
       const dur = Number(json.format?.duration ?? video?.duration)
       const info: ProbeInfo = {
+        rev: PROBE_REV,
         durationMs: Number.isFinite(dur) && dur > 0 ? Math.round(dur * 1000) : undefined,
         width: video?.width,
         height: video?.height,
         fps: parseFps(video?.avg_frame_rate ?? video?.r_frame_rate),
-        audioTracks: audio.map((s, i) => {
-          const title = String(s.tags?.title ?? s.tags?.handler_name ?? '').trim()
-          return {
-            index: i,
-            codec: String(s.codec_name ?? 'unknown'),
-            channels: Number(s.channels ?? 2),
-            title: title && !GENERIC_TITLES.test(title) ? title : undefined
-          }
-        })
+        audioTracks: audio.map((s, i) => ({
+          index: i,
+          codec: String(s.codec_name ?? 'unknown'),
+          channels: Number(s.channels ?? 2),
+          title: trackName(s.tags)
+        }))
       }
-      if (!video && audio.length === 0) return { failed: true }
+      if (!video && audio.length === 0) return { rev: PROBE_REV, failed: true }
       return info
     } catch {
-      return { failed: true }
+      return { rev: PROBE_REV, failed: true }
     }
   }
 

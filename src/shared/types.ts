@@ -88,6 +88,10 @@ export interface Settings {
   dragIncludeAudio: boolean
   autoplayNext: boolean
   loop: boolean
+  /** Volume (0 to 1) that stays the same when switching clips. */
+  masterVolume: number
+  /** Show the track names stored in the file, or just "Track 1", "Track 2". */
+  trackNames: 'names' | 'numbers'
   /** Remembered volume (0 to 1) per track label, for example "Microphone". */
   trackVolumes: Record<string, number>
   /** Only the actions the user changed. Missing actions use the defaults. */
@@ -124,7 +128,10 @@ export interface ClipBulkPatch {
 }
 
 export interface PreparedTrack {
+  /** Stable name of the track: its real name from the file, else "Track N". Volumes are remembered by this. */
   label: string
+  /** Always "Track N", for people who prefer numbers over names. */
+  number: string
   url: string
   /** "embedded" tracks come out of the mp4, "file" tracks are separate audio files. */
   kind: 'embedded' | 'file'

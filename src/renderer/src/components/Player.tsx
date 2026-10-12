@@ -75,6 +75,7 @@ export function Player(): React.JSX.Element {
     const video = videoRef.current
     if (!video) return
     const m = new Mixer(video)
+    m.setMaster(useApp.getState().user.settings.masterVolume)
     mixerRef.current = m
     setMixer(m)
     return () => {
@@ -123,6 +124,10 @@ export function Player(): React.JSX.Element {
     // The playback rate is applied separately so changing it does not reload the clip.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
+
+  useEffect(() => {
+    mixer?.setMaster(settings.masterVolume)
+  }, [mixer, settings.masterVolume])
 
   // Keep the video loop setting in line with the settings.
   useEffect(() => {
@@ -403,10 +408,39 @@ export function Player(): React.JSX.Element {
           </div>
 
           <section className="panel">
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
               <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 20 }}>Audio tracks</h2>
-              <span className="muted" style={{ fontSize: 13 }}>
+              <span className="muted" style={{ fontSize: 13, flex: 1, minWidth: 240 }}>
                 All tracks play together. These sliders only change what you hear here, your files stay untouched.
+              </span>
+              <div className="seg" role="group" aria-label="Track labels">
+                <button className={settings.trackNames === 'names' ? 'on' : ''} onClick={() => updateSettings({ trackNames: 'names' })}>
+                  Names
+                </button>
+                <button className={settings.trackNames === 'numbers' ? 'on' : ''} onClick={() => updateSettings({ trackNames: 'numbers' })}>
+                  Numbers
+                </button>
+              </div>
+            </div>
+            <div className="track-row" style={{ borderColor: 'var(--border-2)' }}>
+              <div className="btn icon" style={{ width: 36, height: 36, border: 0, background: 'transparent' }}>
+                <Volume2 size={18} />
+              </div>
+              <div className="info">
+                <div style={{ fontWeight: 600 }}>Master volume</div>
+                <div className="src">Stays the same for every clip</div>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round(settings.masterVolume * 100)}
+                aria-label="Master volume"
+                style={{ flex: '1 1 180px', minWidth: 120 }}
+                onChange={(e) => updateSettings({ masterVolume: Number(e.target.value) / 100 })}
+              />
+              <span className="mono" style={{ width: 44, textAlign: 'right' }}>
+                {Math.round(settings.masterVolume * 100)}%
               </span>
             </div>
             {!prepared && !error && <span className="muted">Preparing audio…</span>}
@@ -422,7 +456,7 @@ export function Player(): React.JSX.Element {
                   {muted[i] ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </button>
                 <div className="info">
-                  <div style={{ fontWeight: 600 }}>{t.label}</div>
+                  <div style={{ fontWeight: 600 }}>{settings.trackNames === 'numbers' ? t.number : t.label}</div>
                   <div className="src">{t.kind === 'file' ? (aux ? baseName(aux) : 'Separate file') : 'Inside the video file'}</div>
                 </div>
                 <Meter mixer={mixer} index={i} muted={!!muted[i]} />

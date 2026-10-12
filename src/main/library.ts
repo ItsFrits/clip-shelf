@@ -16,7 +16,7 @@ import type {
 import { JsonStore } from './lib/jsonStore'
 import { makeClipKey, makeIgnoreMatcher, parseDateFromName, stem } from './lib/naming'
 import { type ScannedVideo, isAudioFile, isVideoFile, scanFolder, scanOne } from './lib/scanner'
-import { JobQueue, type MediaTools, type ProbeInfo } from './media'
+import { JobQueue, type MediaTools, PROBE_REV, type ProbeInfo } from './media'
 import type { UserDataStore } from './userData'
 
 /** One video file we know about. */
@@ -547,7 +547,7 @@ export class Library {
 
   private needsMedia(key: string): boolean {
     const probe = this.index.get().probes[key]
-    return !probe || (!this.thumbs.has(key) && !this.thumbFailed.has(key))
+    return !probe || probe.rev !== PROBE_REV || (!this.thumbs.has(key) && !this.thumbFailed.has(key))
   }
 
   private queueMedia(keys: string[]): void {
@@ -579,7 +579,7 @@ export class Library {
 
   private async ensureProbe(key: string, file: string): Promise<ProbeInfo> {
     const known = this.index.get().probes[key]
-    if (known) return known
+    if (known && known.rev === PROBE_REV) return known
     const probe = await this.tools.probe(file)
     this.index.get().probes[key] = probe
     this.index.touch(3000)
@@ -603,13 +603,21 @@ export class Library {
     const probe = await this.ensureProbe(key, file)
     const embedded = probe.audioTracks ?? []
     const aux = this.auxPath(key)
-    const videoTrack = (label: string): PreparedTrack => ({ label, url: `clip://video/${key}`, kind: 'embedded' })
-    const auxTrack: PreparedTrack | null = aux ? { label: 'Microphone', url: `clip://aux/${key}`, kind: 'file' } : null
+    const num = (i: number): string => `Track ${i + 1}`
+    const videoTrack = (label: string): PreparedTrack => ({
+      label,
+      number: num(0),
+      url: `clip://video/${key}`,
+      kind: 'embedded'
+    })
+    const auxTrack = (position: number): PreparedTrack | null =>
+      aux ? { label: 'Microphone', number: num(position), url: `clip://aux/${key}`, kind: 'file' } : null
 
     if (embedded.length <= 1) {
       const tracks: PreparedTrack[] = []
-      if (embedded.length === 1) tracks.push(videoTrack(auxTrack ? 'Game audio' : 'Audio'))
-      if (auxTrack) tracks.push(auxTrack)
+      if (embedded.length === 1) tracks.push(videoTrack(embedded[0].title ?? (aux ? 'Game audio' : 'Audio')))
+      const mic = auxTrack(tracks.length)
+      if (mic) tracks.push(mic)
       return { tracks, useVideoAudio: embedded.length === 1 }
     }
 
@@ -620,17 +628,20 @@ export class Library {
       const ok = await this.tools.extractAudio(file, missing, dir)
       if (!ok) {
         console.error('Could not extract audio tracks for', file)
-        const tracks = [videoTrack('Track 1')]
-        if (auxTrack) tracks.push(auxTrack)
+        const tracks = [videoTrack(embedded[0].title ?? num(0))]
+        const mic = auxTrack(1)
+        if (mic) tracks.push(mic)
         return { tracks, useVideoAudio: true }
       }
     }
     const tracks: PreparedTrack[] = embedded.map((t) => ({
-      label: t.title ?? `Track ${t.index + 1}`,
+      label: t.title ?? num(t.index),
+      number: num(t.index),
       url: `clip://audio/${key}/${t.index}`,
       kind: 'embedded'
     }))
-    if (auxTrack) tracks.push(auxTrack)
+    const mic = auxTrack(tracks.length)
+    if (mic) tracks.push(mic)
     return { tracks, useVideoAudio: false }
   }
 

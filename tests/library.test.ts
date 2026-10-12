@@ -145,8 +145,9 @@ describe('Library', () => {
     expect(lib.allClips()).toHaveLength(1)
   })
 
-  it('sent deltas to the window', () => {
+  it('sent deltas to the window', async () => {
+    // Deltas are batched for a moment, so give the last one time to go out.
+    await waitFor(() => deltas.some((d) => d.removes.length > 0), 5000, 'removal delta')
     expect(deltas.some((d) => d.upserts.length > 0)).toBe(true)
-    expect(deltas.some((d) => d.removes.length > 0)).toBe(true)
   })
 })

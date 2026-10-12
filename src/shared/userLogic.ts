@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS: Settings = {
   dragIncludeAudio: true,
   autoplayNext: false,
   loop: true,
+  masterVolume: 1,
+  trackNames: 'names',
   trackVolumes: {},
   keymap: {},
   ignorePatterns: ['.sfk', 'thumb_cache', '*.tmp', '*.part'],

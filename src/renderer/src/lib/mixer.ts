@@ -32,6 +32,7 @@ export class Mixer {
   private videoSource: MediaElementAudioSourceNode
   private videoGain: GainNode
   private videoAnalyser: AnalyserNode
+  private master: GainNode
   private videoBuffer = new Float32Array(1024) as Float32Array<ArrayBuffer>
   private channels: Channel[] = []
   private driftTimer: ReturnType<typeof setInterval> | null = null
@@ -46,7 +47,10 @@ export class Mixer {
     this.videoAnalyser.fftSize = 1024
     this.videoSource.connect(this.videoGain)
     this.videoGain.connect(this.videoAnalyser)
-    this.videoAnalyser.connect(this.ctx.destination)
+    // Every track ends up in one master volume before it reaches the speakers.
+    this.master = this.ctx.createGain()
+    this.master.connect(this.ctx.destination)
+    this.videoAnalyser.connect(this.master)
 
     const on = (type: string, fn: () => void): void => {
       video.addEventListener(type, fn)
@@ -92,7 +96,7 @@ export class Mixer {
     const analyser = this.ctx.createAnalyser()
     analyser.fftSize = 1024
     gain.connect(analyser)
-    analyser.connect(this.ctx.destination)
+    analyser.connect(this.master)
     return { gain, analyser, buffer: new Float32Array(1024) as Float32Array<ArrayBuffer> }
   }
 
@@ -166,6 +170,10 @@ export class Mixer {
     this.videoGain.gain.value = 1
   }
 
+  setMaster(volume: number): void {
+    this.master.gain.value = volume
+  }
+
   get trackCount(): number {
     return this.channels.length
   }
@@ -214,6 +222,7 @@ export class Mixer {
       this.videoSource.disconnect()
       this.videoGain.disconnect()
       this.videoAnalyser.disconnect()
+      this.master.disconnect()
     } catch {
       /* already disconnected */
     }
