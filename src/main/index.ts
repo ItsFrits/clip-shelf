@@ -26,6 +26,14 @@ function createWindow(): BrowserWindow {
     autoHideMenuBar: true,
     title: 'Clip Shelf',
     icon,
+    // The top bar of the app doubles as the title bar. Windows still draws the minimize, maximize and
+    // close buttons (so snap layouts and keyboard shortcuts keep working), in the colours of the bar.
+    ...(process.platform === 'darwin'
+      ? {}
+      : {
+          titleBarStyle: 'hidden' as const,
+          titleBarOverlay: { color: '#151821', symbolColor: '#a3abba', height: 63 }
+        }),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,

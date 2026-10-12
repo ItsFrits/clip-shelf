@@ -251,6 +251,7 @@ export function Player(): React.JSX.Element {
   if (!key || !clip) {
     return (
       <div className="player">
+        <div className="titlebar-fill" />
         <div className="empty">
           <h2>This clip is no longer available</h2>
           <button className="btn" onClick={closePlayer}>

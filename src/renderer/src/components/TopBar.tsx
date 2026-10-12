@@ -42,11 +42,11 @@ export function TopBar(): React.JSX.Element {
         </button>
         <button className="btn lg" disabled title="Coming in the next version">
           <Sparkles size={18} strokeWidth={1.75} />
-          Sort mode
+          <span className="lbl">Sort mode</span>
         </button>
         <button className="btn lg" disabled title="Coming in the next version">
           <LayoutGrid size={18} strokeWidth={1.75} />
-          Projects
+          <span className="lbl">Projects</span>
         </button>
         <button className="btn lg icon" aria-label="Settings" onClick={() => openSettings()}>
           <Settings size={18} strokeWidth={1.75} />

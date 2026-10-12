@@ -19,9 +19,16 @@ export default function App(): React.JSX.Element {
     void init()
   }, [init])
 
+  // Lets the styles know which platform this is (macOS keeps its own window buttons).
+  const platform = useApp((s) => s.appInfo.platform)
+  useEffect(() => {
+    if (platform) document.documentElement.dataset.platform = platform
+  }, [platform])
+
   if (!ready) {
     return (
       <div className="empty" style={{ height: '100%' }}>
+        <div className="titlebar-fill" />
         <span>Loading your library…</span>
       </div>
     )
