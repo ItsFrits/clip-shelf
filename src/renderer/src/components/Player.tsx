@@ -17,7 +17,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { effectiveKeymap, formatChord } from '@shared/keymap'
 import type { PreparedAudio } from '@shared/types'
-import { clipStatus, EMPTY_CLIP_USER, parentDir, trackProfileKey } from '@shared/userLogic'
+import { clipStatus, EMPTY_CLIP_USER, parentDir, suggestedTags, trackProfileKey } from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
 import { baseName, fmtBytes, fmtDayTime, fmtDuration, fmtSeconds } from '../lib/format'
 import { registerPlayerAction } from '../lib/hotkeys'
@@ -35,6 +35,7 @@ export function Player(): React.JSX.Element {
   const playerList = useApp((s) => s.playerList)
   const user = useApp((s) => (s.playerKey ? s.user.clips[s.playerKey] : undefined)) ?? EMPTY_CLIP_USER
   const tagById = useApp((s) => s.tagById)
+  const allTags = useApp((s) => s.user.tags)
   const folders = useApp((s) => s.folders)
   const settings = useSettings()
   const keymap = useMemo(() => effectiveKeymap(settings.keymap), [settings.keymap])
@@ -65,6 +66,8 @@ export function Player(): React.JSX.Element {
   const frameRef = useRef<HTMLSpanElement>(null)
   const watchedMarked = useRef(false)
   const noteRef = useRef<HTMLTextAreaElement>(null)
+  // Suggested tags the user skipped for the clip that is open right now.
+  const [skipped, setSkipped] = useState<string[]>([])
   const tagRef = useRef<HTMLInputElement>(null)
 
   const index = key ? playerList.indexOf(key) : -1
@@ -92,6 +95,7 @@ export function Player(): React.JSX.Element {
     if (!key || !video || !m) return
     let cancelled = false
     watchedMarked.current = false
+    setSkipped([])
     setError(null)
     setPrepared(null)
     setPlaying(false)
@@ -265,6 +269,7 @@ export function Player(): React.JSX.Element {
   const status = clipStatus(user)
   const tags = user.tags.map((id) => tagById.get(id)).filter((t): t is NonNullable<typeof t> => !!t)
   const tagNames = tags.map((t) => t.name.toLowerCase())
+  const nextTags = suggestedTags(user.tags, allTags).filter((t) => !skipped.includes(t.id))
   const suggestions = clip.hints.filter((h) => !user.ignoredHints.includes(h) && !tagNames.includes(h.toLowerCase()))
   const folder = folders.find((f) => f.id === clip.files[0]?.folderId)
   const aux = clip.files.find((f) => f.audioPath)?.audioPath
@@ -582,6 +587,31 @@ export function Player(): React.JSX.Element {
               placeholder={`Add a tag (${chord('focusTag')})`}
               onAdd={(name) => void addTagByName([key], name)}
             />
+            {nextTags.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span className="muted" style={{ fontSize: 12 }}>Suggested next</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {nextTags.map((t) => (
+                    <span key={t.id} className="pill suggest next">
+                      <button
+                        className="add"
+                        title={`Add "${t.name}"`}
+                        onClick={() => void addTagByName([key], t.name)}
+                      >
+                        + {t.name}
+                      </button>
+                      <button
+                        aria-label={`Skip ${t.name}`}
+                        title="Not for this clip"
+                        onClick={() => setSkipped((cur) => [...cur, t.id])}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             {suggestions.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span className="muted" style={{ fontSize: 12 }}>Suggested from the folder name</span>

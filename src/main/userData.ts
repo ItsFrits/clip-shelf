@@ -6,6 +6,7 @@ import {
   DEFAULT_SETTINGS,
   EMPTY_CLIP_USER,
   applyPatch,
+  cleanSuggestions,
   isDefaultClipUser
 } from '../shared/userLogic'
 import { JsonStore } from './lib/jsonStore'
@@ -110,6 +111,21 @@ export class UserDataStore {
     })
   }
 
+  /** Change a tag's name or the list of tags it suggests. Unknown tag ids in the list are dropped. */
+  updateTag(id: string, patch: { name?: string; suggests?: string[] }): void {
+    this.store.mutate((d) => {
+      const t = d.tags.find((x) => x.id === id)
+      if (!t) return
+      if (patch.name !== undefined && patch.name.trim()) t.name = patch.name.trim()
+      if (patch.suggests !== undefined) {
+        const known = new Set(d.tags.map((x) => x.id))
+        const list = [...new Set(patch.suggests)].filter((s) => s !== id && known.has(s))
+        if (list.length > 0) t.suggests = list
+        else delete t.suggests
+      }
+    })
+  }
+
   deleteTag(id: string): void {
     this.mergeTags([id], null)
   }
@@ -126,7 +142,11 @@ export class UserDataStore {
         u.tags = tags
         if (isDefaultClipUser(u)) delete d.clips[key]
       }
-      d.tags = d.tags.filter((t) => !sources.has(t.id))
+      d.tags = cleanSuggestions(
+        d.tags.filter((t) => !sources.has(t.id)),
+        sources,
+        targetId
+      )
     })
   }
 

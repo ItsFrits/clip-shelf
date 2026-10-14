@@ -1,5 +1,5 @@
 import { ChevronLeft, FolderPlus, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ACTIONS,
   type ActionDef,
@@ -11,10 +11,12 @@ import {
 import type { FolderInfo } from '@shared/types'
 import { fmtBytes, fmtCount } from '../lib/format'
 import { type SettingsTab, useApp, useSettings } from '../lib/store'
+import { TagInput } from './TagInput'
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'folders', label: 'Folders' },
   { id: 'playback', label: 'Playback & editor' },
+  { id: 'tags', label: 'Tags' },
   { id: 'hotkeys', label: 'Hotkeys' },
   { id: 'backup', label: 'Backup & updates' }
 ]
@@ -45,6 +47,7 @@ export function Settings(): React.JSX.Element {
           <div className="inner">
             {tab === 'folders' && <FoldersTab />}
             {tab === 'playback' && <PlaybackTab />}
+            {tab === 'tags' && <TagsTab />}
             {tab === 'hotkeys' && <HotkeysTab />}
             {tab === 'backup' && <BackupTab />}
           </div>
@@ -416,6 +419,212 @@ function BackupTab(): React.JSX.Element {
             </button>
           )}
         </Row>
+      </div>
+    </>
+  )
+}
+
+function TagsTab(): React.JSX.Element {
+  const tags = useApp((s) => s.user.tags)
+  const clips = useApp((s) => s.user.clips)
+  const updateTag = useApp((s) => s.updateTag)
+  const addSuggestion = useApp((s) => s.addSuggestion)
+  const ask = useApp((s) => s.ask)
+  const toast = useApp((s) => s.toast)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
+  const [name, setName] = useState('')
+  const [mergeInto, setMergeInto] = useState('')
+
+  const counts = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const c of Object.values(clips)) for (const id of c.tags) m.set(id, (m.get(id) ?? 0) + 1)
+    return m
+  }, [clips])
+  const byId = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
+  const sorted = useMemo(() => {
+    const q = filter.trim().toLowerCase()
+    return tags
+      .filter((t) => t.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [tags, filter])
+
+  const selected = selectedId ? byId.get(selectedId) : undefined
+  useEffect(() => {
+    setName(selected?.name ?? '')
+    setMergeInto('')
+  }, [selected?.id, selected?.name])
+
+  const suggestsList = (selected?.suggests ?? []).map((id) => byId.get(id)).filter((t): t is NonNullable<typeof t> => !!t)
+  const suggestedBy = selected ? tags.filter((t) => t.suggests?.includes(selected.id)) : []
+  const used = selected ? (counts.get(selected.id) ?? 0) : 0
+
+  const rename = (): void => {
+    if (!selected) return
+    const clean = name.trim()
+    if (!clean || clean === selected.name) {
+      setName(selected.name)
+      return
+    }
+    if (tags.some((t) => t.id !== selected.id && t.name.toLowerCase() === clean.toLowerCase())) {
+      toast(`There is already a tag called "${clean}". Use "Merge into" to combine them.`, { kind: 'error' })
+      setName(selected.name)
+      return
+    }
+    void window.api.renameTag(selected.id, clean)
+  }
+
+  const merge = async (): Promise<void> => {
+    if (!selected || !mergeInto) return
+    const target = byId.get(mergeInto)
+    if (!target) return
+    const ok = await ask({
+      title: `Merge "${selected.name}" into "${target.name}"?`,
+      body: `${used} clip${used === 1 ? '' : 's'} with "${selected.name}" get "${target.name}" instead. The tag "${selected.name}" is removed.`,
+      confirmLabel: 'Merge'
+    })
+    if (!ok) return
+    await window.api.mergeTags([selected.id], target.id)
+    setSelectedId(target.id)
+  }
+
+  const remove = async (): Promise<void> => {
+    if (!selected) return
+    const ok = await ask({
+      title: `Delete the tag "${selected.name}"?`,
+      body: used > 0 ? `It is removed from ${used} clip${used === 1 ? '' : 's'}. The clips themselves stay.` : 'No clip uses this tag.',
+      confirmLabel: 'Delete tag',
+      danger: true
+    })
+    if (!ok) return
+    await window.api.deleteTag(selected.id)
+    setSelectedId(null)
+  }
+
+  return (
+    <>
+      <h1>Tags</h1>
+      <div className="sec-card">
+        <span className="muted">
+          Choose which tags are suggested after a tag is added to a clip. It works one way: if "Air dribble" suggests
+          "Sidewall", adding "Sidewall" does not suggest "Air dribble" unless you set that up too.
+        </span>
+        <div className="tag-manager">
+          <div className="tag-list">
+            <input
+              className="field"
+              placeholder="Find a tag"
+              aria-label="Find a tag"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+            <div className="items">
+              {sorted.map((t) => (
+                <button key={t.id} className={'item' + (t.id === selectedId ? ' on' : '')} onClick={() => setSelectedId(t.id)}>
+                  <span className="name">{t.name}</span>
+                  <span className="meta">
+                    {t.suggests?.length ? <span title="Suggests other tags">→ {t.suggests.length}</span> : null}
+                    <span title="Clips with this tag">{fmtCount(counts.get(t.id) ?? 0)}</span>
+                  </span>
+                </button>
+              ))}
+              {sorted.length === 0 && (
+                <span className="muted" style={{ padding: 10 }}>
+                  {tags.length === 0 ? 'No tags yet. Add one to a clip in the player.' : 'No tag matches.'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="tag-editor">
+            {!selected ? (
+              <span className="muted">Pick a tag on the left to edit it.</span>
+            ) : (
+              <>
+                <div className="block">
+                  <span className="h-label">Name</span>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      className="field"
+                      style={{ flex: 1, minWidth: 0 }}
+                      value={name}
+                      aria-label="Tag name"
+                      onChange={(e) => setName(e.target.value)}
+                      onBlur={rename}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                        if (e.key === 'Escape') setName(selected.name)
+                      }}
+                    />
+                    <span className="muted mono" style={{ fontSize: 12 }}>
+                      {fmtCount(used)} clip{used === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="block">
+                  <span className="h-label">After adding this tag, suggest</span>
+                  <div className="chips">
+                    {suggestsList.length === 0 && <span className="muted">Nothing yet.</span>}
+                    {suggestsList.map((t) => (
+                      <span key={t.id} className="pill" style={{ fontSize: 13, padding: '3px 6px 3px 10px' }}>
+                        {t.name}
+                        <button
+                          aria-label={`Stop suggesting ${t.name}`}
+                          onClick={() => updateTag(selected.id, { suggests: (selected.suggests ?? []).filter((id) => id !== t.id) })}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <TagInput
+                    key={selected.id}
+                    exclude={[selected.id, ...(selected.suggests ?? [])]}
+                    placeholder="Add a tag to suggest…"
+                    onAdd={(n) => void addSuggestion(selected.id, n)}
+                  />
+                </div>
+
+                {suggestedBy.length > 0 && (
+                  <div className="block">
+                    <span className="h-label">Suggested after</span>
+                    <div className="chips">
+                      {suggestedBy.map((t) => (
+                        <button key={t.id} className="pill" style={{ border: 0, color: 'inherit' }} onClick={() => setSelectedId(t.id)}>
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="block">
+                  <span className="h-label">Merge or delete</span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <select className="field" style={{ minWidth: 180 }} value={mergeInto} aria-label="Merge into" onChange={(e) => setMergeInto(e.target.value)}>
+                      <option value="">Merge into…</option>
+                      {sorted
+                        .filter((t) => t.id !== selected.id)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                    </select>
+                    <button className="btn" disabled={!mergeInto} onClick={() => void merge()}>
+                      Merge
+                    </button>
+                    <button className="btn danger" style={{ marginLeft: 'auto' }} onClick={() => void remove()}>
+                      <Trash2 size={16} />
+                      Delete tag
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </>
   )

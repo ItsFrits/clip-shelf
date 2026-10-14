@@ -16,7 +16,7 @@ import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
 
 export type View = 'library' | 'player' | 'settings'
-export type SettingsTab = 'folders' | 'playback' | 'hotkeys' | 'backup'
+export type SettingsTab = 'folders' | 'playback' | 'tags' | 'hotkeys' | 'backup'
 
 export interface Toast {
   id: number
@@ -84,6 +84,8 @@ interface AppState {
 
   patch: (keys: string[], patch: ClipBulkPatch, undoLabel?: string) => void
   addTagByName: (keys: string[], name: string) => Promise<void>
+  updateTag: (id: string, patch: { name?: string; suggests?: string[] }) => void
+  addSuggestion: (tagId: string, name: string) => Promise<void>
   undoLast: () => void
   updateSettings: (patch: Partial<Settings>) => void
   trashKeys: (keys: string[]) => Promise<boolean>
@@ -269,6 +271,44 @@ export const useApp = create<AppState>((set, get) => ({
       })
     }
     get().patch(keys, { addTags: [tag.id] }, `Tag "${tag.name}"`)
+  },
+
+  updateTag: (id, patch) => {
+    set((s) => {
+      const tags = s.user.tags.map((t) => {
+        if (t.id !== id) return t
+        const next = { ...t }
+        if (patch.name !== undefined && patch.name.trim()) next.name = patch.name.trim()
+        if (patch.suggests !== undefined) {
+          const list = [...new Set(patch.suggests)].filter((x) => x !== id)
+          if (list.length > 0) next.suggests = list
+          else delete next.suggests
+        }
+        return next
+      })
+      return { user: { ...s.user, tags }, tagById: tagMap(tags) }
+    })
+    void window.api.updateTag(id, patch)
+  },
+
+  /** Make `name` one of the tags suggested after the tag `tagId`. Creates the tag if it is new. */
+  addSuggestion: async (tagId, name) => {
+    const clean = name.trim()
+    if (!clean) return
+    let target = get().user.tags.find((t) => t.name.toLowerCase() === clean.toLowerCase())
+    if (!target) {
+      target = await window.api.createTag(clean)
+      const created = target
+      set((s) => {
+        if (s.user.tags.some((t) => t.id === created.id)) return {}
+        const tags = [...s.user.tags, created]
+        return { user: { ...s.user, tags }, tagById: tagMap(tags) }
+      })
+    }
+    if (target.id === tagId) return
+    const current = get().user.tags.find((t) => t.id === tagId)?.suggests ?? []
+    if (current.includes(target.id)) return
+    get().updateTag(tagId, { suggests: [...current, target.id] })
   },
 
   undoLast: () => {

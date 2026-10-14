@@ -24,6 +24,7 @@ export interface ClipShelfApi {
   createTag(name: string): Promise<Tag>
   renameTag(id: string, name: string): Promise<void>
   deleteTag(id: string): Promise<void>
+  updateTag(id: string, patch: { name?: string; suggests?: string[] }): Promise<void>
   mergeTags(sourceIds: string[], targetId: string): Promise<void>
   updateSettings(patch: Partial<Settings>): Promise<void>
 
@@ -54,6 +55,7 @@ export const INVOKE_METHODS = [
   'createTag',
   'renameTag',
   'deleteTag',
+  'updateTag',
   'mergeTags',
   'updateSettings',
   'prepareAudio',

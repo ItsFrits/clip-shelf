@@ -1354,3 +1354,102 @@ textarea.field {
     padding: 0 12px;
   }
 }
+
+/* ---------- suggested tags ---------- */
+.pill.suggest.next {
+  padding: 1px 4px 1px 4px;
+  gap: 2px;
+  cursor: default;
+}
+.pill.suggest.next .add {
+  color: var(--accent-soft);
+  font-size: 12px;
+  padding: 2px 6px 2px 8px;
+  border-radius: 999px;
+}
+.pill.suggest.next .add:hover {
+  background: rgba(255, 143, 63, 0.14);
+  color: var(--text);
+}
+
+/* ---------- tags page in settings ---------- */
+.tag-manager {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: 16px;
+  min-height: 420px;
+}
+.tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.tag-list .items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 460px;
+  padding-right: 2px;
+}
+.tag-list .item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  padding: 7px 10px;
+  color: var(--text);
+}
+.tag-list .item:hover {
+  background: var(--input);
+}
+.tag-list .item.on {
+  background: var(--input);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.tag-list .item .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-list .item .meta {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.tag-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 4px 4px 16px;
+  border-left: 1px solid var(--border);
+  min-width: 0;
+}
+.tag-editor .block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tag-editor .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+@media (max-width: 900px) {
+  .tag-manager {
+    grid-template-columns: 1fr;
+  }
+  .tag-editor {
+    border-left: 0;
+    padding-left: 0;
+  }
+}

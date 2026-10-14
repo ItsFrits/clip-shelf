@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { applyPatch, clipStatus, EMPTY_CLIP_USER, parentDir, trackProfileKey } from '../src/shared/userLogic'
+import {
+  applyPatch,
+  cleanSuggestions,
+  clipStatus,
+  EMPTY_CLIP_USER,
+  parentDir,
+  suggestedTags,
+  trackProfileKey
+} from '../src/shared/userLogic'
+import type { Tag } from '../src/shared/types'
 
 describe('applyPatch', () => {
   it('marks a clip as watched when it gets a tag', () => {
@@ -43,5 +52,46 @@ describe('track profiles', () => {
     expect(trackProfileKey("d:/video's/obs", ['Game audio', 'Discord'])).toBe(a)
     expect(trackProfileKey("D:\\Video's\\OBS", ['Discord', 'Game audio'])).not.toBe(a)
     expect(trackProfileKey("D:\\Video's\\ReLive", ['Game audio', 'Discord'])).not.toBe(a)
+  })
+})
+
+describe('tag suggestions', () => {
+  const tags: Tag[] = [
+    { id: 'air', name: 'Air dribble', suggests: ['g2a', 'wall'] },
+    { id: 'g2a', name: 'Ground to air' },
+    { id: 'wall', name: 'Sidewall' },
+    { id: 'flick', name: 'Flip reset', suggests: ['air'] }
+  ]
+
+  it('suggests the tags that belong to a tag on the clip', () => {
+    expect(suggestedTags(['air'], tags).map((t) => t.id)).toEqual(['g2a', 'wall'])
+  })
+
+  it('works one way only', () => {
+    expect(suggestedTags(['wall'], tags)).toEqual([])
+    expect(suggestedTags(['g2a'], tags)).toEqual([])
+  })
+
+  it('skips tags that are already on the clip and does not repeat tags', () => {
+    expect(suggestedTags(['air', 'g2a'], tags).map((t) => t.id)).toEqual(['wall'])
+    const twice: Tag[] = [...tags.slice(0, 3), { id: 'flick', name: 'Flip reset', suggests: ['wall', 'air'] }]
+    expect(suggestedTags(['air', 'flick'], twice).map((t) => t.id)).toEqual(['wall', 'g2a'])
+  })
+
+  it('puts suggestions of the most recently added tag first', () => {
+    expect(suggestedTags(['wall', 'flick', 'g2a'], tags).map((t) => t.id)).toEqual(['air'])
+    const ids = suggestedTags(['flick', 'air'], tags).map((t) => t.id)
+    expect(ids).toEqual(['g2a', 'wall'])
+  })
+
+  it('removes and remaps ids after a delete or merge', () => {
+    const deleted = cleanSuggestions(tags.filter((t) => t.id !== 'g2a'), new Set(['g2a']), null)
+    expect(deleted.find((t) => t.id === 'air')?.suggests).toEqual(['wall'])
+
+    const merged = cleanSuggestions(tags.filter((t) => t.id !== 'g2a'), new Set(['g2a']), 'wall')
+    expect(merged.find((t) => t.id === 'air')?.suggests).toEqual(['wall'])
+
+    const self = cleanSuggestions(tags.filter((t) => t.id !== 'air'), new Set(['air']), 'flick')
+    expect('suggests' in self.find((t) => t.id === 'flick')!).toBe(false)
   })
 })

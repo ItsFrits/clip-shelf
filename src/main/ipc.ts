@@ -52,6 +52,7 @@ export function registerIpc(ctx: IpcContext): void {
     user.renameTag(id, name)
     emit('user:replaced', user.data)
   })
+  handle('updateTag', (id, patch) => user.updateTag(id, patch))
   handle('deleteTag', (id) => {
     user.deleteTag(id)
     emit('user:replaced', user.data)

@@ -59,6 +59,11 @@ export interface Clip {
 export interface Tag {
   id: string
   name: string
+  /**
+   * Tags to suggest once this tag is on a clip, as tag ids. One way only: if A suggests B,
+   * B does not suggest A unless it says so itself.
+   */
+  suggests?: string[]
 }
 
 export interface ClipUser {
