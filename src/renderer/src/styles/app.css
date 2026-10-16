@@ -1478,18 +1478,25 @@ textarea.field {
   margin: -28px 0 0 -28px;
   display: grid;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 50%;
-  background: rgba(14, 16, 20, 0.85);
+  background: rgba(14, 16, 20, 0.62);
   backdrop-filter: blur(6px);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.video-indicator.pause:hover {
+  background: rgba(14, 16, 20, 0.85);
   color: var(--accent);
-  pointer-events: none;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .video-indicator.pause {
   animation: indicator-in 0.14s ease-out;
 }
 .video-indicator.play {
   animation: indicator-out 0.5s ease-out forwards;
+  pointer-events: none;
 }
 @keyframes indicator-in {
   from {

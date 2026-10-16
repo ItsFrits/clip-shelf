@@ -405,6 +405,7 @@ export function Player(): React.JSX.Element {
                 key={indicator.id}
                 className={'video-indicator ' + indicator.kind}
                 aria-hidden="true"
+                onClick={togglePlay}
                 onAnimationEnd={() => indicator.kind === 'play' && setIndicator(null)}
               >
                 <Pause size={26} fill="currentColor" strokeWidth={0} />
