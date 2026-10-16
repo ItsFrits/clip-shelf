@@ -47,27 +47,24 @@ npm run typecheck && npm test && git push -u origin feat/naam && git switch main
 
 Een release is een aparte stap op `main`, pas als Claude zegt dat het een goed moment is. Alleen een tag start de build en de update voor gebruikers.
 
-1. Claude past `version` in `package.json` en `CHANGELOG.md` aan.
-2. Daarna, op `main`:
+Het versienummer staat op één plek: je geeft het één keer mee aan het release-script. Dat past `package.json`, `package-lock.json` en `CHANGELOG.md` (de kop "Unreleased" wordt het nieuwe versienummer) zelf aan, draait typecheck en tests, commit, pusht en zet de tag. Claude zegt welk nummer het moet zijn.
+
+Op `main`, met alles gemerged en niets open (`git status` leeg):
 
 ```bash
-git switch main && npm run typecheck && npm test && git add -A && git commit -m "Release 0.2.0" && git push && git tag v0.2.0 && git push origin v0.2.0
+git switch main && git pull && npm run release -- 0.2.0
 ```
 
-De tag moet exact `v` + het versienummer uit `package.json` zijn, anders stopt de build bewust. De tag start de build op GitHub (tab Actions). Na ongeveer 5 minuten staat de installer onder Releases. Mensen met de app krijgen de update binnen 4 uur zelf, of direct via Settings, Check for updates.
+Het script stopt met een duidelijke melding als je niet op `main` zit, als er nog niet-gecommitte wijzigingen zijn, als het nummer niet hoger is dan het huidige, als de tag al bestaat of als er niets onder "Unreleased" staat.
+
+De tag is altijd `v` + het versienummer uit `package.json`, anders stopt de build bewust. De tag start de build op GitHub (tab Actions). Na ongeveer 5 minuten staat de installer onder Releases. Mensen met de app krijgen de update binnen 4 uur zelf, of direct via Settings, Check for updates.
 
 ## Als de build faalt
 
-Maak de fout hier eerst lokaal, daarna de tag opnieuw op de nieuwe commit zetten (vervang het versienummer):
+Maak de fout hier eerst lokaal, daarna de tag opnieuw op de nieuwe commit zetten. Het versienummer wordt uit `package.json` gehaald, je hoeft niets in te vullen:
 
 ```bash
-git add -A
-git commit -m "Fix build"
-git push
-git tag -d v0.2.0
-git push origin :refs/tags/v0.2.0
-git tag v0.2.0
-git push origin v0.2.0
+git add -A && git commit -m "Fix build" && git push && v=$(node -p "require('./package.json').version") && git tag -d "v$v" && git push origin ":refs/tags/v$v" && git tag "v$v" && git push origin "v$v"
 ```
 
 Waarom: "Re-run jobs" op GitHub gebruikt de oude code van die tag, dus een fix werkt pas als de tag verplaatst is. Staat er al een release, dan overschrijft de workflow die zelf.
