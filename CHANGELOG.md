@@ -4,6 +4,8 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+## 0.2.0
+
 ### Added
 - An About tab in Settings with the version, these release notes, a link to GitHub issues, "Copy diagnostics" for bug reports and a button that opens the logs folder.
 - Warnings and errors are written to a log file (`logs` folder in the app data folder), so a problem can be traced afterwards.
