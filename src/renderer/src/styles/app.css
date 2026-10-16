@@ -1469,71 +1469,99 @@ textarea.field {
 .video-wrap video {
   cursor: pointer;
 }
-.video-flash,
-.video-paused {
+.video-indicator {
   position: absolute;
   left: 50%;
   top: 50%;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
   display: grid;
   place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 50%;
   background: rgba(14, 16, 20, 0.62);
+  backdrop-filter: blur(6px);
   color: #fff;
   pointer-events: none;
 }
-.video-flash {
-  width: 76px;
-  height: 76px;
-  margin: -38px 0 0 -38px;
-  animation: video-flash 0.55s ease-out forwards;
+.video-indicator.pause {
+  animation: indicator-in 0.14s ease-out;
 }
-.video-paused {
-  width: 52px;
-  height: 52px;
-  margin: -26px 0 0 -26px;
-  opacity: 0.55;
+.video-indicator.play {
+  animation: indicator-out 0.5s ease-out forwards;
 }
-@keyframes video-flash {
+@keyframes indicator-in {
   from {
-    opacity: 0.95;
-    transform: scale(0.8);
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes indicator-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
   }
   to {
     opacity: 0;
     transform: scale(1.25);
   }
 }
+/* Previous and next clip: a tall block on the edge, only visible when the mouse is close to that side. */
 .video-nav {
   position: absolute;
   top: 50%;
-  width: 46px;
-  height: 46px;
-  margin-top: -23px;
+  width: 40px;
+  height: 84px;
+  margin-top: -42px;
   display: grid;
   place-items: center;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 50%;
+  border-radius: 10px;
   background: rgba(14, 16, 20, 0.62);
+  backdrop-filter: blur(6px);
   color: #fff;
   opacity: 0;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .video-nav.prev {
-  left: 14px;
+  left: 10px;
 }
 .video-nav.next {
-  right: 14px;
+  right: 10px;
 }
-.video-wrap:hover .video-nav,
+.video-wrap.near-prev .video-nav.prev,
+.video-wrap.near-next .video-nav.next {
+  opacity: 1;
+  pointer-events: auto;
+}
 .video-nav:focus-visible {
   opacity: 1;
 }
 .video-nav:hover {
   background: rgba(14, 16, 20, 0.85);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Video info and frame counter: only while the mouse moves over the video. */
+.video-wrap > .badge {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.video-wrap.active > .badge,
+.video-wrap.peek > .badge.tr {
+  opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
-  .video-flash {
+  .video-indicator.play {
     animation-duration: 0.01s;
   }
 }

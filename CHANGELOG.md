@@ -5,8 +5,9 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
-- Hover arrows on the video to go to the previous or next clip (they replace the two arrows in the header).
-- Clicking the video shows a play or pause icon in the middle, and a quiet pause icon while paused.
+- Previous and next clip buttons on the sides of the video, which only show when the mouse is close to that side (they replace the two arrows in the header). The arrow turns the accent colour on hover.
+- Clicking the video pauses it, with a pause icon in the middle that turns into a play icon and fades out when you continue.
+- Video info and the frame counter only show while the mouse moves over the video, so they no longer cover things like the game chat. The frame counter also shows briefly after stepping a frame with the keyboard.
 - Keyboard hint on the Random button in the player. A new setting under Playback & editor turns every keyboard hint off.
 - The window remembers its size, position and maximized state.
 

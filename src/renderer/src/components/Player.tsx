@@ -29,6 +29,8 @@ import { Stars } from './Stars'
 import { TagInput } from './TagInput'
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2]
+/** How close (px) the mouse has to be to the side of the video to show the previous or next clip button. */
+const NEAR_PX = 120
 
 export function Player(): React.JSX.Element {
   const key = useApp((s) => s.playerKey)
@@ -70,10 +72,17 @@ export function Player(): React.JSX.Element {
   // Suggested tags the user skipped for the clip that is open right now.
   const [skipped, setSkipped] = useState<string[]>([])
   const tagRef = useRef<HTMLInputElement>(null)
-  // A short play or pause icon that flashes in the middle of the video, and a quiet one while paused.
-  const [flash, setFlash] = useState<{ id: number; kind: 'play' | 'pause' } | null>(null)
-  const flashId = useRef(0)
-  const [pausedByUser, setPausedByUser] = useState(false)
+  // The round icon in the middle of the video: a pause icon that stays while paused, which turns
+  // into a play icon and fades out when playback resumes. One element, so it never jumps.
+  const [indicator, setIndicator] = useState<{ id: number; kind: 'play' | 'pause' } | null>(null)
+  const indicatorId = useRef(0)
+  // Video info and frame counter only show while the mouse moves over the video (or just after a frame step).
+  const [active, setActive] = useState(false)
+  const [peek, setPeek] = useState(false)
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Which side the mouse is close to, to show the previous or next clip button.
+  const [near, setNear] = useState<'prev' | 'next' | null>(null)
 
   const index = key ? playerList.indexOf(key) : -1
   const fps = clip?.fps && clip.fps > 0 ? clip.fps : 30
@@ -104,8 +113,7 @@ export function Player(): React.JSX.Element {
     setError(null)
     setPrepared(null)
     setPlaying(false)
-    setPausedByUser(false)
-    setFlash(null)
+    setIndicator(null)
     video.src = `clip://video/${key}`
     video.playbackRate = rate
     video.load()
@@ -191,8 +199,7 @@ export function Player(): React.JSX.Element {
     const resuming = v.paused
     if (resuming) void v.play().catch(() => undefined)
     else v.pause()
-    setPausedByUser(!resuming)
-    setFlash({ id: ++flashId.current, kind: resuming ? 'play' : 'pause' })
+    setIndicator({ id: ++indicatorId.current, kind: resuming ? 'play' : 'pause' })
   }, [])
 
   const stepFrame = useCallback(
@@ -200,7 +207,10 @@ export function Player(): React.JSX.Element {
       const v = videoRef.current
       if (!v) return
       v.pause()
-      setPausedByUser(false)
+      setIndicator(null)
+      setPeek(true)
+      if (peekTimer.current) clearTimeout(peekTimer.current)
+      peekTimer.current = setTimeout(() => setPeek(false), 1500)
       v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + dir / fps))
     },
     [fps]
@@ -357,7 +367,22 @@ export function Player(): React.JSX.Element {
 
       <div className="player-body">
         <main className="player-main">
-          <div className="video-wrap">
+          <div
+            className={'video-wrap' + (active ? ' active' : '') + (peek ? ' peek' : '') + (near ? ' near-' + near : '')}
+            onMouseMove={(e) => {
+              const r = e.currentTarget.getBoundingClientRect()
+              const x = e.clientX - r.left
+              setNear(x < NEAR_PX ? 'prev' : x > r.width - NEAR_PX ? 'next' : null)
+              setActive(true)
+              if (idleTimer.current) clearTimeout(idleTimer.current)
+              idleTimer.current = setTimeout(() => setActive(false), 2500)
+            }}
+            onMouseLeave={() => {
+              setNear(null)
+              setActive(false)
+              if (idleTimer.current) clearTimeout(idleTimer.current)
+            }}
+          >
             <video
               ref={videoRef}
               crossOrigin="anonymous"
@@ -365,7 +390,7 @@ export function Player(): React.JSX.Element {
               onClick={togglePlay}
               onPlay={() => {
                 setPlaying(true)
-                setPausedByUser(false)
+                setIndicator((cur) => (cur?.kind === 'pause' ? { id: ++indicatorId.current, kind: 'play' } : cur))
               }}
               onPause={() => setPlaying(false)}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
@@ -375,14 +400,14 @@ export function Player(): React.JSX.Element {
               }}
               onError={() => setError('This video could not be played. Its format may not be supported.')}
             />
-            {pausedByUser && !error && (
-              <span className="video-paused" aria-hidden="true">
-                <Pause size={26} fill="currentColor" strokeWidth={0} />
-              </span>
-            )}
-            {flash && (
-              <span key={flash.id} className="video-flash" aria-hidden="true" onAnimationEnd={() => setFlash(null)}>
-                {flash.kind === 'pause' ? <Pause size={30} fill="currentColor" strokeWidth={0} /> : <Play size={30} fill="currentColor" strokeWidth={0} />}
+            {indicator && !error && (
+              <span
+                key={indicator.id}
+                className={'video-indicator ' + indicator.kind}
+                aria-hidden="true"
+                onAnimationEnd={() => indicator.kind === 'play' && setIndicator(null)}
+              >
+                {indicator.kind === 'pause' ? <Pause size={26} fill="currentColor" strokeWidth={0} /> : <Play size={26} fill="currentColor" strokeWidth={0} />}
               </span>
             )}
             {index > 0 && (
