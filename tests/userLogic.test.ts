@@ -6,7 +6,8 @@ import {
   EMPTY_CLIP_USER,
   parentDir,
   suggestedTags,
-  trackProfileKey
+  trackProfileKey,
+  whatsNewNotice
 } from '../src/shared/userLogic'
 import type { Tag } from '../src/shared/types'
 
@@ -93,5 +94,23 @@ describe('tag suggestions', () => {
 
     const self = cleanSuggestions(tags.filter((t) => t.id !== 'air'), new Set(['air']), 'flick')
     expect('suggests' in self.find((t) => t.id === 'flick')!).toBe(false)
+  })
+})
+
+describe('whatsNewNotice', () => {
+  it('shows nothing when the version has not changed', () => {
+    expect(whatsNewNotice('0.2.0', '0.2.0', true)).toEqual({ remember: false, notify: false })
+  })
+
+  it('points to the release notes after an update', () => {
+    expect(whatsNewNotice('0.1.6', '0.2.0', true)).toEqual({ remember: true, notify: true })
+  })
+
+  it('treats the first start after this feature arrived as an update when there is data', () => {
+    expect(whatsNewNotice('', '0.2.0', true)).toEqual({ remember: true, notify: true })
+  })
+
+  it('stays quiet on a brand new install', () => {
+    expect(whatsNewNotice('', '0.2.0', false)).toEqual({ remember: true, notify: false })
   })
 })

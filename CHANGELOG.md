@@ -5,6 +5,9 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
+- An About tab in Settings with the version, these release notes, a link to GitHub issues, "Copy diagnostics" for bug reports and a button that opens the logs folder.
+- Warnings and errors are written to a log file (`logs` folder in the app data folder), so a problem can be traced afterwards.
+- After an update, a small notice links to the release notes.
 - Previous and next clip buttons on the sides of the video, which only show when the mouse is close to that side (they replace the two arrows in the header). The arrow turns the accent colour on hover.
 - Clicking the video pauses it, with a pause icon in the middle that fades out when you continue.
 - Video info and the frame counter only show while the mouse moves over the video, so they no longer cover things like the game chat. The frame counter also shows briefly after stepping a frame with the keyboard.

@@ -11,6 +11,7 @@ import {
 import type { FolderInfo } from '@shared/types'
 import { fmtBytes, fmtCount } from '../lib/format'
 import { type SettingsTab, useApp, useSettings } from '../lib/store'
+import { AboutTab } from './AboutTab'
 import { TagInput } from './TagInput'
 
 const TABS: { id: SettingsTab; label: string }[] = [
@@ -18,7 +19,8 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'playback', label: 'Playback & editor' },
   { id: 'tags', label: 'Tags' },
   { id: 'hotkeys', label: 'Hotkeys' },
-  { id: 'backup', label: 'Backup & updates' }
+  { id: 'backup', label: 'Backup & updates' },
+  { id: 'about', label: 'About' }
 ]
 
 export function Settings(): React.JSX.Element {
@@ -50,6 +52,7 @@ export function Settings(): React.JSX.Element {
             {tab === 'tags' && <TagsTab />}
             {tab === 'hotkeys' && <HotkeysTab />}
             {tab === 'backup' && <BackupTab />}
+            {tab === 'about' && <AboutTab />}
           </div>
         </div>
       </div>

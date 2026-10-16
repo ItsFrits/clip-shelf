@@ -40,6 +40,10 @@ export interface ClipShelfApi {
   checkForUpdates(): Promise<void>
   installUpdate(): Promise<void>
 
+  openLogsFolder(): Promise<void>
+  /** Write an error from the window to the log file. */
+  logError(message: string): void
+
   on<E extends ApiEventName>(event: E, cb: (payload: ApiEvents[E]) => void): () => void
 }
 
@@ -64,8 +68,9 @@ export const INVOKE_METHODS = [
   'exportBackup',
   'importBackup',
   'checkForUpdates',
-  'installUpdate'
+  'installUpdate',
+  'openLogsFolder'
 ] as const
 
 /** Fire and forget messages. */
-export const SEND_METHODS = ['prioritizeThumbs', 'startDrag'] as const
+export const SEND_METHODS = ['prioritizeThumbs', 'startDrag', 'logError'] as const

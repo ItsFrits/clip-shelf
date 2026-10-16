@@ -11,12 +11,12 @@ import type {
   UpdateStatus,
   UserData
 } from '@shared/types'
-import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser } from '@shared/userLogic'
+import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, whatsNewNotice } from '@shared/userLogic'
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
 
 export type View = 'library' | 'player' | 'settings'
-export type SettingsTab = 'folders' | 'playback' | 'tags' | 'hotkeys' | 'backup'
+export type SettingsTab = 'folders' | 'playback' | 'tags' | 'hotkeys' | 'backup' | 'about'
 
 export interface Toast {
   id: number
@@ -187,6 +187,20 @@ export const useApp = create<AppState>((set, get) => ({
     })
     // The check starts a couple of seconds after launch, which can be before this window is listening.
     if (snap.update.state !== get().update.state) onUpdate(snap.update)
+
+    // After an update, point to the release notes once. Only for the installed app, so developing
+    // does not touch this. A brand new install (no folders or clips yet) gets no notice.
+    if (snap.app.packaged) {
+      const hadData = snap.user.folders.length > 0 || Object.keys(snap.user.clips).length > 0
+      const notice = whatsNewNotice(snap.user.settings.lastSeenVersion, snap.app.version, hadData)
+      if (notice.remember) get().updateSettings({ lastSeenVersion: snap.app.version })
+      if (notice.notify) {
+        get().toast(`Updated to Clip Shelf ${snap.app.version}.`, {
+          actionLabel: 'See what’s new',
+          action: () => get().openSettings('about')
+        })
+      }
+    }
   },
 
   setFilters: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })),

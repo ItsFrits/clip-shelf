@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import type { UpdateStatus } from '../shared/types'
+import { logLine } from './log'
 
 /** Checks GitHub Releases for a newer version and downloads it in the background. */
 export class Updater {
@@ -32,7 +33,10 @@ export class Updater {
       this.set({ state: 'downloading', version: this.status.version, percent: Math.round(p.percent) })
     )
     autoUpdater.on('update-downloaded', (info) => this.set({ state: 'ready', version: info.version }))
-    autoUpdater.on('error', (err) => this.set({ state: 'error', message: err?.message ?? String(err) }))
+    autoUpdater.on('error', (err) => {
+      logLine('warn', 'Update problem: ' + (err?.message ?? String(err)))
+      this.set({ state: 'error', message: err?.message ?? String(err) })
+    })
 
     // A check is one small request, so start almost right away. The download runs in the background.
     setTimeout(() => void this.check(), 2000)

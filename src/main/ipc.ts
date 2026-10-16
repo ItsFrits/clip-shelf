@@ -2,6 +2,8 @@ import { BrowserWindow, app, dialog, ipcMain, nativeImage, shell } from 'electro
 import { readFileSync } from 'fs'
 import icon from '../../resources/icon.png?asset'
 import type { ApiEventName, ApiEvents, Snapshot } from '../shared/types'
+import { mkdirSync } from 'fs'
+import { logLine } from './log'
 import type { Library } from './library'
 import type { Updater } from './updater'
 import type { UserDataStore } from './userData'
@@ -11,6 +13,7 @@ interface IpcContext {
   user: UserDataStore
   updater: Updater
   getWindow: () => BrowserWindow | null
+  logDir: string
 }
 
 /** Send an event to the window. */
@@ -22,7 +25,7 @@ export function makeEmitter(getWindow: () => BrowserWindow | null) {
 }
 
 export function registerIpc(ctx: IpcContext): void {
-  const { library, user, updater, getWindow } = ctx
+  const { library, user, updater, getWindow, logDir } = ctx
   const emit = makeEmitter(getWindow)
   const handle = (name: string, fn: (...args: any[]) => unknown): void => {
     ipcMain.handle('api:' + name, (_e, ...args) => fn(...args))
@@ -99,6 +102,15 @@ export function registerIpc(ctx: IpcContext): void {
 
   handle('checkForUpdates', () => updater.check())
   handle('installUpdate', () => updater.install())
+
+  handle('openLogsFolder', async () => {
+    mkdirSync(logDir, { recursive: true })
+    await shell.openPath(logDir)
+  })
+  // Errors from the window. Capped in size so a runaway loop cannot fill the disk.
+  ipcMain.on('api:logError', (_e, message: unknown) => {
+    if (typeof message === 'string') logLine('error', '[window] ' + message.slice(0, 2000))
+  })
 
   ipcMain.on('api:prioritizeThumbs', (_e, keys: string[]) => {
     if (Array.isArray(keys)) library.prioritize(keys)

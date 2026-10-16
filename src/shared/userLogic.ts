@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoplayNext: false,
   loop: true,
   showKeyHints: true,
+  lastSeenVersion: '',
   masterVolume: 1,
   masterMuted: false,
   trackNames: 'names',
@@ -65,6 +66,15 @@ export function clipStatus(u: ClipUser): ClipStatus {
   if (u.tags.length > 0) return 'tagged'
   if (u.watched) return 'watched'
   return 'new'
+}
+
+/**
+ * After an update, point to the release notes once. A brand new install (nothing in the library yet)
+ * only records the version and shows nothing.
+ */
+export function whatsNewNotice(lastSeen: string, current: string, hadData: boolean): { remember: boolean; notify: boolean } {
+  if (!current || lastSeen === current) return { remember: false, notify: false }
+  return { remember: true, notify: lastSeen !== '' || hadData }
 }
 
 /** The folder a file is in (works for both Windows and other paths). */

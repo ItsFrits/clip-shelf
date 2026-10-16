@@ -6,6 +6,7 @@ import { makeEmitter, registerIpc } from './ipc'
 import { Library } from './library'
 import { handleClipProtocol, registerClipScheme } from './protocol'
 import { createMediaTools } from './tools'
+import { initLogging, logLine } from './log'
 import { loadWindowState, trackWindowState } from './windowState'
 import { Updater } from './updater'
 import { UserDataStore } from './userData'
@@ -80,6 +81,11 @@ if (!app.requestSingleInstanceLock()) {
     app.on('browser-window-created', (_, w) => optimizer.watchWindowShortcuts(w))
 
     const dataDir = app.getPath('userData')
+    const logDir = join(dataDir, 'logs')
+    initLogging(
+      logDir,
+      `Clip Shelf ${app.getVersion()} started (${process.platform} ${process.arch}, Electron ${process.versions.electron}, ${app.isPackaged ? 'installed' : 'development'})`
+    )
     const cacheDir = join(dataDir, 'clip-cache')
     const getWindow = (): BrowserWindow | null => mainWindow
     const emit = makeEmitter(getWindow)
@@ -98,12 +104,14 @@ if (!app.requestSingleInstanceLock()) {
 
     const updater = new Updater((status) => emit('updater:status', status))
     handleClipProtocol(library)
-    registerIpc({ library, user, updater, getWindow })
+    registerIpc({ library, user, updater, getWindow, logDir })
 
     mainWindow = createWindow()
     mainWindow.on('closed', () => {
       mainWindow = null
     })
+    mainWindow.webContents.on('render-process-gone', (_e, details) => logLine('error', `The window crashed: ${details.reason} (code ${details.exitCode})`))
+    mainWindow.on('unresponsive', () => logLine('warn', 'The window stopped responding.'))
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         mainWindow = createWindow()

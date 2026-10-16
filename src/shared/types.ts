@@ -101,6 +101,8 @@ export interface Settings {
   loop: boolean
   /** Show keyboard shortcut hints next to buttons and fields. */
   showKeyHints: boolean
+  /** The app version the user last saw, to show a "what's new" notice after an update. */
+  lastSeenVersion: string
   /** Volume (0 to 1) that stays the same when switching clips. */
   masterVolume: number
   /** Master mute. Stays on when you switch to another clip. */

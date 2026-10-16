@@ -1572,3 +1572,49 @@ textarea.field {
     animation-duration: 0.01s;
   }
 }
+
+/* ---------- about: release notes ---------- */
+.changelog-title {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+}
+.changelog h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+}
+.changelog ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.changelog li::marker {
+  color: var(--text-3);
+}
+.changelog code,
+.setting-row code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--input);
+  color: var(--text);
+}
+.pill-note {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--s-tagged);
+  color: var(--s-tagged);
+}
+a.btn {
+  text-decoration: none;
+}
