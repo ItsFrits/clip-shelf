@@ -32,7 +32,8 @@ export function registerIpc(ctx: IpcContext): void {
     folders: library.folderInfos(),
     clips: library.allClips(),
     user: user.data,
-    app: { version: app.getVersion(), platform: process.platform, packaged: app.isPackaged }
+    app: { version: app.getVersion(), platform: process.platform, packaged: app.isPackaged },
+    update: updater.current
   }))
 
   handle('pickFolder', async () => {

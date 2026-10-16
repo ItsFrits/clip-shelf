@@ -1,6 +1,6 @@
 {
   "name": "clip-shelf",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Browse, tag and organize gameplay clips from many folders, then drag them into your video editor.",
   "main": "./out/main/index.js",
   "author": "ItsFrits",

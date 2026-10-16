@@ -156,7 +156,7 @@ export const useApp = create<AppState>((set, get) => ({
     })
     api.on('folders:changed', (folders) => set({ folders }))
     api.on('jobs:progress', (jobs) => set({ jobs }))
-    api.on('updater:status', (update) => {
+    const onUpdate = (update: UpdateStatus): void => {
       const before = get().update.state
       set({ update })
       if (update.state === 'downloading' && before !== 'downloading') {
@@ -169,7 +169,8 @@ export const useApp = create<AppState>((set, get) => ({
           action: () => void window.api.installUpdate()
         })
       }
-    })
+    }
+    api.on('updater:status', onUpdate)
     api.on('user:replaced', (user) => set({ user, tagById: tagMap(user.tags) }))
 
     const snap = await api.getSnapshot()
@@ -181,6 +182,8 @@ export const useApp = create<AppState>((set, get) => ({
       tagById: tagMap(snap.user.tags),
       appInfo: snap.app
     })
+    // The check starts a couple of seconds after launch, which can be before this window is listening.
+    if (snap.update.state !== get().update.state) onUpdate(snap.update)
   },
 
   setFilters: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })),

@@ -137,6 +137,8 @@ export interface Snapshot {
   clips: Clip[]
   user: UserData
   app: { version: string; platform: string; packaged: boolean }
+  /** Latest update status, in case an update event came in before the window was listening. */
+  update: UpdateStatus
 }
 
 export interface ClipBulkPatch {

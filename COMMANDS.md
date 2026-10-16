@@ -28,8 +28,8 @@ git push
 4. De tag maken. De tag moet exact `v` + het versienummer uit `package.json` zijn, anders stopt de build bewust:
 
 ```bash
-git tag v0.1.5
-git push origin v0.1.5
+git tag v0.1.6
+git push origin v0.1.6
 ```
 
 De tag start de build op GitHub (tab Actions). Na ongeveer 5 minuten staat de installer onder Releases. Mensen met de app krijgen de update binnen 4 uur zelf, of direct via Settings, Check for updates.
@@ -44,8 +44,8 @@ git commit -m "Fix build"
 git push
 git tag -d v0.1.1
 git push origin :refs/tags/v0.1.1
-git tag v0.1.5
-git push origin v0.1.5
+git tag v0.1.6
+git push origin v0.1.6
 ```
 
 Waarom: "Re-run jobs" op GitHub gebruikt de oude code van die tag, dus een fix werkt pas als de tag verplaatst is. Staat er al een release, dan overschrijft de workflow die zelf.

@@ -34,7 +34,8 @@ export class Updater {
     autoUpdater.on('update-downloaded', (info) => this.set({ state: 'ready', version: info.version }))
     autoUpdater.on('error', (err) => this.set({ state: 'error', message: err?.message ?? String(err) }))
 
-    setTimeout(() => void this.check(), 8000)
+    // A check is one small request, so start almost right away. The download runs in the background.
+    setTimeout(() => void this.check(), 2000)
     this.timer = setInterval(() => void this.check(), 4 * 60 * 60 * 1000)
   }
 
