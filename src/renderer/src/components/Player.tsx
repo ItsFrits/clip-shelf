@@ -23,6 +23,7 @@ import { baseName, fmtBytes, fmtDayTime, fmtDuration, fmtSeconds } from '../lib/
 import { registerPlayerAction } from '../lib/hotkeys'
 import { Mixer } from '../lib/mixer'
 import { useApp, useSettings } from '../lib/store'
+import { KeyHint } from './KeyHint'
 import { Meter } from './Meter'
 import { Stars } from './Stars'
 import { TagInput } from './TagInput'
@@ -69,6 +70,10 @@ export function Player(): React.JSX.Element {
   // Suggested tags the user skipped for the clip that is open right now.
   const [skipped, setSkipped] = useState<string[]>([])
   const tagRef = useRef<HTMLInputElement>(null)
+  // A short play or pause icon that flashes in the middle of the video, and a quiet one while paused.
+  const [flash, setFlash] = useState<{ id: number; kind: 'play' | 'pause' } | null>(null)
+  const flashId = useRef(0)
+  const [pausedByUser, setPausedByUser] = useState(false)
 
   const index = key ? playerList.indexOf(key) : -1
   const fps = clip?.fps && clip.fps > 0 ? clip.fps : 30
@@ -99,6 +104,8 @@ export function Player(): React.JSX.Element {
     setError(null)
     setPrepared(null)
     setPlaying(false)
+    setPausedByUser(false)
+    setFlash(null)
     video.src = `clip://video/${key}`
     video.playbackRate = rate
     video.load()
@@ -181,8 +188,11 @@ export function Player(): React.JSX.Element {
   const togglePlay = useCallback(() => {
     const v = videoRef.current
     if (!v) return
-    if (v.paused) void v.play().catch(() => undefined)
+    const resuming = v.paused
+    if (resuming) void v.play().catch(() => undefined)
     else v.pause()
+    setPausedByUser(!resuming)
+    setFlash({ id: ++flashId.current, kind: resuming ? 'play' : 'pause' })
   }, [])
 
   const stepFrame = useCallback(
@@ -190,6 +200,7 @@ export function Player(): React.JSX.Element {
       const v = videoRef.current
       if (!v) return
       v.pause()
+      setPausedByUser(false)
       v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + dir / fps))
     },
     [fps]
@@ -336,15 +347,10 @@ export function Player(): React.JSX.Element {
           <span className="muted" style={{ fontSize: 13 }}>
             {index >= 0 ? `Clip ${index + 1} of ${playerList.length} in this view` : 'Random pick'}
           </span>
-          <button className="btn icon" aria-label="Previous clip" title={chord('prevClip')} onClick={() => stepPlayer(-1)}>
-            <ChevronLeft size={16} strokeWidth={2} />
-          </button>
-          <button className="btn icon" aria-label="Next clip" title={chord('nextClip')} onClick={() => stepPlayer(1)}>
-            <ChevronRight size={16} strokeWidth={2} />
-          </button>
           <button className="btn outline" onClick={randomClip}>
             <Shuffle size={16} strokeWidth={2} />
             Random
+            <KeyHint>{chord('random')}</KeyHint>
           </button>
         </div>
       </header>
@@ -357,7 +363,10 @@ export function Player(): React.JSX.Element {
               crossOrigin="anonymous"
               playsInline
               onClick={togglePlay}
-              onPlay={() => setPlaying(true)}
+              onPlay={() => {
+                setPlaying(true)
+                setPausedByUser(false)
+              }}
               onPause={() => setPlaying(false)}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
               onEnded={() => {
@@ -366,6 +375,36 @@ export function Player(): React.JSX.Element {
               }}
               onError={() => setError('This video could not be played. Its format may not be supported.')}
             />
+            {pausedByUser && !error && (
+              <span className="video-paused" aria-hidden="true">
+                <Pause size={26} fill="currentColor" strokeWidth={0} />
+              </span>
+            )}
+            {flash && (
+              <span key={flash.id} className="video-flash" aria-hidden="true" onAnimationEnd={() => setFlash(null)}>
+                {flash.kind === 'pause' ? <Pause size={30} fill="currentColor" strokeWidth={0} /> : <Play size={30} fill="currentColor" strokeWidth={0} />}
+              </span>
+            )}
+            {index > 0 && (
+              <button
+                className="video-nav prev"
+                aria-label="Previous clip"
+                title={`Previous clip (${chord('prevClip')})`}
+                onClick={() => stepPlayer(-1)}
+              >
+                <ChevronLeft size={26} strokeWidth={2} />
+              </button>
+            )}
+            {index >= 0 && index < playerList.length - 1 && (
+              <button
+                className="video-nav next"
+                aria-label="Next clip"
+                title={`Next clip (${chord('nextClip')})`}
+                onClick={() => stepPlayer(1)}
+              >
+                <ChevronRight size={26} strokeWidth={2} />
+              </button>
+            )}
             <span className="badge tl" style={{ top: 14, left: 14, padding: '4px 10px', fontSize: 12 }}>
               {folder?.name ?? ''}
               {clip.width ? ` · ${clip.width}×${clip.height}` : ''}
@@ -438,12 +477,16 @@ export function Player(): React.JSX.Element {
               </div>
             </div>
             <div className="hints">
-              <span><span className="kbd">{chord('playPause')}</span> play</span>
-              <span><span className="kbd">{chord('frameBack')}</span> <span className="kbd">{chord('frameForward')}</span> frame step</span>
-              <span><span className="kbd">{chord('speedDown')}</span> <span className="kbd">{chord('speedUp')}</span> speed</span>
-              <span><span className="kbd">{chord('rate1')}–{chord('rate5')}</span> rate</span>
-              <span><span className="kbd">{chord('focusTag')}</span> tag</span>
-              <span><span className="kbd">{chord('random')}</span> random clip</span>
+              {settings.showKeyHints && (
+                <>
+                <span><span className="kbd">{chord('playPause')}</span> play</span>
+                <span><span className="kbd">{chord('frameBack')}</span> <span className="kbd">{chord('frameForward')}</span> frame step</span>
+                <span><span className="kbd">{chord('speedDown')}</span> <span className="kbd">{chord('speedUp')}</span> speed</span>
+                <span><span className="kbd">{chord('rate1')}–{chord('rate5')}</span> rate</span>
+                <span><span className="kbd">{chord('focusTag')}</span> tag</span>
+                <span><span className="kbd">{chord('random')}</span> random clip</span>
+                </>
+              )}
               <span style={{ marginLeft: 'auto' }}>A clip counts as watched when it plays to the end, or when you tag, rate or write a note.</span>
             </div>
           </div>
@@ -474,7 +517,7 @@ export function Player(): React.JSX.Element {
             </div>
             <div className="track-row" style={{ borderColor: 'var(--border-2)' }}>
               <button
-                className="btn icon"
+                className={'btn icon' + (settings.masterMuted ? ' is-off' : '')}
                 style={{ width: 36, height: 36 }}
                 aria-label={settings.masterMuted ? 'Unmute everything' : 'Mute everything'}
                 title={`${settings.masterMuted ? 'Unmute' : 'Mute'} everything (${chord('muteMaster')})`}
@@ -504,7 +547,7 @@ export function Player(): React.JSX.Element {
             {prepared?.tracks.map((t, i) => (
               <div key={t.label + i} className="track-row">
                 <button
-                  className="btn icon"
+                  className={'btn icon' + (muted[i] ? ' is-off' : '')}
                   style={{ width: 36, height: 36 }}
                   aria-label={`${muted[i] ? 'Unmute' : 'Mute'} ${t.label}`}
                   onClick={() => toggleMute(i)}
@@ -522,7 +565,7 @@ export function Player(): React.JSX.Element {
                   max={100}
                   value={Math.round((volumes[i] ?? 1) * 100)}
                   aria-label={`${t.label} volume`}
-                  style={{ flex: '1 1 180px', minWidth: 120 }}
+                  style={{ flex: '1 1 180px', minWidth: 120, opacity: muted[i] ? 0.45 : 1 }}
                   onChange={(e) => setTrackVolume(i, Number(e.target.value) / 100)}
                 />
                 <span className="mono" style={{ width: 44, textAlign: 'right' }}>
@@ -584,7 +627,7 @@ export function Player(): React.JSX.Element {
             <TagInput
               inputRef={tagRef}
               exclude={user.tags}
-              placeholder={`Add a tag (${chord('focusTag')})`}
+              placeholder={settings.showKeyHints ? `Add a tag (${chord('focusTag')})` : 'Add a tag'}
               onAdd={(name) => void addTagByName([key], name)}
             />
             {nextTags.length > 0 && (
@@ -631,7 +674,7 @@ export function Player(): React.JSX.Element {
             <Stars value={user.rating} onChange={(n) => patch([key], { set: { rating: n } }, 'Rate')} size={28} />
           </section>
 
-          <NoteEditor key={key} clipKey={key} value={user.note} inputRef={noteRef} label={chord('focusNote')} />
+          <NoteEditor key={key} clipKey={key} value={user.note} inputRef={noteRef} label={settings.showKeyHints ? chord('focusNote') : ''} />
 
           <section className="side-sec">
             <h2 className="h-label">Details</h2>
@@ -711,7 +754,7 @@ function NoteEditor({ clipKey, value, label, inputRef }: NoteProps): React.JSX.E
         className="field"
         rows={4}
         value={text}
-        placeholder={`Write something to find this clip later (${label})`}
+        placeholder={label ? `Write something to find this clip later (${label})` : 'Write something to find this clip later'}
         onChange={(e) => {
           setText(e.target.value)
           if (timer.current) clearTimeout(timer.current)

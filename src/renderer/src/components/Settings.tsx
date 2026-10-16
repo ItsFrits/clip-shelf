@@ -218,6 +218,11 @@ function PlaybackTab(): React.JSX.Element {
         </Row>
       </div>
       <div className="sec-card">
+        <Row title="Keyboard hints" desc="Show the shortcut next to buttons and fields, like the key for Random clip.">
+          <Switch label="Keyboard hints" on={settings.showKeyHints} onChange={(v) => update({ showKeyHints: v })} />
+        </Row>
+      </div>
+      <div className="sec-card">
         <Row title="Audio track labels" desc="Show the track names stored in the video file (like “Game” or “Mic”), or just Track 1, Track 2. Clips without names always show numbers.">
           <div className="seg" role="group" aria-label="Audio track labels">
             <button className={settings.trackNames === 'names' ? 'on' : ''} onClick={() => update({ trackNames: 'names' })}>

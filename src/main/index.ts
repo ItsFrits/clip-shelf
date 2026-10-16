@@ -6,6 +6,7 @@ import { makeEmitter, registerIpc } from './ipc'
 import { Library } from './library'
 import { handleClipProtocol, registerClipScheme } from './protocol'
 import { createMediaTools } from './tools'
+import { loadWindowState, trackWindowState } from './windowState'
 import { Updater } from './updater'
 import { UserDataStore } from './userData'
 
@@ -15,12 +16,17 @@ let mainWindow: BrowserWindow | null = null
 let library: Library | null = null
 let user: UserDataStore | null = null
 
+const MIN_SIZE = { width: 1100, height: 700 }
+
 function createWindow(): BrowserWindow {
+  const stateFile = join(app.getPath('userData'), 'window-state.json')
+  const state = loadWindowState(stateFile, { width: 1600, height: 900 }, MIN_SIZE)
   const win = new BrowserWindow({
-    width: 1600,
-    height: 900,
-    minWidth: 1100,
-    minHeight: 700,
+    width: state.width,
+    height: state.height,
+    ...(state.x !== undefined && state.y !== undefined ? { x: state.x, y: state.y } : {}),
+    minWidth: MIN_SIZE.width,
+    minHeight: MIN_SIZE.height,
     show: false,
     backgroundColor: '#0E1014',
     autoHideMenuBar: true,
@@ -41,6 +47,8 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false
     }
   })
+  if (state.maximized) win.maximize()
+  trackWindowState(win, stateFile)
   win.on('ready-to-show', () => win.show())
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//i.test(url)) void shell.openExternal(url)

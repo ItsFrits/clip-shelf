@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useApp } from '../lib/store'
+import { KeyHint } from './KeyHint'
 
 interface Props {
   onAdd: (name: string) => void
@@ -17,6 +18,8 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
   const [text, setText] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
+  // True once the user moved the highlight with the arrow keys. Then Enter takes that option.
+  const [moved, setMoved] = useState(false)
 
   const clean = text.trim()
   const options = useMemo(() => {
@@ -33,6 +36,9 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
   const exact = tags.some((t) => t.name.toLowerCase() === clean.toLowerCase())
   const canCreate = clean !== '' && !exact
   const count = options.length + (canCreate ? 1 : 0)
+  // The option Enter will pick. Typing a name that already exists picks that tag, not the first partial match.
+  const exactIndex = options.findIndex((t) => t.name.toLowerCase() === clean.toLowerCase())
+  const chosen = moved || exactIndex < 0 ? Math.min(active, Math.max(0, count - 1)) : exactIndex
 
   const choose = (index: number): void => {
     const name = index < options.length ? options[index].name : clean
@@ -40,6 +46,7 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
     onAdd(name)
     setText('')
     setActive(0)
+    setMoved(false)
   }
 
   return (
@@ -54,6 +61,7 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
         onChange={(e) => {
           setText(e.target.value)
           setActive(0)
+          setMoved(false)
           setOpen(true)
         }}
         onFocus={() => setOpen(true)}
@@ -61,16 +69,16 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setActive((a) => Math.min(a + 1, Math.max(0, count - 1)))
+            setActive(Math.min(chosen + 1, Math.max(0, count - 1)))
+            setMoved(true)
           } else if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setActive((a) => Math.max(0, a - 1))
+            setActive(Math.max(0, chosen - 1))
+            setMoved(true)
           } else if (e.key === 'Enter') {
             e.preventDefault()
             if (clean === '') return
-            // Typing a name that already exists adds that tag, not the first partial match.
-            const exactIndex = options.findIndex((t) => t.name.toLowerCase() === clean.toLowerCase())
-            choose(exactIndex >= 0 ? exactIndex : active)
+            choose(chosen)
           } else if (e.key === 'Escape') {
             setText('')
             setOpen(false)
@@ -84,19 +92,20 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
             <button
               key={t.id}
               type="button"
-              className={'opt' + (i === active ? ' active' : '')}
+              className={'opt' + (i === chosen ? ' active' : '')}
               onMouseDown={(e) => {
                 e.preventDefault()
                 choose(i)
               }}
             >
-              {t.name}
+              <span>{t.name}</span>
+              {i === chosen && clean !== '' && <KeyHint>Enter</KeyHint>}
             </button>
           ))}
           {canCreate && (
             <button
               type="button"
-              className={'opt' + (options.length === active ? ' active' : '')}
+              className={'opt' + (options.length === chosen ? ' active' : '')}
               onMouseDown={(e) => {
                 e.preventDefault()
                 choose(options.length)
@@ -105,7 +114,7 @@ export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, a
               <span>
                 Create <b>“{clean}”</b>
               </span>
-              <span className="kbd">Enter</span>
+              {options.length === chosen && clean !== '' && <KeyHint>Enter</KeyHint>}
             </button>
           )}
         </div>

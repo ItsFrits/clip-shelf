@@ -99,6 +99,8 @@ export interface Settings {
   dragIncludeAudio: boolean
   autoplayNext: boolean
   loop: boolean
+  /** Show keyboard shortcut hints next to buttons and fields. */
+  showKeyHints: boolean
   /** Volume (0 to 1) that stays the same when switching clips. */
   masterVolume: number
   /** Master mute. Stays on when you switch to another clip. */

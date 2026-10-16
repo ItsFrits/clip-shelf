@@ -2,6 +2,7 @@ import { LayoutGrid, Play, Search, Settings, Shuffle, Sparkles } from 'lucide-re
 import { useMemo } from 'react'
 import { formatChord, effectiveKeymap } from '@shared/keymap'
 import { useApp } from '../lib/store'
+import { KeyHint, ON_ACCENT } from './KeyHint'
 
 export function TopBar(): React.JSX.Element {
   const query = useApp((s) => s.filters.query)
@@ -30,15 +31,13 @@ export function TopBar(): React.JSX.Element {
           aria-label="Search clips"
           onChange={(e) => setFilters({ query: e.target.value })}
         />
-        <span className="kbd">{chord('search')}</span>
+        <KeyHint>{chord('search')}</KeyHint>
       </label>
       <div className="topbar-actions">
         <button className="btn lg primary" onClick={randomClip}>
           <Shuffle size={18} strokeWidth={2} />
           Random clip
-          <span className="kbd" style={{ background: 'rgba(26,15,5,.14)', border: 0, color: 'inherit' }}>
-            {chord('random')}
-          </span>
+          <KeyHint style={ON_ACCENT}>{chord('random')}</KeyHint>
         </button>
         <button className="btn lg" disabled title="Coming in the next version">
           <Sparkles size={18} strokeWidth={1.75} />

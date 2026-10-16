@@ -249,6 +249,7 @@ svg {
 }
 
 .seg {
+  flex: none;
   display: inline-flex;
   border-radius: 8px;
   border: 1px solid var(--border-2);
@@ -1451,5 +1452,88 @@ textarea.field {
   .tag-editor {
     border-left: 0;
     padding-left: 0;
+  }
+}
+
+/* ---------- muted tracks ---------- */
+.btn.icon.is-off {
+  background: #4a2329;
+  border-color: #8a4a52;
+  color: #ffb4b4;
+}
+.btn.icon.is-off:hover:not(:disabled) {
+  background: #5a2a31;
+}
+
+/* ---------- video: click to pause, previous and next clip ---------- */
+.video-wrap video {
+  cursor: pointer;
+}
+.video-flash,
+.video-paused {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(14, 16, 20, 0.62);
+  color: #fff;
+  pointer-events: none;
+}
+.video-flash {
+  width: 76px;
+  height: 76px;
+  margin: -38px 0 0 -38px;
+  animation: video-flash 0.55s ease-out forwards;
+}
+.video-paused {
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  opacity: 0.55;
+}
+@keyframes video-flash {
+  from {
+    opacity: 0.95;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+.video-nav {
+  position: absolute;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  margin-top: -23px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: rgba(14, 16, 20, 0.62);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.video-nav.prev {
+  left: 14px;
+}
+.video-nav.next {
+  right: 14px;
+}
+.video-wrap:hover .video-nav,
+.video-nav:focus-visible {
+  opacity: 1;
+}
+.video-nav:hover {
+  background: rgba(14, 16, 20, 0.85);
+}
+@media (prefers-reduced-motion: reduce) {
+  .video-flash {
+    animation-duration: 0.01s;
   }
 }

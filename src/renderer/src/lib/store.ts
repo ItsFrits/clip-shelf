@@ -60,6 +60,8 @@ interface AppState {
   anchorKey: string | null
 
   playerKey: string | null
+  /** The clip that was open when the player closed, so the library can scroll back to it. */
+  focusKey: string | null
   playerList: string[]
 
   undo: UndoEntry[]
@@ -133,6 +135,7 @@ export const useApp = create<AppState>((set, get) => ({
   anchorKey: null,
 
   playerKey: null,
+  focusKey: null,
   playerList: [],
 
   undo: [],
@@ -219,7 +222,7 @@ export const useApp = create<AppState>((set, get) => ({
       playerKey: key,
       playerList: list ?? s.visible.map((c) => c.key)
     })),
-  closePlayer: () => set({ view: 'library', playerKey: null }),
+  closePlayer: () => set((s) => ({ view: 'library', playerKey: null, focusKey: s.playerKey })),
   stepPlayer: (dir) => {
     const { playerKey, playerList, clips } = get()
     if (!playerKey) return

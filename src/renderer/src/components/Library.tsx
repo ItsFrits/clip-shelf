@@ -14,6 +14,9 @@ const HEADER_H = 52
 const CARD_CHROME = 104
 const MIN_CARD_WIDTH = [150, 180, 208, 260, 340]
 
+/** Where the library was scrolled to when it was last on screen (the player and settings replace it). */
+let savedScroll = 0
+
 type Row =
   | { kind: 'header'; id: string; label: string; count: number }
   | { kind: 'cards'; id: string; clips: Clip[] }
@@ -36,6 +39,14 @@ export function Library(): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(1200)
+  const [ready, setReady] = useState(false)
+  // Where to scroll back to: the clip that was just open, else the old scroll position.
+  const restore = useRef<{ key: string | null; offset: number; done: boolean }>({
+    key: useApp.getState().focusKey,
+    offset: savedScroll,
+    done: false
+  })
+  const firstFilterRun = useRef(true)
 
   useEffect(() => {
     const el = innerRef.current
@@ -43,6 +54,8 @@ export function Library(): React.JSX.Element {
     const ro = new ResizeObserver(() => setWidth(el.clientWidth))
     ro.observe(el)
     setWidth(el.clientWidth)
+    setReady(true)
+    useApp.setState({ focusKey: null })
     return () => ro.disconnect()
   }, [])
 
@@ -77,8 +90,22 @@ export function Library(): React.JSX.Element {
   // Back to the top when the filters change.
   const filterSig = JSON.stringify([filters, settings.hideSorted, settings.sort, settings.group])
   useEffect(() => {
+    if (firstFilterRun.current) {
+      firstFilterRun.current = false
+      return
+    }
     scrollRef.current?.scrollTo({ top: 0 })
   }, [filterSig])
+
+  // Coming back from the player or settings: scroll to the clip you were just watching.
+  useEffect(() => {
+    const r = restore.current
+    if (!ready || r.done || rows.length === 0) return
+    r.done = true
+    const target = r.key ? rows.findIndex((row) => row.kind === 'cards' && row.clips.some((c) => c.key === r.key)) : -1
+    if (target >= 0) virt.scrollToIndex(target, { align: 'center' })
+    else if (r.offset > 0) scrollRef.current?.scrollTo({ top: r.offset })
+  }, [ready, rows, virt])
 
   // Tell the main process which thumbnails are on screen so it makes those first.
   const items = virt.getVirtualItems()
@@ -234,7 +261,13 @@ export function Library(): React.JSX.Element {
         </div>
       )}
 
-      <div className="lib-scroll" ref={scrollRef} style={{ display: noFolders || loading || noMatch ? 'none' : undefined }}>
+      <div
+        className="lib-scroll"
+        ref={scrollRef}
+        onScroll={(e) => {
+          savedScroll = e.currentTarget.scrollTop
+        }}
+        style={{ display: noFolders || loading || noMatch ? 'none' : undefined }}>
         <div ref={innerRef} className={'grid-inner' + (selectionActive ? ' has-selection' : '')} style={{ height: virt.getTotalSize() + (selectionActive ? 90 : 0) }}>
           {items.map((it) => {
             const row = rows[it.index]

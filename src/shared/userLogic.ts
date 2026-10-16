@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dragIncludeAudio: true,
   autoplayNext: false,
   loop: true,
+  showKeyHints: true,
   masterVolume: 1,
   masterMuted: false,
   trackNames: 'names',
