@@ -72,8 +72,8 @@ export function Player(): React.JSX.Element {
   // Suggested tags the user skipped for the clip that is open right now.
   const [skipped, setSkipped] = useState<string[]>([])
   const tagRef = useRef<HTMLInputElement>(null)
-  // The round icon in the middle of the video: a pause icon that stays while paused, which turns
-  // into a play icon and fades out when playback resumes. One element, so it never jumps.
+  // The round pause icon in the middle of the video. It stays while paused and fades out when
+  // playback resumes. One element, so it never jumps.
   const [indicator, setIndicator] = useState<{ id: number; kind: 'play' | 'pause' } | null>(null)
   const indicatorId = useRef(0)
   // Video info and frame counter only show while the mouse moves over the video (or just after a frame step).
@@ -407,7 +407,7 @@ export function Player(): React.JSX.Element {
                 aria-hidden="true"
                 onAnimationEnd={() => indicator.kind === 'play' && setIndicator(null)}
               >
-                {indicator.kind === 'pause' ? <Pause size={26} fill="currentColor" strokeWidth={0} /> : <Play size={26} fill="currentColor" strokeWidth={0} />}
+                <Pause size={26} fill="currentColor" strokeWidth={0} />
               </span>
             )}
             {index > 0 && (
@@ -417,7 +417,7 @@ export function Player(): React.JSX.Element {
                 title={`Previous clip (${chord('prevClip')})`}
                 onClick={() => stepPlayer(-1)}
               >
-                <ChevronLeft size={26} strokeWidth={2} />
+                <ChevronLeft size={22} strokeWidth={2} />
               </button>
             )}
             {index >= 0 && index < playerList.length - 1 && (
@@ -427,7 +427,7 @@ export function Player(): React.JSX.Element {
                 title={`Next clip (${chord('nextClip')})`}
                 onClick={() => stepPlayer(1)}
               >
-                <ChevronRight size={26} strokeWidth={2} />
+                <ChevronRight size={22} strokeWidth={2} />
               </button>
             )}
             <span className="badge tl" style={{ top: 14, left: 14, padding: '4px 10px', fontSize: 12 }}>
