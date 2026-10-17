@@ -4,6 +4,9 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+### Added
+- Sort your tags A-Z, by most clips or by most recently used, in the sidebar and in Settings, Tags. The choice is remembered. "Recent" starts filling in as you tag new clips.
+
 ## 0.2.0
 
 ### Added

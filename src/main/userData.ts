@@ -7,7 +7,8 @@ import {
   EMPTY_CLIP_USER,
   applyPatch,
   cleanSuggestions,
-  isDefaultClipUser
+  isDefaultClipUser,
+  markTagsUsed
 } from '../shared/userLogic'
 import { JsonStore } from './lib/jsonStore'
 
@@ -89,6 +90,7 @@ export class UserDataStore {
         if (isDefaultClipUser(next)) delete d.clips[key]
         else d.clips[key] = next
       }
+      d.tags = markTagsUsed(d.tags, patch.addTags, Date.now())
     })
   }
 
@@ -142,11 +144,12 @@ export class UserDataStore {
         u.tags = tags
         if (isDefaultClipUser(u)) delete d.clips[key]
       }
-      d.tags = cleanSuggestions(
-        d.tags.filter((t) => !sources.has(t.id)),
-        sources,
-        targetId
-      )
+      // The target counts as used as recently as the most recent of the tags merged into it.
+      const latest = Math.max(0, ...d.tags.filter((t) => sources.has(t.id)).map((t) => t.usedAt ?? 0))
+      const kept = d.tags
+        .filter((t) => !sources.has(t.id))
+        .map((t) => (t.id === targetId && latest > (t.usedAt ?? 0) ? { ...t, usedAt: latest } : t))
+      d.tags = cleanSuggestions(kept, sources, targetId)
     })
   }
 

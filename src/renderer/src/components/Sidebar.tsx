@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { useMemo } from 'react'
-import { clipStatus, type ClipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
+import { clipStatus, type ClipStatus, EMPTY_CLIP_USER, sortTags } from '@shared/userLogic'
 import {
   ALL_STATUSES,
   type DateMode,
@@ -11,6 +11,7 @@ import {
 } from '../lib/filter'
 import { fmtCount } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
+import { TagSortControl } from './TagSortControl'
 
 const DATE_MODES: { id: DateMode; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -44,11 +45,8 @@ export function Sidebar(): React.JSX.Element {
   const total = clips.size
   const reviewed = total - counts.status.new
   const sortedTags = useMemo(
-    () =>
-      [...user.tags]
-        .map((t) => ({ ...t, count: counts.tags.get(t.id) ?? 0 }))
-        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
-    [user.tags, counts.tags]
+    () => sortTags(user.tags, counts.tags, settings.tagSort).map((t) => ({ ...t, count: counts.tags.get(t.id) ?? 0 })),
+    [user.tags, counts.tags, settings.tagSort]
   )
 
   const toggleStatus = (s: ClipStatus): void => {
@@ -135,6 +133,7 @@ export function Sidebar(): React.JSX.Element {
             </button>
           </div>
         </div>
+        {sortedTags.length > 1 && <TagSortControl />}
         {sortedTags.length === 0 ? (
           <span className="muted" style={{ fontSize: 13 }}>
             No tags yet. Open a clip and add one.

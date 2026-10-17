@@ -4,7 +4,9 @@ import {
   cleanSuggestions,
   clipStatus,
   EMPTY_CLIP_USER,
+  markTagsUsed,
   parentDir,
+  sortTags,
   suggestedTags,
   trackProfileKey,
   whatsNewNotice
@@ -112,5 +114,46 @@ describe('whatsNewNotice', () => {
 
   it('stays quiet on a brand new install', () => {
     expect(whatsNewNotice('', '0.2.0', false)).toEqual({ remember: true, notify: false })
+  })
+})
+
+describe('tag sorting', () => {
+  const tags: Tag[] = [
+    { id: 'a', name: 'Sidewall', usedAt: 100 },
+    { id: 'b', name: 'Air dribble', usedAt: 300 },
+    { id: 'c', name: 'Flip reset' },
+    { id: 'd', name: 'Ceiling shot', usedAt: 200 }
+  ]
+  const counts = new Map([
+    ['a', 5],
+    ['b', 5],
+    ['d', 9]
+  ])
+  const names = (mode: 'name' | 'count' | 'recent'): string[] => sortTags(tags, counts, mode).map((t) => t.name)
+
+  it('sorts A-Z', () => {
+    expect(names('name')).toEqual(['Air dribble', 'Ceiling shot', 'Flip reset', 'Sidewall'])
+  })
+
+  it('sorts by clip count, ties and empty tags A-Z', () => {
+    expect(names('count')).toEqual(['Ceiling shot', 'Air dribble', 'Sidewall', 'Flip reset'])
+  })
+
+  it('sorts by last use, never used last', () => {
+    expect(names('recent')).toEqual(['Air dribble', 'Ceiling shot', 'Sidewall', 'Flip reset'])
+  })
+
+  it('does not change the original list', () => {
+    const copy = JSON.stringify(tags)
+    sortTags(tags, counts, 'recent')
+    expect(JSON.stringify(tags)).toBe(copy)
+  })
+
+  it('marks only the added tags as used', () => {
+    const next = markTagsUsed(tags, ['c'], 999)
+    expect(next.find((t) => t.id === 'c')?.usedAt).toBe(999)
+    expect(next.find((t) => t.id === 'a')?.usedAt).toBe(100)
+    expect(markTagsUsed(tags, [], 999)).toBe(tags)
+    expect(markTagsUsed(tags, undefined, 999)).toBe(tags)
   })
 })

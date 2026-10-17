@@ -1,4 +1,4 @@
-import type { ClipBulkPatch, ClipUser, Settings, Tag } from './types'
+import type { ClipBulkPatch, ClipUser, Settings, Tag, TagSort } from './types'
 
 export const EMPTY_CLIP_USER: ClipUser = {
   tags: [],
@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoplayNext: false,
   loop: true,
   showKeyHints: true,
+  tagSort: 'count',
   lastSeenVersion: '',
   masterVolume: 1,
   masterMuted: false,
@@ -123,4 +124,27 @@ export function cleanSuggestions(tags: Tag[], removed: Set<string>, replacement:
     const { suggests: _old, ...rest } = t
     return next.length > 0 ? { ...rest, suggests: next } : rest
   })
+}
+
+/**
+ * A sorted copy of the tags. "name" is A-Z, "count" puts the tags on the most clips first and
+ * "recent" the tags that were put on a clip most recently (tags never used since then come last).
+ * Ties always fall back to A-Z.
+ */
+export function sortTags<T extends Tag>(tags: T[], counts: Map<string, number>, mode: TagSort): T[] {
+  const byName = (a: T, b: T): number => a.name.localeCompare(b.name)
+  const key =
+    mode === 'count'
+      ? (t: T): number => counts.get(t.id) ?? 0
+      : mode === 'recent'
+        ? (t: T): number => t.usedAt ?? 0
+        : null
+  return [...tags].sort((a, b) => (key ? key(b) - key(a) : 0) || byName(a, b))
+}
+
+/** Note that these tags were just put on a clip. Returns the same array when nothing changes. */
+export function markTagsUsed(tags: Tag[], ids: string[] | undefined, now: number): Tag[] {
+  if (!ids?.length) return tags
+  const used = new Set(ids)
+  return tags.map((t) => (used.has(t.id) ? { ...t, usedAt: now } : t))
 }

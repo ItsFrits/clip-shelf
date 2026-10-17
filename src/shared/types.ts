@@ -64,7 +64,11 @@ export interface Tag {
    * B does not suggest A unless it says so itself.
    */
   suggests?: string[]
+  /** When the tag was last put on a clip (ms since 1970). Used for sorting by "Recent". */
+  usedAt?: number
 }
+
+export type TagSort = 'name' | 'count' | 'recent'
 
 export interface ClipUser {
   tags: string[]
@@ -101,6 +105,8 @@ export interface Settings {
   loop: boolean
   /** Show keyboard shortcut hints next to buttons and fields. */
   showKeyHints: boolean
+  /** Order of the tag lists in the sidebar and in Settings, Tags. */
+  tagSort: TagSort
   /** The app version the user last saw, to show a "what's new" notice after an update. */
   lastSeenVersion: string
   /** Volume (0 to 1) that stays the same when switching clips. */

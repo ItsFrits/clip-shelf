@@ -11,7 +11,7 @@ import type {
   UpdateStatus,
   UserData
 } from '@shared/types'
-import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, whatsNewNotice } from '@shared/userLogic'
+import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, markTagsUsed, whatsNewNotice } from '@shared/userLogic'
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
 
@@ -271,7 +271,7 @@ export const useApp = create<AppState>((set, get) => ({
       else clips[k] = next
     }
     set((s) => ({
-      user: { ...s.user, clips },
+      user: { ...s.user, clips, tags: markTagsUsed(s.user.tags, patch.addTags, Date.now()) },
       undo: undoLabel ? [...s.undo.slice(-49), { label: undoLabel, before }] : s.undo
     }))
     void window.api.patchClips(keys, patch)

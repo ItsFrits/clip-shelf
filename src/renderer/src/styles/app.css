@@ -270,6 +270,14 @@ svg {
   color: var(--accent-ink);
   font-weight: 600;
 }
+.seg.tag-sort button {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.seg.tag-sort {
+  display: flex;
+}
 .seg.tall button {
   padding: 9px 0;
   flex: 1;

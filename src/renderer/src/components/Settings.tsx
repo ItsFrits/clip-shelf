@@ -9,10 +9,12 @@ import {
   formatChord
 } from '@shared/keymap'
 import type { FolderInfo } from '@shared/types'
+import { sortTags } from '@shared/userLogic'
 import { fmtBytes, fmtCount } from '../lib/format'
 import { type SettingsTab, useApp, useSettings } from '../lib/store'
 import { AboutTab } from './AboutTab'
 import { TagInput } from './TagInput'
+import { TagSortControl } from './TagSortControl'
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'folders', label: 'Folders' },
@@ -439,6 +441,7 @@ function TagsTab(): React.JSX.Element {
   const addSuggestion = useApp((s) => s.addSuggestion)
   const ask = useApp((s) => s.ask)
   const toast = useApp((s) => s.toast)
+  const tagSort = useSettings().tagSort
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [name, setName] = useState('')
@@ -452,10 +455,12 @@ function TagsTab(): React.JSX.Element {
   const byId = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
   const sorted = useMemo(() => {
     const q = filter.trim().toLowerCase()
-    return tags
-      .filter((t) => t.name.toLowerCase().includes(q))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [tags, filter])
+    return sortTags(
+      tags.filter((t) => t.name.toLowerCase().includes(q)),
+      counts,
+      tagSort
+    )
+  }, [tags, filter, counts, tagSort])
 
   const selected = selectedId ? byId.get(selectedId) : undefined
   useEffect(() => {
@@ -526,6 +531,7 @@ function TagsTab(): React.JSX.Element {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
+            <TagSortControl />
             <div className="items">
               {sorted.map((t) => (
                 <button key={t.id} className={'item' + (t.id === selectedId ? ' on' : '')} onClick={() => setSelectedId(t.id)}>
