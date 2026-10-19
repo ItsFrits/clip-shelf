@@ -270,6 +270,54 @@ svg {
   color: var(--accent-ink);
   font-weight: 600;
 }
+.seg.stack {
+  display: flex;
+  flex-direction: column;
+}
+.seg.stack button {
+  padding: 6px 10px;
+  font-size: 12px;
+  text-align: left;
+}
+.help {
+  position: relative;
+  display: inline-flex;
+  color: var(--text-2);
+  cursor: help;
+  align-self: center;
+  margin-right: auto;
+  margin-left: 8px;
+}
+.help:hover,
+.help:focus-visible {
+  color: var(--text);
+}
+.help::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -48px;
+  width: 232px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border-2);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 400;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+  z-index: 20;
+}
+.help:hover::after,
+.help:focus-visible::after {
+  opacity: 1;
+}
 .seg.tag-sort button {
   flex: 1;
   padding: 4px 8px;
@@ -299,6 +347,15 @@ svg {
   background: rgba(255, 143, 63, 0.16);
   border-color: var(--accent);
   color: var(--accent-soft);
+}
+.chip.out {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.chip.out:not(.on) {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 .chip .n {
   font-family: var(--font-mono);

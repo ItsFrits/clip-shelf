@@ -74,6 +74,8 @@ export type TagSort = 'name' | 'count' | 'recent'
 export interface SavedFilters {
   statuses: ('new' | 'watched' | 'tagged' | 'used')[]
   tagIds: string[]
+  /** Clips with any of these tags are hidden, even when they also have a tag from tagIds. */
+  excludeTagIds: string[]
   tagMode: 'any' | 'all'
   minRating: number
   dateMode: 'all' | 'week' | 'month' | 'year' | 'range'

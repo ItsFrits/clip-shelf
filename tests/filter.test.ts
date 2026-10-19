@@ -48,6 +48,12 @@ describe('computeVisible', () => {
     expect(run({ tagIds: ['t1', 't2'], tagMode: 'any' })).toEqual(['a', 'c'])
     expect(run({ tagIds: ['t1', 't2'], tagMode: 'all' })).toEqual(['c'])
   })
+  it('hides clips with an excluded tag, and hiding wins over showing', () => {
+    expect(run({ excludeTagIds: ['t2'] })).toEqual(['a', 'b', 'd'])
+    expect(run({ tagIds: ['t1'], excludeTagIds: ['t2'] })).toEqual(['a'])
+    expect(run({ tagIds: ['t2'], excludeTagIds: ['t2'] })).toEqual([])
+    expect(run({ excludeTagIds: ['t1', 't2'], tagMode: 'all' })).toEqual(['b', 'd'])
+  })
   it('filters by rating', () => {
     expect(run({ minRating: 4 })).toEqual(['a'])
   })

@@ -1,5 +1,6 @@
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CircleHelp, Star } from 'lucide-react'
 import { useMemo } from 'react'
+import { cycleTag, describeTagFilter } from '@shared/tagFilter'
 import { clipStatus, type ClipStatus, EMPTY_CLIP_USER, sortTags } from '@shared/userLogic'
 import {
   ALL_STATUSES,
@@ -53,11 +54,13 @@ export function Sidebar(): React.JSX.Element {
     const on = filters.statuses.includes(s)
     setFilters({ statuses: on ? filters.statuses.filter((x) => x !== s) : [...filters.statuses, s] })
   }
-  const toggleTag = (id: string): void => {
-    setFilters({
-      tagIds: filters.tagIds.includes(id) ? filters.tagIds.filter((x) => x !== id) : [...filters.tagIds, id]
-    })
+  // One click shows a tag, a second click hides it, a third clears it.
+  const clickTag = (id: string): void => {
+    const next = cycleTag(id, filters.tagIds, filters.excludeTagIds)
+    setFilters({ tagIds: next.include, excludeTagIds: next.exclude })
   }
+  const tagName = (id: string): string => user.tags.find((t) => t.id === id)?.name ?? '?'
+  const tagSentence = describeTagFilter(filters.tagIds.map(tagName), filters.excludeTagIds.map(tagName), filters.tagMode)
   const toggleFolder = (id: string): void => {
     setFilters({
       folderIds: filters.folderIds.includes(id)
@@ -124,14 +127,15 @@ export function Sidebar(): React.JSX.Element {
       <section className="side-sec">
         <div className="side-sec-head">
           <h2 className="h-label">Tags</h2>
-          <div className="seg" style={{ fontSize: 12 }}>
-            <button className={filters.tagMode === 'any' ? 'on' : ''} style={{ padding: '3px 10px' }} onClick={() => setFilters({ tagMode: 'any' })}>
-              Any
-            </button>
-            <button className={filters.tagMode === 'all' ? 'on' : ''} style={{ padding: '3px 10px' }} onClick={() => setFilters({ tagMode: 'all' })}>
-              All
-            </button>
-          </div>
+          <span
+            className="help"
+            tabIndex={0}
+            role="img"
+            aria-label="How tag filters work"
+            data-tip="Click a tag once to show only clips with it. Click it again to hide clips with it (red). A third click clears it. A hidden tag always wins over a shown one."
+          >
+            <CircleHelp size={14} />
+          </span>
         </div>
         {sortedTags.length > 1 && <TagSortControl />}
         {sortedTags.length === 0 ? (
@@ -144,14 +148,36 @@ export function Sidebar(): React.JSX.Element {
               <button
                 key={t.id}
                 type="button"
-                className={'chip' + (filters.tagIds.includes(t.id) ? ' on' : '')}
-                onClick={() => toggleTag(t.id)}
+                className={'chip' + (filters.tagIds.includes(t.id) ? ' on' : '') + (filters.excludeTagIds.includes(t.id) ? ' out' : '')}
+                title={
+                  filters.tagIds.includes(t.id)
+                    ? 'Showing clips with this tag. Click to hide them instead.'
+                    : filters.excludeTagIds.includes(t.id)
+                      ? 'Hiding clips with this tag. Click to clear.'
+                      : 'Click to show only clips with this tag.'
+                }
+                onClick={() => clickTag(t.id)}
               >
                 {t.name}
                 <span className="n">{t.count}</span>
               </button>
             ))}
           </div>
+        )}
+        {filters.tagIds.length > 1 && (
+          <div className="seg stack" role="radiogroup" aria-label="How several shown tags combine">
+            <button type="button" role="radio" aria-checked={filters.tagMode === 'any'} className={filters.tagMode === 'any' ? 'on' : ''} onClick={() => setFilters({ tagMode: 'any' })}>
+              Match any tag (OR)
+            </button>
+            <button type="button" role="radio" aria-checked={filters.tagMode === 'all'} className={filters.tagMode === 'all' ? 'on' : ''} onClick={() => setFilters({ tagMode: 'all' })}>
+              Match all tags (AND)
+            </button>
+          </div>
+        )}
+        {tagSentence && (
+          <span className="muted" style={{ fontSize: 12 }}>
+            {tagSentence}
+          </span>
         )}
       </section>
 

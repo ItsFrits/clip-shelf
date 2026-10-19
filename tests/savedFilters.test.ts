@@ -14,6 +14,7 @@ describe('sanitizeSavedFilters', () => {
     const saved = {
       statuses: ['new', 'tagged'],
       tagIds: ['t1', 't2'],
+      excludeTagIds: ['t3'],
       tagMode: 'all',
       minRating: 4,
       dateMode: 'week',
@@ -22,13 +23,23 @@ describe('sanitizeSavedFilters', () => {
       rangeTo: '',
       folderIds: ['f1']
     }
-    expect(sanitizeSavedFilters(saved, ['t1', 't2'], ['f1'], NOW)).toEqual(saved)
+    expect(sanitizeSavedFilters(saved, ['t1', 't2', 't3'], ['f1'], NOW)).toEqual(saved)
   })
 
   it('drops tags and folders that no longer exist', () => {
     const out = sanitizeSavedFilters({ tagIds: ['t1', 'gone'], folderIds: ['gone', 'f1'] }, ['t1'], ['f1'], NOW)
     expect(out.tagIds).toEqual(['t1'])
     expect(out.folderIds).toEqual(['f1'])
+  })
+
+  it('hiding a tag wins when it is in both lists, and unknown hidden tags are dropped', () => {
+    const out = sanitizeSavedFilters({ tagIds: ['t1', 't2'], excludeTagIds: ['t2', 'gone'] }, ['t1', 't2'], [], NOW)
+    expect(out.tagIds).toEqual(['t1'])
+    expect(out.excludeTagIds).toEqual(['t2'])
+  })
+
+  it('opens filters saved before hiding tags existed', () => {
+    expect(sanitizeSavedFilters({ tagIds: ['t1'], tagMode: 'any' }, ['t1'], [], NOW).excludeTagIds).toEqual([])
   })
 
   it('never ends up with no statuses at all', () => {

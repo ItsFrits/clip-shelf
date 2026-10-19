@@ -7,6 +7,7 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/
 export const DEFAULT_SAVED_FILTERS: SavedFilters = {
   statuses: STATUSES,
   tagIds: [],
+  excludeTagIds: [],
   tagMode: 'any',
   minRating: 0,
   dateMode: 'all',
@@ -38,9 +39,13 @@ export function sanitizeSavedFilters(
   const anchor = typeof r.anchor === 'number' && Number.isFinite(r.anchor) && r.anchor > 0 ? r.anchor : now
   const rating = typeof r.minRating === 'number' ? Math.round(r.minRating) : 0
 
+  // A tag that is both shown and hidden is hidden: hiding always wins.
+  const excluded = list(r.excludeTagIds, (id) => tags.has(id))
+
   return {
     statuses: statuses.length > 0 ? STATUSES.filter((s) => statuses.includes(s)) : STATUSES,
-    tagIds: list(r.tagIds, (id) => tags.has(id)),
+    tagIds: list(r.tagIds, (id) => tags.has(id) && !excluded.includes(id)),
+    excludeTagIds: excluded,
     tagMode: r.tagMode === 'all' ? 'all' : 'any',
     minRating: rating >= 1 && rating <= 5 ? rating : 0,
     dateMode,
@@ -57,6 +62,7 @@ export function toSavedFilters(f: SavedFilters): SavedFilters {
   return {
     statuses: [...f.statuses],
     tagIds: [...f.tagIds],
+    excludeTagIds: [...f.excludeTagIds],
     tagMode: f.tagMode,
     minRating: f.minRating,
     dateMode: f.dateMode,

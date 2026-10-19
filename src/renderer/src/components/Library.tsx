@@ -147,6 +147,13 @@ export function Library(): React.JSX.Element {
       remove: () => setFilters({ tagIds: filters.tagIds.filter((t) => t !== id) })
     })
   }
+  for (const id of filters.excludeTagIds) {
+    chips.push({
+      id: 'notag' + id,
+      label: 'Not: ' + (tagById.get(id)?.name ?? '?'),
+      remove: () => setFilters({ excludeTagIds: filters.excludeTagIds.filter((t) => t !== id) })
+    })
+  }
   if (filters.minRating > 0) chips.push({ id: 'rating', label: `${filters.minRating}+ stars`, remove: () => setFilters({ minRating: 0 }) })
   if (filters.dateMode !== 'all') chips.push({ id: 'date', label: dateLabel(filters), remove: () => setFilters({ dateMode: 'all' }) })
   for (const id of filters.folderIds) {

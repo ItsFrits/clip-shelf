@@ -5,6 +5,8 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
+- Hide clips by tag: click a tag in the sidebar once to show only clips with it, twice to hide clips with it (red), three times to clear it. A hidden tag always wins over a shown one. The small ? next to "Tags" explains it.
+- A sentence under the tags says what the filter does, for example "Showing clips tagged Air dribble OR Sidewall". The old Any/All switch is now "Match any tag (OR)" and "Match all tags (AND)" and only shows up when two or more tags are shown.
 - The library opens with the filters you left it with: status, tags (and any/all), minimum rating, date (including the chosen week or month) and folders. Search text is not remembered. "Reset all" next to the active filters clears everything.
 - Sort your tags A-Z, by most clips or by most recently used, in the sidebar and in Settings, Tags. The choice is remembered. "Recent" starts filling in as you tag new clips.
 

@@ -9,6 +9,8 @@ export interface Filters {
   /** Statuses that are shown. */
   statuses: ClipStatus[]
   tagIds: string[]
+  /** Clips with any of these tags are hidden. This wins over tagIds. */
+  excludeTagIds: string[]
   tagMode: 'any' | 'all'
   minRating: number
   dateMode: DateMode
@@ -27,6 +29,7 @@ export const DEFAULT_FILTERS: Filters = {
   query: '',
   statuses: ALL_STATUSES,
   tagIds: [],
+  excludeTagIds: [],
   tagMode: 'any',
   minRating: 0,
   dateMode: 'all',
@@ -117,6 +120,7 @@ export function isFiltered(f: Filters, hideSorted: boolean): boolean {
     f.query.trim() !== '' ||
     f.statuses.length !== ALL_STATUSES.length ||
     f.tagIds.length > 0 ||
+    f.excludeTagIds.length > 0 ||
     f.minRating > 0 ||
     f.dateMode !== 'all' ||
     f.folderIds.length > 0 ||
@@ -136,6 +140,7 @@ export function computeVisible(
   const tagName = new Map(ctx.tags.map((t) => [t.id, t.name.toLowerCase()]))
   const statusSet = new Set(f.statuses)
   const folderSet = new Set(f.folderIds)
+  const excludeSet = new Set(f.excludeTagIds)
   const out: Clip[] = []
 
   for (const c of clips) {
@@ -146,6 +151,7 @@ export function computeVisible(
     if (f.minRating > 0 && u.rating < f.minRating) continue
     if (window && (c.date < window[0] || c.date >= window[1])) continue
     if (folderSet.size > 0 && !c.files.some((x) => folderSet.has(x.folderId))) continue
+    if (excludeSet.size > 0 && u.tags.some((t) => excludeSet.has(t))) continue
     if (f.tagIds.length > 0) {
       const has = (id: string): boolean => u.tags.includes(id)
       if (f.tagMode === 'all' ? !f.tagIds.every(has) : !f.tagIds.some(has)) continue
