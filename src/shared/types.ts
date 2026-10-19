@@ -77,7 +77,10 @@ export interface SavedFilters {
   /** Clips with any of these tags are hidden, even when they also have a tag from tagIds. */
   excludeTagIds: string[]
   tagMode: 'any' | 'all'
+  /** Stars from 1 to 5. Unrated clips (0) are shown or hidden by showUnrated, whatever the range. */
   minRating: number
+  maxRating: number
+  showUnrated: boolean
   dateMode: 'all' | 'week' | 'month' | 'year' | 'range'
   /** Any time inside the chosen week, month or year. 0 when the date filter is off. */
   anchor: number

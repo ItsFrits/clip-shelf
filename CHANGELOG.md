@@ -5,6 +5,7 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
+- Rating filter with a range: choose the lowest and the highest number of stars. Unrated clips have their own checkbox, "Show unrated clips" (on by default). The active filter shows what it does, for example "4 to 5 stars + unrated".
 - Hide clips by tag: click a tag in the sidebar once to show only clips with it, twice to hide clips with it (red), three times to clear it. A hidden tag always wins over a shown one. The small ? next to "Tags" explains it.
 - A sentence under the tags says what the filter does, for example "Showing clips tagged Air dribble OR Sidewall". The old Any/All switch is now "Match any tag (OR)" and "Match all tags (AND)" and only shows up when two or more tags are shown.
 - The library opens with the filters you left it with: status, tags (and any/all), minimum rating, date (including the chosen week or month) and folders. Search text is not remembered. "Reset all" next to the active filters clears everything.

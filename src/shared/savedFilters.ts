@@ -1,3 +1,4 @@
+import { FULL_RATING_RANGE, sanitizeRatingRange } from './rating'
 import type { SavedFilters } from './types'
 
 const STATUSES: SavedFilters['statuses'] = ['new', 'watched', 'tagged', 'used']
@@ -9,7 +10,7 @@ export const DEFAULT_SAVED_FILTERS: SavedFilters = {
   tagIds: [],
   excludeTagIds: [],
   tagMode: 'any',
-  minRating: 0,
+  ...FULL_RATING_RANGE,
   dateMode: 'all',
   anchor: 0,
   rangeFrom: '',
@@ -37,7 +38,6 @@ export function sanitizeSavedFilters(
   const statuses = list(r.statuses, (s) => (STATUSES as string[]).includes(s)) as SavedFilters['statuses']
   const dateMode = DATE_MODES.includes(r.dateMode as SavedFilters['dateMode']) ? (r.dateMode as SavedFilters['dateMode']) : 'all'
   const anchor = typeof r.anchor === 'number' && Number.isFinite(r.anchor) && r.anchor > 0 ? r.anchor : now
-  const rating = typeof r.minRating === 'number' ? Math.round(r.minRating) : 0
 
   // A tag that is both shown and hidden is hidden: hiding always wins.
   const excluded = list(r.excludeTagIds, (id) => tags.has(id))
@@ -47,7 +47,7 @@ export function sanitizeSavedFilters(
     tagIds: list(r.tagIds, (id) => tags.has(id) && !excluded.includes(id)),
     excludeTagIds: excluded,
     tagMode: r.tagMode === 'all' ? 'all' : 'any',
-    minRating: rating >= 1 && rating <= 5 ? rating : 0,
+    ...sanitizeRatingRange(r),
     dateMode,
     anchor: dateMode === 'week' || dateMode === 'month' || dateMode === 'year' ? anchor : now,
     rangeFrom: typeof r.rangeFrom === 'string' && DAY.test(r.rangeFrom) ? r.rangeFrom : '',
@@ -65,6 +65,8 @@ export function toSavedFilters(f: SavedFilters): SavedFilters {
     excludeTagIds: [...f.excludeTagIds],
     tagMode: f.tagMode,
     minRating: f.minRating,
+    maxRating: f.maxRating,
+    showUnrated: f.showUnrated,
     dateMode: f.dateMode,
     anchor: keepsAnchor ? f.anchor : 0,
     rangeFrom: f.rangeFrom,

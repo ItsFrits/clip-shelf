@@ -1,3 +1,4 @@
+import { FULL_RATING_RANGE, isRatingFiltered, ratingMatches } from '@shared/rating'
 import type { Clip, FolderInfo, Settings, Tag, UserData } from '@shared/types'
 import { type ClipStatus, EMPTY_CLIP_USER, clipStatus } from '@shared/userLogic'
 import { fmtDay, fmtMonth, fmtShortDate, startOfDay, startOfMonth, startOfWeek } from './format'
@@ -13,6 +14,9 @@ export interface Filters {
   excludeTagIds: string[]
   tagMode: 'any' | 'all'
   minRating: number
+  maxRating: number
+  /** Unrated clips are shown or hidden by this, whatever the range is. */
+  showUnrated: boolean
   dateMode: DateMode
   /** Any time inside the week, month or year that is shown. */
   anchor: number
@@ -31,7 +35,7 @@ export const DEFAULT_FILTERS: Filters = {
   tagIds: [],
   excludeTagIds: [],
   tagMode: 'any',
-  minRating: 0,
+  ...FULL_RATING_RANGE,
   dateMode: 'all',
   anchor: Date.now(),
   rangeFrom: '',
@@ -121,7 +125,7 @@ export function isFiltered(f: Filters, hideSorted: boolean): boolean {
     f.statuses.length !== ALL_STATUSES.length ||
     f.tagIds.length > 0 ||
     f.excludeTagIds.length > 0 ||
-    f.minRating > 0 ||
+    isRatingFiltered(f) ||
     f.dateMode !== 'all' ||
     f.folderIds.length > 0 ||
     hideSorted
@@ -148,7 +152,7 @@ export function computeVisible(
     const status = clipStatus(u)
     if (settings.hideSorted && status !== 'new') continue
     if (!statusSet.has(status)) continue
-    if (f.minRating > 0 && u.rating < f.minRating) continue
+    if (!ratingMatches(u.rating, f)) continue
     if (window && (c.date < window[0] || c.date >= window[1])) continue
     if (folderSet.size > 0 && !c.files.some((x) => folderSet.has(x.folderId))) continue
     if (excludeSet.size > 0 && u.tags.some((t) => excludeSet.has(t))) continue

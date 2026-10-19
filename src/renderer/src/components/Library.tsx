@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film, FolderPlus, Grid3x3, Shuffle } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { FULL_RATING_RANGE, ratingChipLabel } from '@shared/rating'
 import type { Clip } from '@shared/types'
 import { STATUS_LABEL, dateLabel, groupClips, isFiltered } from '../lib/filter'
 import { plural } from '../lib/format'
@@ -154,7 +155,8 @@ export function Library(): React.JSX.Element {
       remove: () => setFilters({ excludeTagIds: filters.excludeTagIds.filter((t) => t !== id) })
     })
   }
-  if (filters.minRating > 0) chips.push({ id: 'rating', label: `${filters.minRating}+ stars`, remove: () => setFilters({ minRating: 0 }) })
+  const ratingLabel = ratingChipLabel(filters)
+  if (ratingLabel) chips.push({ id: 'rating', label: ratingLabel, remove: () => setFilters({ ...FULL_RATING_RANGE }) })
   if (filters.dateMode !== 'all') chips.push({ id: 'date', label: dateLabel(filters), remove: () => setFilters({ dateMode: 'all' }) })
   for (const id of filters.folderIds) {
     chips.push({

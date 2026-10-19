@@ -975,6 +975,15 @@ textarea.field {
   gap: 4px;
   color: var(--accent);
 }
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.rating-row > .muted {
+  width: 34px;
+}
 .stars button {
   border: 0;
   background: transparent;

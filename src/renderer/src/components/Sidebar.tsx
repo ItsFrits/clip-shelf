@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, CircleHelp, Star } from 'lucide-react'
 import { useMemo } from 'react'
+import { pickMaxRating, pickMinRating } from '@shared/rating'
 import { cycleTag, describeTagFilter } from '@shared/tagFilter'
 import { clipStatus, type ClipStatus, EMPTY_CLIP_USER, sortTags } from '@shared/userLogic'
 import {
@@ -22,6 +23,31 @@ const DATE_MODES: { id: DateMode; label: string }[] = [
   { id: 'range', label: 'Range' }
 ]
 
+function StarRow({
+  label,
+  value,
+  ariaPrefix,
+  onPick
+}: {
+  label: string
+  value: number
+  ariaPrefix: string
+  onPick: (n: number) => void
+}): React.JSX.Element {
+  return (
+    <div className="rating-row">
+      <span className="muted">{label}</span>
+      <div className="stars" role="radiogroup" aria-label={`${ariaPrefix} stars`}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" role="radio" aria-checked={n === value} aria-label={`${ariaPrefix} ${n} ${n === 1 ? 'star' : 'stars'}`} onClick={() => onPick(n)}>
+            <Star size={22} strokeWidth={1.75} fill={n <= value ? 'currentColor' : 'none'} />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function Sidebar(): React.JSX.Element {
   const clips = useApp((s) => s.clips)
   const user = useApp((s) => s.user)
@@ -35,12 +61,14 @@ export function Sidebar(): React.JSX.Element {
   const counts = useMemo(() => {
     const status: Record<ClipStatus, number> = { new: 0, watched: 0, tagged: 0, used: 0 }
     const tags = new Map<string, number>()
+    let unrated = 0
     for (const c of clips.values()) {
       const u = user.clips[c.key] ?? EMPTY_CLIP_USER
       status[clipStatus(u)]++
+      if (u.rating <= 0) unrated++
       for (const t of u.tags) tags.set(t, (tags.get(t) ?? 0) + 1)
     }
-    return { status, tags }
+    return { status, tags, unrated }
   }, [clips, user.clips])
 
   const total = clips.size
@@ -187,19 +215,26 @@ export function Sidebar(): React.JSX.Element {
       </section>
 
       <section className="side-sec">
-        <h2 className="h-label">Minimum rating</h2>
-        <div className="stars" role="radiogroup" aria-label="Minimum rating">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              aria-label={`At least ${n} stars`}
-              onClick={() => setFilters({ minRating: filters.minRating === n ? 0 : n })}
-            >
-              <Star size={22} strokeWidth={1.75} fill={n <= filters.minRating ? 'currentColor' : 'none'} />
-            </button>
-          ))}
-        </div>
+        <h2 className="h-label">Rating</h2>
+        <StarRow
+          label="From"
+          value={filters.minRating}
+          ariaPrefix="From"
+          onPick={(n) => setFilters(pickMinRating(filters, n))}
+        />
+        <StarRow
+          label="To"
+          value={filters.maxRating}
+          ariaPrefix="Up to"
+          onPick={(n) => setFilters(pickMaxRating(filters, n))}
+        />
+        <label className="check-row">
+          <input type="checkbox" checked={filters.showUnrated} onChange={() => setFilters({ showUnrated: !filters.showUnrated })} />
+          <span className="label">Show unrated clips</span>
+          <span className="mono muted" style={{ fontSize: 12 }}>
+            {fmtCount(counts.unrated)}
+          </span>
+        </label>
       </section>
 
       <section className="side-sec">

@@ -54,8 +54,12 @@ describe('computeVisible', () => {
     expect(run({ tagIds: ['t2'], excludeTagIds: ['t2'] })).toEqual([])
     expect(run({ excludeTagIds: ['t1', 't2'], tagMode: 'all' })).toEqual(['b', 'd'])
   })
-  it('filters by rating', () => {
-    expect(run({ minRating: 4 })).toEqual(['a'])
+  it('filters by a range of stars, and unrated clips follow their own switch', () => {
+    expect(run({ minRating: 4, showUnrated: false })).toEqual(['a'])
+    expect(run({ minRating: 5, showUnrated: false })).toEqual([])
+    expect(run({ minRating: 1, maxRating: 3, showUnrated: false })).toEqual([])
+    expect(run({ minRating: 5 })).toEqual(['b', 'c', 'd'])
+    expect(run({ showUnrated: false })).toEqual(['a'])
   })
   it('searches names, notes and tag names', () => {
     expect(run({ query: 'pinch' })).toEqual(['c'])

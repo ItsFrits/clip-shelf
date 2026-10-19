@@ -17,6 +17,8 @@ describe('sanitizeSavedFilters', () => {
       excludeTagIds: ['t3'],
       tagMode: 'all',
       minRating: 4,
+      maxRating: 5,
+      showUnrated: false,
       dateMode: 'week',
       anchor: WEEK,
       rangeFrom: '',
@@ -42,6 +44,11 @@ describe('sanitizeSavedFilters', () => {
     expect(sanitizeSavedFilters({ tagIds: ['t1'], tagMode: 'any' }, ['t1'], [], NOW).excludeTagIds).toEqual([])
   })
 
+  it('turns an old saved minimum into a range that hides unrated clips', () => {
+    expect(sanitizeSavedFilters({ minRating: 3 }, [], [], NOW)).toMatchObject({ minRating: 3, maxRating: 5, showUnrated: false })
+    expect(sanitizeSavedFilters({ minRating: 0 }, [], [], NOW)).toMatchObject({ minRating: 1, maxRating: 5, showUnrated: true })
+  })
+
   it('never ends up with no statuses at all', () => {
     expect(sanitizeSavedFilters({ statuses: [] }, [], [], NOW).statuses).toEqual(['new', 'watched', 'tagged', 'used'])
     expect(sanitizeSavedFilters({ statuses: ['bogus'] }, [], [], NOW).statuses).toEqual(['new', 'watched', 'tagged', 'used'])
@@ -54,7 +61,7 @@ describe('sanitizeSavedFilters', () => {
       [],
       NOW
     )
-    expect(out).toMatchObject({ minRating: 0, dateMode: 'all', tagMode: 'any', rangeFrom: '', rangeTo: '', anchor: NOW })
+    expect(out).toMatchObject({ minRating: 5, maxRating: 5, showUnrated: false, dateMode: 'all', tagMode: 'any', rangeFrom: '', rangeTo: '', anchor: NOW })
   })
 
   it('starts at today when no week, month or year was chosen', () => {
@@ -72,7 +79,7 @@ describe('toSavedFilters', () => {
   })
 
   it('is the same after a round trip through the sanitizer', () => {
-    const f = toSavedFilters({ ...DEFAULT_SAVED_FILTERS, dateMode: 'month', anchor: WEEK, tagIds: ['t1'], minRating: 3 })
+    const f = toSavedFilters({ ...DEFAULT_SAVED_FILTERS, dateMode: 'month', anchor: WEEK, tagIds: ['t1'], minRating: 3, maxRating: 4 })
     expect(toSavedFilters(sanitizeSavedFilters(f, ['t1'], [], NOW))).toEqual(f)
   })
 })
