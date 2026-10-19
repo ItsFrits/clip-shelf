@@ -270,17 +270,13 @@ svg {
   color: var(--accent-ink);
   font-weight: 600;
 }
-.seg.stack {
-  display: flex;
-  flex-direction: column;
+.seg.tag-sort.tag-mode button {
+  white-space: nowrap;
+  padding-left: 4px;
+  padding-right: 4px;
 }
-.seg.stack.dim {
+.seg.tag-mode.dim {
   opacity: 0.6;
-}
-.seg.stack button {
-  padding: 6px 10px;
-  font-size: 12px;
-  text-align: left;
 }
 .help {
   position: relative;
