@@ -164,8 +164,13 @@ export function Sidebar(): React.JSX.Element {
             ))}
           </div>
         )}
-        {filters.tagIds.length > 1 && (
-          <div className="seg stack" role="radiogroup" aria-label="How several shown tags combine">
+        {sortedTags.length > 0 && (
+          <div
+            className={'seg stack' + (filters.tagIds.length > 1 ? '' : ' dim')}
+            role="radiogroup"
+            aria-label="How several shown tags combine"
+            title={filters.tagIds.length > 1 ? undefined : 'This only matters when you show two or more tags.'}
+          >
             <button type="button" role="radio" aria-checked={filters.tagMode === 'any'} className={filters.tagMode === 'any' ? 'on' : ''} onClick={() => setFilters({ tagMode: 'any' })}>
               Match any tag (OR)
             </button>
