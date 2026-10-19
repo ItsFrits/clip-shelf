@@ -5,6 +5,7 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
+- The library opens with the filters you left it with: status, tags (and any/all), minimum rating, date (including the chosen week or month) and folders. Search text is not remembered. "Reset all" next to the active filters clears everything.
 - Sort your tags A-Z, by most clips or by most recently used, in the sidebar and in Settings, Tags. The choice is remembered. "Recent" starts filling in as you tag new clips.
 
 ## 0.2.0

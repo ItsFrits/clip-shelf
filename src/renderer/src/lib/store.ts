@@ -11,6 +11,7 @@ import type {
   UpdateStatus,
   UserData
 } from '@shared/types'
+import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '@shared/savedFilters'
 import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, markTagsUsed, whatsNewNotice } from '@shared/userLogic'
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
@@ -183,7 +184,17 @@ export const useApp = create<AppState>((set, get) => ({
       clips: new Map(snap.clips.map((c) => [c.key, c])),
       user: snap.user,
       tagById: tagMap(snap.user.tags),
-      appInfo: snap.app
+      appInfo: snap.app,
+      // Open the library with the filters you left it with (not the search text).
+      filters: {
+        ...get().filters,
+        ...sanitizeSavedFilters(
+          snap.user.settings.savedFilters,
+          snap.user.tags.map((t) => t.id),
+          snap.user.folders.map((f) => f.id),
+          Date.now()
+        )
+      }
     })
     // The check starts a couple of seconds after launch, which can be before this window is listening.
     if (snap.update.state !== get().update.state) onUpdate(snap.update)
@@ -450,6 +461,15 @@ useApp.subscribe((s, prev) => {
     )
     useApp.setState({ visible })
   }
+})
+
+// Remember the sidebar filters. Only changes after the first load are saved, so opening the app never
+// overwrites what was saved with the defaults.
+useApp.subscribe((s, prev) => {
+  if (!s.ready || !prev.ready || s.filters === prev.filters) return
+  const next = toSavedFilters(s.filters)
+  const current = s.user.settings.savedFilters ?? toSavedFilters(DEFAULT_SAVED_FILTERS)
+  if (JSON.stringify(next) !== JSON.stringify(current)) s.updateSettings({ savedFilters: next })
 })
 
 export function useSettings(): Settings {

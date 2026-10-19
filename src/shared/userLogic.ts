@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
   loop: true,
   showKeyHints: true,
   tagSort: 'count',
+  savedFilters: null,
   lastSeenVersion: '',
   masterVolume: 1,
   masterMuted: false,

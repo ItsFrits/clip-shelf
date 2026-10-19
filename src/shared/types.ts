@@ -70,6 +70,21 @@ export interface Tag {
 
 export type TagSort = 'name' | 'count' | 'recent'
 
+/** The sidebar filters that are kept between sessions. The search text is not part of it. */
+export interface SavedFilters {
+  statuses: ('new' | 'watched' | 'tagged' | 'used')[]
+  tagIds: string[]
+  tagMode: 'any' | 'all'
+  minRating: number
+  dateMode: 'all' | 'week' | 'month' | 'year' | 'range'
+  /** Any time inside the chosen week, month or year. 0 when the date filter is off. */
+  anchor: number
+  /** yyyy-mm-dd, for the custom range. */
+  rangeFrom: string
+  rangeTo: string
+  folderIds: string[]
+}
+
 export interface ClipUser {
   tags: string[]
   /** 0 means not rated. */
@@ -107,6 +122,8 @@ export interface Settings {
   showKeyHints: boolean
   /** Order of the tag lists in the sidebar and in Settings, Tags. */
   tagSort: TagSort
+  /** The filters as you left them, so the library opens where you stopped. */
+  savedFilters: SavedFilters | null
   /** The app version the user last saw, to show a "what's new" notice after an update. */
   lastSeenVersion: string
   /** Volume (0 to 1) that stays the same when switching clips. */
