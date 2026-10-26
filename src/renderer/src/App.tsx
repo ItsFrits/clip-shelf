@@ -40,7 +40,7 @@ export default function App(): React.JSX.Element {
     const alpha = combineDim([modalOpen ? MODAL_DIM : 0, confirmOpen ? DIALOG_DIM : 0])
     const motion = resolveMotion(animations, animationSpeed, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     // Only the opening of the settings window fades in. Closing and dialogs are instant.
-    const fadeMs = modalOpen && !modalWasOpen.current && !motion.off ? 200 * motion.scale : 0
+    const fadeMs = modalOpen && !modalWasOpen.current && !motion.off ? 50 * motion.scale : 0
     modalWasOpen.current = modalOpen
     window.api.setTitleBarDim(alpha, fadeMs)
     // eslint-disable-next-line react-hooks/exhaustive-deps
