@@ -118,6 +118,11 @@ export interface TrackLevel {
   muted: boolean
 }
 
+export type AnimationMode = 'system' | 'on' | 'off'
+export type AnimationSpeed = 'slow' | 'normal' | 'fast'
+/** Settings open as a window over the library, or as a page that replaces it. */
+export type SettingsView = 'window' | 'page'
+
 export interface Settings {
   editorName: string
   dragIncludeAudio: boolean
@@ -127,6 +132,13 @@ export interface Settings {
   showKeyHints: boolean
   /** Order of the tag lists in the sidebar and in Settings, Tags. */
   tagSort: TagSort
+  /** Open Settings as a window over the library, or as a full page. */
+  settingsView: SettingsView
+  /** Open Settings on the tab you used last. When off it starts on the first tab. */
+  rememberSettingsTab: boolean
+  /** 'system' follows the operating system's reduced motion setting. */
+  animations: AnimationMode
+  animationSpeed: AnimationSpeed
   /** The filters as you left them, so the library opens where you stopped. */
   savedFilters: SavedFilters | null
   /** The app version the user last saw, to show a "what's new" notice after an update. */

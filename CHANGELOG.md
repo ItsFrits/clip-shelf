@@ -4,6 +4,12 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+### Added
+- Settings now opens as a window on top of the library. Close it with the X, by clicking outside it, or with Esc. Prefer the old full page? Choose "Full page" under General.
+- A new General tab, the first one in Settings, with the settings for how Settings itself works and for animations.
+- Option to remember the last tab you used in Settings (on by default). Turn it off to always start on General.
+- Animations can follow your system setting, be always on, or be off. You can also make them slower or faster.
+
 ## 0.3.0
 
 ### Added

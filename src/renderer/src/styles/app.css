@@ -408,7 +408,7 @@ svg {
   height: 16px;
   border-radius: 50%;
   background: var(--text-2);
-  transition: transform 0.12s;
+  transition: transform var(--anim-fast) ease;
 }
 .switch.on {
   background: var(--accent);
@@ -1557,7 +1557,7 @@ textarea.field {
   backdrop-filter: blur(6px);
   color: #fff;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease;
 }
 .video-indicator.pause:hover {
   background: rgba(14, 16, 20, 0.85);
@@ -1565,10 +1565,10 @@ textarea.field {
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .video-indicator.pause {
-  animation: indicator-in 0.14s ease-out;
+  animation: indicator-in var(--anim-fast) ease-out;
 }
 .video-indicator.play {
-  animation: indicator-out 0.5s ease-out forwards;
+  animation: indicator-out var(--anim-slow) ease-out forwards;
   pointer-events: none;
 }
 @keyframes indicator-in {
@@ -1608,7 +1608,7 @@ textarea.field {
   color: #fff;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: opacity var(--anim-fast) ease, background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease;
 }
 .video-nav.prev {
   left: 10px;
@@ -1633,17 +1633,12 @@ textarea.field {
 /* Video info and frame counter: only while the mouse moves over the video. */
 .video-wrap > .badge {
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--anim-med) ease;
   pointer-events: none;
 }
 .video-wrap.active > .badge,
 .video-wrap.peek > .badge.tr {
   opacity: 1;
-}
-@media (prefers-reduced-motion: reduce) {
-  .video-indicator.play {
-    animation-duration: 0.01s;
-  }
 }
 
 /* ---------- about: release notes ---------- */
@@ -1728,17 +1723,12 @@ a.btn {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: cal-in var(--anim-fast, 120ms) ease-out;
+  animation: cal-in var(--anim-fast) ease-out;
 }
 @keyframes cal-in {
   from {
     opacity: 0;
     transform: translateY(-4px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cal {
-    animation: none;
   }
 }
 .cal-head {
@@ -1896,4 +1886,84 @@ a.btn {
   padding-top: 4px;
   border-top: 1px solid var(--border);
   min-height: 34px;
+}
+
+/* ---------- animation tokens ----------
+   --anim-scale is set from Settings, General (slow, normal, fast). With animations off,
+   html[data-anim='off'] shortens every animation and transition to nothing. */
+:root {
+  --anim-scale: 1;
+  --anim-fast: calc(120ms * var(--anim-scale));
+  --anim-med: calc(200ms * var(--anim-scale));
+  --anim-slow: calc(500ms * var(--anim-scale));
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+html[data-anim='off'] *,
+html[data-anim='off'] *::before,
+html[data-anim='off'] *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0s !important;
+  transition-duration: 1ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- settings as a window ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 10, 14, 0.62);
+  backdrop-filter: blur(3px);
+  animation: modal-fade var(--anim-med) var(--ease);
+}
+.settings-modal {
+  width: min(900px, 90vw);
+  height: min(640px, 85vh);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border-2);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  outline: none;
+  animation: modal-pop var(--anim-med) var(--ease);
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 10px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+}
+.settings-modal .settings-nav {
+  flex-basis: 200px;
+  overflow-y: auto;
+}
+.settings-modal .settings-main {
+  padding: 22px 28px;
+}
+.settings-modal .settings-main h1 {
+  font-size: 28px;
+}
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
 }

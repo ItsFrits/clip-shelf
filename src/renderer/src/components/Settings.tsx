@@ -1,5 +1,5 @@
-import { ChevronLeft, FolderPlus, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, FolderPlus, RefreshCw, RotateCcw, Trash2, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ACTIONS,
   type ActionDef,
@@ -8,7 +8,8 @@ import {
   findConflict,
   formatChord
 } from '@shared/keymap'
-import type { FolderInfo } from '@shared/types'
+import type { AnimationMode, AnimationSpeed, FolderInfo, SettingsView } from '@shared/types'
+import { resolveMotion } from '@shared/uiPrefs'
 import { sortTags } from '@shared/userLogic'
 import { fmtBytes, fmtCount } from '../lib/format'
 import { type SettingsTab, useApp, useSettings } from '../lib/store'
@@ -17,6 +18,7 @@ import { TagInput } from './TagInput'
 import { TagSortControl } from './TagSortControl'
 
 const TABS: { id: SettingsTab; label: string }[] = [
+  { id: 'general', label: 'General' },
   { id: 'folders', label: 'Folders' },
   { id: 'playback', label: 'Playback & editor' },
   { id: 'tags', label: 'Tags' },
@@ -25,38 +27,104 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'about', label: 'About' }
 ]
 
-export function Settings(): React.JSX.Element {
+/** The tabs and the open tab. Shared by the window and the full page. */
+function SettingsBody(): React.JSX.Element {
   const tab = useApp((s) => s.settingsTab)
   const openSettings = useApp((s) => s.openSettings)
+  return (
+    <div className="settings-body">
+      <nav className="settings-nav">
+        {TABS.map((t) => (
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => openSettings(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </nav>
+      <div className="settings-main">
+        <div className="inner">
+          {tab === 'general' && <GeneralTab />}
+          {tab === 'folders' && <FoldersTab />}
+          {tab === 'playback' && <PlaybackTab />}
+          {tab === 'tags' && <TagsTab />}
+          {tab === 'hotkeys' && <HotkeysTab />}
+          {tab === 'backup' && <BackupTab />}
+          {tab === 'about' && <AboutTab />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+export function Settings({ modal = false }: { modal?: boolean }): React.JSX.Element {
   const setView = useApp((s) => s.setView)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  // A click only closes the window when it also started on the dark area, so selecting text
+  // and letting go outside the window does not close it.
+  const pressedBackdrop = useRef(false)
+  const close = (): void => setView('library')
+
+  useEffect(() => {
+    if (!modal) return
+    const before = document.activeElement as HTMLElement | null
+    dialogRef.current?.focus({ preventScroll: true })
+    return () => {
+      if (before && document.contains(before)) before.focus({ preventScroll: true })
+    }
+  }, [modal])
+
+  if (!modal) {
+    return (
+      <div className="settings">
+        <header className="player-head">
+          <button className="btn" onClick={close}>
+            <ChevronLeft size={16} strokeWidth={2} />
+            Library
+          </button>
+          <span className="player-title">Settings</span>
+        </header>
+        <SettingsBody />
+      </div>
+    )
+  }
+
+  // Keep Tab inside the window.
+  const onKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key !== 'Tab' || !dialogRef.current) return
+    const items = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null)
+    if (items.length === 0) return
+    const first = items[0]
+    const last = items[items.length - 1]
+    const active = document.activeElement
+    if (e.shiftKey && (active === first || active === dialogRef.current)) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 
   return (
-    <div className="settings">
-      <header className="player-head">
-        <button className="btn" onClick={() => setView('library')}>
-          <ChevronLeft size={16} strokeWidth={2} />
-          Library
-        </button>
-        <span className="player-title">Settings</span>
-      </header>
-      <div className="settings-body">
-        <nav className="settings-nav">
-          {TABS.map((t) => (
-            <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => openSettings(t.id)}>
-              {t.label}
-            </button>
-          ))}
-        </nav>
-        <div className="settings-main">
-          <div className="inner">
-            {tab === 'folders' && <FoldersTab />}
-            {tab === 'playback' && <PlaybackTab />}
-            {tab === 'tags' && <TagsTab />}
-            {tab === 'hotkeys' && <HotkeysTab />}
-            {tab === 'backup' && <BackupTab />}
-            {tab === 'about' && <AboutTab />}
-          </div>
-        </div>
+    <div
+      className="modal-backdrop"
+      onMouseDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && pressedBackdrop.current) close()
+        pressedBackdrop.current = false
+      }}
+    >
+      <div ref={dialogRef} className="settings-modal" role="dialog" aria-modal="true" aria-label="Settings" tabIndex={-1} onKeyDown={onKeyDown}>
+        <header className="modal-head">
+          <span className="modal-title">Settings</span>
+          <button className="btn icon" aria-label="Close settings" title="Close (Esc)" onClick={close}>
+            <X size={18} strokeWidth={2} />
+          </button>
+        </header>
+        <SettingsBody />
       </div>
     </div>
   )
@@ -84,6 +152,79 @@ function Switch(props: { on: boolean; onChange: (on: boolean) => void; label: st
       className={'switch' + (props.on ? ' on' : '')}
       onClick={() => props.onChange(!props.on)}
     />
+  )
+}
+
+// ------------------------------------------------------------------ general
+
+function Choice<T extends string>(props: {
+  value: T
+  options: { id: T; label: string }[]
+  onChange: (v: T) => void
+  label: string
+}): React.JSX.Element {
+  return (
+    <div className="seg" role="group" aria-label={props.label}>
+      {props.options.map((o) => (
+        <button key={o.id} className={props.value === o.id ? 'on' : ''} onClick={() => props.onChange(o.id)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function GeneralTab(): React.JSX.Element {
+  const settings = useSettings()
+  const update = useApp((s) => s.updateSettings)
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const off = resolveMotion(settings.animations, settings.animationSpeed, reduced).off
+  return (
+    <>
+      <h1>General</h1>
+      <div className="sec-card">
+        <Row title="Open settings as" desc="A window over the library, or a full page that replaces it.">
+          <Choice<SettingsView>
+            label="Open settings as"
+            value={settings.settingsView}
+            options={[
+              { id: 'window', label: 'Window' },
+              { id: 'page', label: 'Full page' }
+            ]}
+            onChange={(v) => update({ settingsView: v })}
+          />
+        </Row>
+        <Row title="Remember the last tab" desc="Settings opens on the tab you used last. When this is off it always starts on General.">
+          <Switch label="Remember the last tab" on={settings.rememberSettingsTab} onChange={(v) => update({ rememberSettingsTab: v })} />
+        </Row>
+      </div>
+      <div className="sec-card">
+        <Row title="Animations" desc="Follow system uses the reduced motion setting of your operating system.">
+          <Choice<AnimationMode>
+            label="Animations"
+            value={settings.animations}
+            options={[
+              { id: 'system', label: 'Follow system' },
+              { id: 'on', label: 'On' },
+              { id: 'off', label: 'Off' }
+            ]}
+            onChange={(v) => update({ animations: v })}
+          />
+        </Row>
+        <Row title="Animation speed" desc={off ? 'Animations are off right now, so this has no effect.' : 'How quickly things fade and slide.'}>
+          <Choice<AnimationSpeed>
+            label="Animation speed"
+            value={settings.animationSpeed}
+            options={[
+              { id: 'slow', label: 'Slow' },
+              { id: 'normal', label: 'Normal' },
+              { id: 'fast', label: 'Fast' }
+            ]}
+            onChange={(v) => update({ animationSpeed: v })}
+          />
+        </Row>
+      </div>
+    </>
   )
 }
 

@@ -14,10 +14,11 @@ import type {
 import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '@shared/savedFilters'
 import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, markTagsUsed, whatsNewNotice } from '@shared/userLogic'
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
+import { settingsTabOnOpen } from '@shared/uiPrefs'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
 
 export type View = 'library' | 'player' | 'settings'
-export type SettingsTab = 'folders' | 'playback' | 'tags' | 'hotkeys' | 'backup' | 'about'
+export type SettingsTab = 'general' | 'folders' | 'playback' | 'tags' | 'hotkeys' | 'backup' | 'about'
 
 export interface Toast {
   id: number
@@ -129,7 +130,7 @@ export const useApp = create<AppState>((set, get) => ({
   update: { state: 'idle' },
 
   view: 'library',
-  settingsTab: 'folders',
+  settingsTab: 'general',
   filters: { ...DEFAULT_FILTERS, anchor: Date.now() },
   visible: [],
   selected: new Set(),
@@ -220,7 +221,11 @@ export const useApp = create<AppState>((set, get) => ({
     get().updateSettings({ hideSorted: false })
   },
   setView: (view) => set({ view }),
-  openSettings: (tab) => set((s) => ({ view: 'settings', settingsTab: tab ?? s.settingsTab })),
+  openSettings: (tab) =>
+    set((s) => ({
+      view: 'settings',
+      settingsTab: settingsTabOnOpen(tab, s.settingsTab, s.user.settings.rememberSettingsTab, 'general')
+    })),
 
   select: (key, mode) =>
     set((s) => {
