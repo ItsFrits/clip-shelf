@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, CircleHelp, Star } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { type RangePreset, rangePreset } from '@shared/calendar'
 import { pickMaxRating, pickMinRating } from '@shared/rating'
 import { cycleTag, describeTagFilter } from '@shared/tagFilter'
 import { clipStatus, type ClipStatus, EMPTY_CLIP_USER, sortTags } from '@shared/userLogic'
@@ -13,10 +14,12 @@ import {
 } from '../lib/filter'
 import { fmtCount } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
+import { DatePicker } from './DatePicker'
 import { TagSortControl } from './TagSortControl'
 
 const DATE_MODES: { id: DateMode; label: string }[] = [
   { id: 'all', label: 'All' },
+  { id: 'day', label: 'Day' },
   { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
   { id: 'year', label: 'Year' },
@@ -48,6 +51,12 @@ function StarRow({
   )
 }
 
+const PRESETS: { id: RangePreset; label: string }[] = [
+  { id: 'last7', label: 'Last 7 days' },
+  { id: 'last30', label: 'Last 30 days' },
+  { id: 'thisYear', label: 'This year' }
+]
+
 export function Sidebar(): React.JSX.Element {
   const clips = useApp((s) => s.clips)
   const user = useApp((s) => s.user)
@@ -57,6 +66,8 @@ export function Sidebar(): React.JSX.Element {
   const openSettings = useApp((s) => s.openSettings)
   const updateSettings = useApp((s) => s.updateSettings)
   const settings = useSettings()
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [navEl, setNavEl] = useState<HTMLElement | null>(null)
 
   const counts = useMemo(() => {
     const status: Record<ClipStatus, number> = { new: 0, watched: 0, tagged: 0, used: 0 }
@@ -105,6 +116,8 @@ export function Sidebar(): React.JSX.Element {
       if (newest) anchor = newest
     }
     setFilters({ dateMode: mode, anchor })
+    // A range has nothing to show until you pick days, so the calendar opens right away.
+    setPickerOpen(mode === 'range')
   }
 
   return (
@@ -243,7 +256,7 @@ export function Sidebar(): React.JSX.Element {
           {DATE_MODES.map((m) => (
             <button
               key={m.id}
-              style={{ flex: 1, padding: '6px 0' }}
+              style={{ flex: 1, padding: '6px 0', fontSize: 12 }}
               className={filters.dateMode === m.id ? 'on' : ''}
               onClick={() => setDateMode(m.id)}
             >
@@ -251,28 +264,59 @@ export function Sidebar(): React.JSX.Element {
             </button>
           ))}
         </div>
-        {(filters.dateMode === 'week' || filters.dateMode === 'month' || filters.dateMode === 'year') && (
-          <div className="date-nav">
+        {(filters.dateMode === 'day' || filters.dateMode === 'week' || filters.dateMode === 'month' || filters.dateMode === 'year') && (
+          <div className="date-nav" ref={setNavEl}>
             <button type="button" aria-label="Previous" onClick={() => setFilters({ anchor: shiftAnchor(filters.dateMode, filters.anchor, -1) })}>
               <ChevronLeft size={16} />
             </button>
-            <span style={{ fontWeight: 600, textAlign: 'center' }}>{dateLabel(filters)}</span>
+            <button
+              type="button"
+              className="date-label"
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
+              title="Open the calendar"
+              onClick={() => setPickerOpen((o) => !o)}
+            >
+              {dateLabel(filters)}
+            </button>
             <button type="button" aria-label="Next" onClick={() => setFilters({ anchor: shiftAnchor(filters.dateMode, filters.anchor, 1) })}>
               <ChevronRight size={16} />
             </button>
           </div>
         )}
         {filters.dateMode === 'range' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label className="muted" style={{ fontSize: 12 }}>
-              From
-              <input type="date" className="field" style={{ width: '100%', marginTop: 4 }} value={filters.rangeFrom} onChange={(e) => setFilters({ rangeFrom: e.target.value })} />
-            </label>
-            <label className="muted" style={{ fontSize: 12 }}>
-              To
-              <input type="date" className="field" style={{ width: '100%', marginTop: 4 }} value={filters.rangeTo} onChange={(e) => setFilters({ rangeTo: e.target.value })} />
-            </label>
-          </div>
+          <>
+            <div className="date-nav" ref={setNavEl}>
+              <button
+                type="button"
+                className="date-label"
+                aria-haspopup="dialog"
+                aria-expanded={pickerOpen}
+                title="Open the calendar"
+                onClick={() => setPickerOpen((o) => !o)}
+              >
+                {filters.rangeFrom || filters.rangeTo ? dateLabel(filters) : 'Pick a range'}
+              </button>
+            </div>
+            <div className="presets">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="btn small"
+                  onClick={() => {
+                    const r = rangePreset(p.id, Date.now())
+                    setFilters({ rangeFrom: r.from, rangeTo: r.to })
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {pickerOpen && filters.dateMode !== 'all' && navEl && (
+          <DatePicker key={filters.dateMode} anchorEl={navEl} onClose={() => setPickerOpen(false)} />
         )}
       </section>
 

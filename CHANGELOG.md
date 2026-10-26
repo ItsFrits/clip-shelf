@@ -5,6 +5,11 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
+- A calendar for the date filter, in the style of the app. Click the date in the sidebar to open it. Weeks start on Monday, you can jump to a month or a year by clicking the title, and Today, Latest (the day of your newest clip) and Clear are at the bottom.
+- Under each day in the calendar, small dots in the colors of New, Watched, Tagged and Used show what is on that day. The dots follow your other filters, so with only "New" on you see where unsorted clips are. Hover a day for the numbers.
+- A new Day option in the date filter, with arrows to step to the previous and next day.
+- Range: click a first and a last day in the calendar, or use Last 7 days, Last 30 days and This year.
+- A "Group by" label in front of the Day, Week and Month buttons above the clips, so they are not mixed up with the date filter.
 - Rating filter with a range: choose the lowest and the highest number of stars. Unrated clips have their own checkbox, "Show unrated clips" (on by default). The active filter shows what it does, for example "4 to 5 stars + unrated".
 - Hide clips by tag: click a tag in the sidebar once to show only clips with it, twice to hide clips with it (red), three times to clear it. A hidden tag always wins over a shown one. The small ? next to "Tags" explains it.
 - A sentence under the tags says what the filter does, for example "Showing clips tagged Air dribble OR Sidewall". The old Any/All switch is now "Match any tag (OR)" and "Match all tags (AND)" and only shows up when two or more tags are shown.

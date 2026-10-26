@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_FILTERS, computeVisible, dateWindow, groupClips } from '../src/renderer/src/lib/filter'
+import { DEFAULT_FILTERS, computeVisible, dateLabel, dateWindow, groupClips, isFiltered, shiftAnchor } from '../src/renderer/src/lib/filter'
 import type { Clip, UserData } from '../src/shared/types'
 import { DEFAULT_SETTINGS, EMPTY_CLIP_USER } from '../src/shared/userLogic'
 
@@ -66,10 +66,22 @@ describe('computeVisible', () => {
     expect(run({ query: 'ceiling' })).toEqual(['c'])
     expect(run({ query: 'replay d' })).toEqual(['d'])
   })
+  it('filters by a single day and steps through days', () => {
+    expect(run({ dateMode: 'day', anchor: new Date(2025, 7, 2, 20).getTime() })).toEqual(['a', 'b'])
+    expect(dateWindow({ ...DEFAULT_FILTERS, dateMode: 'day', anchor: new Date(2025, 7, 2, 20).getTime() })).toEqual([
+      new Date(2025, 7, 2).getTime(),
+      new Date(2025, 7, 3).getTime()
+    ])
+    expect(shiftAnchor('day', new Date(2025, 7, 2, 20).getTime(), 1)).toBe(new Date(2025, 7, 3, 20).getTime())
+  })
   it('filters by month and by range', () => {
     expect(run({ dateMode: 'month', anchor: new Date(2025, 7, 15).getTime() })).toEqual(['a', 'b', 'c'])
     expect(run({ dateMode: 'range', rangeFrom: '2025-08-03', rangeTo: '2025-08-03' })).toEqual(['c'])
     expect(dateWindow({ ...DEFAULT_FILTERS, dateMode: 'all' })).toBeNull()
+    expect(run({ dateMode: 'range' })).toEqual(['a', 'b', 'c', 'd'])
+    expect(dateLabel({ ...DEFAULT_FILTERS, dateMode: 'range' })).toBe('All clips')
+    expect(isFiltered({ ...DEFAULT_FILTERS, dateMode: 'range' }, false)).toBe(false)
+    expect(isFiltered({ ...DEFAULT_FILTERS, dateMode: 'range', rangeFrom: '2025-08-03' }, false)).toBe(true)
   })
 })
 

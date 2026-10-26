@@ -64,6 +64,10 @@ describe('sanitizeSavedFilters', () => {
     expect(out).toMatchObject({ minRating: 5, maxRating: 5, showUnrated: false, dateMode: 'all', tagMode: 'any', rangeFrom: '', rangeTo: '', anchor: NOW })
   })
 
+  it('keeps the chosen day', () => {
+    expect(sanitizeSavedFilters({ dateMode: 'day', anchor: WEEK }, [], [], NOW)).toMatchObject({ dateMode: 'day', anchor: WEEK })
+  })
+
   it('starts at today when no week, month or year was chosen', () => {
     expect(sanitizeSavedFilters({ dateMode: 'all', anchor: WEEK }, [], [], NOW).anchor).toBe(NOW)
     expect(sanitizeSavedFilters({ dateMode: 'range', anchor: WEEK, rangeFrom: '2026-01-01' }, [], [], NOW).anchor).toBe(NOW)

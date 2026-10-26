@@ -2,7 +2,7 @@ import { FULL_RATING_RANGE, sanitizeRatingRange } from './rating'
 import type { SavedFilters } from './types'
 
 const STATUSES: SavedFilters['statuses'] = ['new', 'watched', 'tagged', 'used']
-const DATE_MODES: SavedFilters['dateMode'][] = ['all', 'week', 'month', 'year', 'range']
+const DATE_MODES: SavedFilters['dateMode'][] = ['all', 'day', 'week', 'month', 'year', 'range']
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
 export const DEFAULT_SAVED_FILTERS: SavedFilters = {
@@ -49,7 +49,7 @@ export function sanitizeSavedFilters(
     tagMode: r.tagMode === 'all' ? 'all' : 'any',
     ...sanitizeRatingRange(r),
     dateMode,
-    anchor: dateMode === 'week' || dateMode === 'month' || dateMode === 'year' ? anchor : now,
+    anchor: dateMode === 'day' || dateMode === 'week' || dateMode === 'month' || dateMode === 'year' ? anchor : now,
     rangeFrom: typeof r.rangeFrom === 'string' && DAY.test(r.rangeFrom) ? r.rangeFrom : '',
     rangeTo: typeof r.rangeTo === 'string' && DAY.test(r.rangeTo) ? r.rangeTo : '',
     folderIds: list(r.folderIds, (id) => folders.has(id))
@@ -58,7 +58,7 @@ export function sanitizeSavedFilters(
 
 /** The part of the current filters that is saved. The anchor only matters for week, month and year. */
 export function toSavedFilters(f: SavedFilters): SavedFilters {
-  const keepsAnchor = f.dateMode === 'week' || f.dateMode === 'month' || f.dateMode === 'year'
+  const keepsAnchor = f.dateMode === 'day' || f.dateMode === 'week' || f.dateMode === 'month' || f.dateMode === 'year'
   return {
     statuses: [...f.statuses],
     tagIds: [...f.tagIds],

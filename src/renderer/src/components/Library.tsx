@@ -157,7 +157,7 @@ export function Library(): React.JSX.Element {
   }
   const ratingLabel = ratingChipLabel(filters)
   if (ratingLabel) chips.push({ id: 'rating', label: ratingLabel, remove: () => setFilters({ ...FULL_RATING_RANGE }) })
-  if (filters.dateMode !== 'all') chips.push({ id: 'date', label: dateLabel(filters), remove: () => setFilters({ dateMode: 'all' }) })
+  if (filters.dateMode !== 'all' && (filters.dateMode !== 'range' || filters.rangeFrom || filters.rangeTo)) chips.push({ id: 'date', label: dateLabel(filters), remove: () => setFilters({ dateMode: 'all' }) })
   for (const id of filters.folderIds) {
     chips.push({
       id: 'folder' + id,
@@ -191,6 +191,9 @@ export function Library(): React.JSX.Element {
             </span>
           </div>
           <div className="lib-tools">
+            <span className="muted" style={{ fontSize: 13 }}>
+              Group by
+            </span>
             <div className="seg" role="group" aria-label="Group by">
               {(['day', 'week', 'month', 'none'] as const).map((g) => (
                 <button key={g} className={settings.group === g ? 'on' : ''} onClick={() => updateSettings({ group: g })}>

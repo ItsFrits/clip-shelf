@@ -3,7 +3,7 @@ import type { Clip, FolderInfo, Settings, Tag, UserData } from '@shared/types'
 import { type ClipStatus, EMPTY_CLIP_USER, clipStatus } from '@shared/userLogic'
 import { fmtDay, fmtMonth, fmtShortDate, startOfDay, startOfMonth, startOfWeek } from './format'
 
-export type DateMode = 'all' | 'week' | 'month' | 'year' | 'range'
+export type DateMode = 'all' | 'day' | 'week' | 'month' | 'year' | 'range'
 
 export interface Filters {
   query: string
@@ -61,6 +61,12 @@ export const STATUS_COLOR: Record<ClipStatus, string> = {
 export function dateWindow(f: Filters): [number, number] | null {
   const a = new Date(f.anchor)
   switch (f.dateMode) {
+    case 'day': {
+      const from = startOfDay(f.anchor)
+      const to = new Date(from)
+      to.setDate(to.getDate() + 1)
+      return [from, to.getTime()]
+    }
     case 'week': {
       const from = startOfWeek(f.anchor)
       const to = new Date(from)
@@ -91,6 +97,8 @@ export function dateLabel(f: Filters): string {
   if (!w) return 'All clips'
   const a = new Date(f.anchor)
   switch (f.dateMode) {
+    case 'day':
+      return fmtDay(f.anchor)
     case 'week':
       return `Week of ${fmtShortDate(w[0])}`
     case 'month':
@@ -98,6 +106,7 @@ export function dateLabel(f: Filters): string {
     case 'year':
       return String(a.getFullYear())
     default: {
+      if (!Number.isFinite(w[0]) && !Number.isFinite(w[1])) return 'All clips'
       const from = Number.isFinite(w[0]) ? fmtShortDate(w[0]) : 'the start'
       const to = Number.isFinite(w[1]) ? fmtShortDate(w[1] - 1) : 'now'
       return `${from} to ${to}`
@@ -107,7 +116,8 @@ export function dateLabel(f: Filters): string {
 
 export function shiftAnchor(mode: DateMode, anchor: number, dir: 1 | -1): number {
   const d = new Date(anchor)
-  if (mode === 'week') d.setDate(d.getDate() + 7 * dir)
+  if (mode === 'day') d.setDate(d.getDate() + dir)
+  else if (mode === 'week') d.setDate(d.getDate() + 7 * dir)
   else if (mode === 'month') d.setMonth(d.getMonth() + dir, 1)
   else if (mode === 'year') d.setFullYear(d.getFullYear() + dir, 0, 1)
   return d.getTime()
@@ -126,7 +136,7 @@ export function isFiltered(f: Filters, hideSorted: boolean): boolean {
     f.tagIds.length > 0 ||
     f.excludeTagIds.length > 0 ||
     isRatingFiltered(f) ||
-    f.dateMode !== 'all' ||
+    (f.dateMode !== 'all' && !(f.dateMode === 'range' && !f.rangeFrom && !f.rangeTo)) ||
     f.folderIds.length > 0 ||
     hideSorted
   )
