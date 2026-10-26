@@ -1922,8 +1922,8 @@ html[data-anim='off'] *::after {
   animation: modal-fade var(--anim-med) var(--ease);
 }
 .settings-modal {
-  width: min(900px, 90vw);
-  height: min(640px, 85vh);
+  width: min(1100px, 92vw);
+  height: min(780px, 90vh);
   display: flex;
   flex-direction: column;
   border-radius: 16px;
