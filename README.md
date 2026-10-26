@@ -5,7 +5,7 @@ Browse, tag and organize gameplay clips that are spread over many folders, then 
 - Watches the folders you choose, live. Your files are never changed or moved.
 - Plays a clip with **all** its audio tracks at once (game audio, mic, ...), each with its own volume and level meter. Works for tracks inside the mp4 and for a separate mic file with the same name (Radeon ReLive style).
 - Tags (many per clip), notes, star ratings, and a status per clip: new, watched (played to the end), tagged, used.
-- Search, filter by status, tag, rating, date and folder. Random clip, also from the current results.
+- Search, filter by status, tag, rating, date and folder. Random clip, picked from the current results.
 - Drag one or many clips to the video editor of your choice.
 - Duplicates (same name and size in several folders) are merged into one clip.
 - Every keyboard shortcut can be changed in Settings.

@@ -13,6 +13,13 @@ All notable changes to Clip Shelf. Newest first.
 - The tabs in Settings light up when you hover over them.
 - The window buttons in the top right get darker together with the rest of the window when Settings or a dialog is open.
 
+### Changed
+- Removed the second "Random clip from these results" button above the clips. The Random clip button in the top bar (and the R key) already picks from the current results.
+- The stars in the player and in the selection bar no longer fill in while you hover over them, so they behave like the stars in the sidebar.
+
+### Fixed
+- Pressing a button in a pill-shaped group (like A-Z, Most clips, Recent) no longer shows a darker edge around the button.
+
 ## 0.3.0
 
 ### Added

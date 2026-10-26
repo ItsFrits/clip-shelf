@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film, FolderPlus, Grid3x3, Shuffle } from 'lucide-react'
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film, FolderPlus, Grid3x3 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FULL_RATING_RANGE, ratingChipLabel } from '@shared/rating'
 import type { Clip } from '@shared/types'
@@ -31,7 +31,6 @@ export function Library(): React.JSX.Element {
   const setFilters = useApp((s) => s.setFilters)
   const resetFilters = useApp((s) => s.resetFilters)
   const updateSettings = useApp((s) => s.updateSettings)
-  const randomClip = useApp((s) => s.randomClip)
   const openSettings = useApp((s) => s.openSettings)
   const tagById = useApp((s) => s.tagById)
   const selectionActive = useApp((s) => s.selected.size > 0)
@@ -233,12 +232,6 @@ export function Library(): React.JSX.Element {
             {filtered && (
               <button className="btn ghost small" onClick={resetFilters}>
                 Reset all
-              </button>
-            )}
-            {visible.length > 0 && (
-              <button className="btn outline small" style={{ marginLeft: 'auto', borderRadius: 999 }} onClick={randomClip}>
-                <Shuffle size={14} />
-                Random clip from these results
               </button>
             )}
           </div>

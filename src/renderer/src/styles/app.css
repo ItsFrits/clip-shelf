@@ -253,6 +253,8 @@ svg {
   display: inline-flex;
   border-radius: 8px;
   border: 1px solid var(--border-2);
+  /* Same colour as the buttons, so a button that shrinks while pressed does not show a darker edge. */
+  background: var(--input);
   overflow: hidden;
   font-size: 13px;
 }
