@@ -1216,17 +1216,54 @@ textarea.field {
   gap: 4px;
 }
 .settings-nav button {
+  position: relative;
   text-align: left;
   border: 0;
   background: transparent;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 16px;
   border-radius: 10px;
   color: var(--text-2);
+  transition: background var(--anim-fast) ease, color var(--anim-fast) ease,
+    transform var(--anim-fast) var(--ease);
+}
+/* The accent bar on the left grows in when a tab is hovered, and stays for the open tab. */
+.settings-nav button::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transform: translateY(-50%) scaleY(0.2);
+  transition: opacity var(--anim-fast) ease, transform var(--anim-fast) var(--ease);
+}
+.settings-nav button:hover:not(.on) {
+  background: color-mix(in srgb, var(--input) 60%, transparent);
+  color: var(--text);
+  transform: translateX(3px);
+}
+.settings-nav button:hover:not(.on)::before {
+  opacity: 0.55;
+  transform: translateY(-50%) scaleY(0.6);
+}
+.settings-nav button:active:not(.on) {
+  transform: translateX(3px) scale(0.98);
+}
+.settings-nav button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 .settings-nav button.on {
   background: var(--input);
   color: var(--text);
   font-weight: 600;
+}
+.settings-nav button.on::before {
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
 }
 .settings-main {
   flex: 1;
@@ -1922,8 +1959,8 @@ html[data-anim='off'] *::after {
   animation: modal-fade var(--anim-med) var(--ease);
 }
 .settings-modal {
-  width: min(1100px, 92vw);
-  height: min(780px, 90vh);
+  width: min(1240px, 94vw);
+  height: min(860px, 92vh);
   display: flex;
   flex-direction: column;
   border-radius: 16px;
