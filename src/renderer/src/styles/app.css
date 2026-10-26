@@ -1224,7 +1224,8 @@ textarea.field {
   border-radius: 10px;
   color: var(--text-2);
   transition: background var(--anim-fast) ease, color var(--anim-fast) ease,
-    transform var(--anim-fast) var(--ease);
+    transform var(--anim-fast) var(--ease), scale var(--press-out) var(--press-spring);
+  --press: 0.98;
 }
 /* The accent bar on the left grows in when a tab is hovered, and stays for the open tab. */
 .settings-nav button::before {
@@ -1250,7 +1251,7 @@ textarea.field {
   transform: translateY(-50%) scaleY(0.6);
 }
 .settings-nav button:active:not(.on) {
-  transform: translateX(3px) scale(0.98);
+  transform: translateX(3px);
 }
 .settings-nav button:focus-visible {
   outline: 2px solid var(--accent);
@@ -1595,6 +1596,7 @@ textarea.field {
   color: #fff;
   cursor: pointer;
   transition: background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease;
+  --press: 1;
 }
 .video-indicator.pause:hover {
   background: rgba(14, 16, 20, 0.85);
@@ -1645,7 +1647,8 @@ textarea.field {
   color: #fff;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--anim-fast) ease, background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease;
+  transition: opacity var(--anim-fast) ease, background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease,
+    scale var(--press-out) var(--press-spring);
 }
 .video-nav.prev {
   left: 10px;
@@ -1934,6 +1937,10 @@ a.btn {
   --anim-med: calc(200ms * var(--anim-scale));
   --anim-slow: calc(500ms * var(--anim-scale));
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Pressing a button: in quickly, back with a small overshoot. */
+  --press-in: calc(70ms * var(--anim-scale));
+  --press-out: calc(260ms * var(--anim-scale));
+  --press-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 html[data-anim='off'] *,
 html[data-anim='off'] *::before,
@@ -2003,4 +2010,54 @@ html[data-anim='off'] *::after {
     opacity: 0;
     transform: translateY(8px) scale(0.98);
   }
+}
+
+/* ---------- press feedback ----------
+   Every button gets a little smaller while it is held down and springs back when released.
+   It uses the separate "scale" property, so it never clashes with a button's own transform.
+   --press is how small it gets. Set --press: 1 on a button to leave it out. */
+button {
+  transition: scale var(--press-out) var(--press-spring);
+}
+button:not(:disabled):active {
+  scale: var(--press, 0.97);
+  transition-duration: var(--press-in);
+  transition-timing-function: ease-out;
+}
+html[data-anim='off'] button:active {
+  scale: 1 !important;
+}
+.btn.icon,
+.date-nav button,
+.cal-nav,
+.video-nav,
+.check {
+  --press: 0.92;
+}
+.date-nav .date-label {
+  --press: 0.98;
+}
+.seg button,
+.chip {
+  --press: 0.96;
+}
+.cal-day {
+  --press: 0.92;
+}
+.cal-cell {
+  --press: 0.94;
+}
+/* Stars pop: pressed in further and thrown back with a bigger overshoot. */
+.stars button {
+  --press: 0.78;
+  --press-spring: cubic-bezier(0.3, 2.6, 0.5, 1);
+}
+/* Left out: they already move on their own, are too small, or start a drag. */
+.switch,
+.link-btn,
+.fchip button,
+.pill button,
+.btn.grab,
+.opt {
+  --press: 1;
 }

@@ -9,6 +9,9 @@ All notable changes to Clip Shelf. Newest first.
 - A new General tab, the first one in Settings, with the settings for how Settings itself works and for animations.
 - Option to remember the last tab you used in Settings (on by default). Turn it off to always start on General.
 - Animations can follow your system setting, be always on, or be off. You can also make them slower or faster.
+- Buttons get a little smaller while you hold them down and spring back when you let go. The stars give a small pop. This follows the Animations setting, so it is gone when animations are off.
+- The tabs in Settings light up when you hover over them.
+- The window buttons in the top right get darker together with the rest of the window when Settings or a dialog is open.
 
 ## 0.3.0
 
