@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { makeEmitter, registerIpc } from './ipc'
 import { Library } from './library'
 import { handleClipProtocol, registerClipScheme } from './protocol'
+import { TITLE_BAR_HEIGHT, titleBarColors } from '../shared/uiPrefs'
 import { createMediaTools } from './tools'
 import { initLogging, logLine } from './log'
 import { loadWindowState, trackWindowState } from './windowState'
@@ -39,7 +40,7 @@ function createWindow(): BrowserWindow {
       ? {}
       : {
           titleBarStyle: 'hidden' as const,
-          titleBarOverlay: { color: '#151821', symbolColor: '#a3abba', height: 63 }
+          titleBarOverlay: { ...titleBarColors(0), height: TITLE_BAR_HEIGHT }
         }),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

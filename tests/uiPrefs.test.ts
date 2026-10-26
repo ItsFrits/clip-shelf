@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { resolveMotion, settingsTabOnOpen } from '../src/shared/uiPrefs'
+import {
+  DIM_COLOR,
+  MODAL_DIM,
+  TITLE_BAR_COLOR,
+  TITLE_BAR_SYMBOLS,
+  combineDim,
+  mixHex,
+  resolveMotion,
+  settingsTabOnOpen,
+  titleBarColors
+} from '../src/shared/uiPrefs'
 import { DEFAULT_SETTINGS } from '../src/shared/userLogic'
 
 describe('resolveMotion', () => {
@@ -40,5 +50,26 @@ describe('defaults', () => {
     expect(DEFAULT_SETTINGS.rememberSettingsTab).toBe(true)
     expect(DEFAULT_SETTINGS.animations).toBe('system')
     expect(DEFAULT_SETTINGS.animationSpeed).toBe('normal')
+  })
+})
+
+describe('title bar dimming', () => {
+  it('combines dark layers', () => {
+    expect(combineDim([])).toBe(0)
+    expect(combineDim([0.5])).toBeCloseTo(0.5)
+    expect(combineDim([0.62, 0.7])).toBeCloseTo(1 - 0.38 * 0.3)
+    expect(combineDim([NaN, 2])).toBe(1)
+  })
+  it('mixes colours', () => {
+    expect(mixHex('#000000', '#ffffff', 0)).toBe('#000000')
+    expect(mixHex('#000000', '#ffffff', 1)).toBe('#ffffff')
+    expect(mixHex('#000000', '#ffffff', 0.5)).toBe('#808080')
+  })
+  it('keeps the normal colours without a dark layer and darkens with one', () => {
+    expect(titleBarColors(0)).toEqual({ color: TITLE_BAR_COLOR, symbolColor: TITLE_BAR_SYMBOLS })
+    const dim = titleBarColors(MODAL_DIM)
+    expect(dim.color).toBe('#0d0f15')
+    expect(dim.symbolColor).not.toBe(TITLE_BAR_SYMBOLS)
+    expect(titleBarColors(1).color).toBe(DIM_COLOR)
   })
 })

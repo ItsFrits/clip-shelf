@@ -43,6 +43,11 @@ export interface ClipShelfApi {
   openLogsFolder(): Promise<void>
   /** Write an error from the window to the log file. */
   logError(message: string): void
+  /**
+   * Darken the system title bar buttons to match a dark layer over the page (0 is none, 1 is black).
+   * The change takes fadeMs milliseconds. Only on Windows and Linux.
+   */
+  setTitleBarDim(alpha: number, fadeMs: number): void
 
   on<E extends ApiEventName>(event: E, cb: (payload: ApiEvents[E]) => void): () => void
 }
@@ -73,4 +78,4 @@ export const INVOKE_METHODS = [
 ] as const
 
 /** Fire and forget messages. */
-export const SEND_METHODS = ['prioritizeThumbs', 'startDrag', 'logError'] as const
+export const SEND_METHODS = ['prioritizeThumbs', 'startDrag', 'logError', 'setTitleBarDim'] as const

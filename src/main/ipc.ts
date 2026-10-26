@@ -2,6 +2,7 @@ import { BrowserWindow, app, dialog, ipcMain, nativeImage, shell } from 'electro
 import { readFileSync } from 'fs'
 import icon from '../../resources/icon.png?asset'
 import type { ApiEventName, ApiEvents, Snapshot } from '../shared/types'
+import { TITLE_BAR_HEIGHT, titleBarColors } from '../shared/uiPrefs'
 import { mkdirSync } from 'fs'
 import { logLine } from './log'
 import type { Library } from './library'
@@ -110,6 +111,33 @@ export function registerIpc(ctx: IpcContext): void {
   // Errors from the window. Capped in size so a runaway loop cannot fill the disk.
   ipcMain.on('api:logError', (_e, message: unknown) => {
     if (typeof message === 'string') logLine('error', '[window] ' + message.slice(0, 2000))
+  })
+
+  // Keeps the system title bar buttons in step with a dark layer over the page.
+  let titleDim = 0
+  let titleTimer: ReturnType<typeof setInterval> | undefined
+  ipcMain.on('api:setTitleBarDim', (_e, alpha: unknown, fadeMs: unknown) => {
+    const win = getWindow()
+    if (!win || win.isDestroyed() || process.platform === 'darwin' || typeof win.setTitleBarOverlay !== 'function') return
+    const target = typeof alpha === 'number' && Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 0
+    const duration = typeof fadeMs === 'number' && Number.isFinite(fadeMs) ? Math.min(1000, Math.max(0, fadeMs)) : 0
+    const apply = (a: number): void => {
+      titleDim = a
+      try {
+        win.setTitleBarOverlay({ ...titleBarColors(a), height: TITLE_BAR_HEIGHT })
+      } catch {
+        /* the window is closing */
+      }
+    }
+    if (titleTimer) clearInterval(titleTimer)
+    if (duration === 0) return apply(target)
+    const from = titleDim
+    const start = Date.now()
+    titleTimer = setInterval(() => {
+      const t = Math.min(1, (Date.now() - start) / duration)
+      apply(from + (target - from) * t)
+      if (t >= 1 && titleTimer) clearInterval(titleTimer)
+    }, 16)
   })
 
   ipcMain.on('api:prioritizeThumbs', (_e, keys: string[]) => {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { ConfirmDialog, Toasts } from './components/Overlays'
 import { Library } from './components/Library'
 import { Player } from './components/Player'
@@ -7,7 +7,7 @@ import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
 import { useHotkeys } from './lib/hotkeys'
-import { resolveMotion } from '@shared/uiPrefs'
+import { DIALOG_DIM, MODAL_DIM, combineDim, resolveMotion } from '@shared/uiPrefs'
 import { useApp, useSettings } from './lib/store'
 
 export default function App(): React.JSX.Element {
@@ -30,6 +30,21 @@ export default function App(): React.JSX.Element {
     query.addEventListener('change', apply)
     return () => query.removeEventListener('change', apply)
   }, [animations, animationSpeed])
+
+  // The window buttons of the system sit on top of the page, so they are darkened by hand to
+  // match the dark layer behind the settings window and dialogs.
+  const modalOpen = view === 'settings' && settingsView === 'window'
+  const confirmOpen = useApp((s) => s.confirm !== null)
+  const modalWasOpen = useRef(false)
+  useEffect(() => {
+    const alpha = combineDim([modalOpen ? MODAL_DIM : 0, confirmOpen ? DIALOG_DIM : 0])
+    const motion = resolveMotion(animations, animationSpeed, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    // Only the opening of the settings window fades in. Closing and dialogs are instant.
+    const fadeMs = modalOpen && !modalWasOpen.current && !motion.off ? 200 * motion.scale : 0
+    modalWasOpen.current = modalOpen
+    window.api.setTitleBarDim(alpha, fadeMs)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen, confirmOpen])
 
   useEffect(() => {
     void init()

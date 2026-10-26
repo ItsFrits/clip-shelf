@@ -29,3 +29,44 @@ export function settingsTabOnOpen<T extends string>(
   if (requested) return requested
   return remember ? current : first
 }
+
+// ---- title bar buttons -------------------------------------------------------------------------
+// On Windows the minimize, maximize and close buttons are drawn by the system, on top of the page,
+// so a dark layer in the page does not dim them. They get the dimmed colours instead.
+
+export const TITLE_BAR_HEIGHT = 63
+export const TITLE_BAR_COLOR = '#151821'
+export const TITLE_BAR_SYMBOLS = '#a3abba'
+/** The colour of the dark layer behind windows and dialogs, and how opaque each one is (see app.css). */
+export const DIM_COLOR = '#080a0e'
+export const MODAL_DIM = 0.62
+export const DIALOG_DIM = 0.7
+
+/** Several dark layers on top of each other, as one. */
+export function combineDim(alphas: number[]): number {
+  return 1 - alphas.reduce((rest, a) => rest * (1 - clamp01(a)), 1)
+}
+
+function clamp01(n: number): number {
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0
+}
+
+/** Mix two #rrggbb colours. t = 0 gives a, t = 1 gives b. */
+export function mixHex(a: string, b: string, t: number): string {
+  const k = clamp01(t)
+  const parse = (hex: string): number[] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  const ca = parse(a)
+  const cb = parse(b)
+  return (
+    '#' +
+    ca
+      .map((v, i) => Math.round(v + (cb[i] - v) * k))
+      .map((v) => v.toString(16).padStart(2, '0'))
+      .join('')
+  )
+}
+
+/** The colours of the title bar buttons with a dark layer of this opacity on top of the page. */
+export function titleBarColors(dim: number): { color: string; symbolColor: string } {
+  return { color: mixHex(TITLE_BAR_COLOR, DIM_COLOR, dim), symbolColor: mixHex(TITLE_BAR_SYMBOLS, DIM_COLOR, dim) }
+}
