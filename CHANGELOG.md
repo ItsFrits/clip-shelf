@@ -4,6 +4,8 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+## 0.3.0
+
 ### Added
 - A calendar for the date filter, in the style of the app. Click the date in the sidebar to open it. Weeks start on Monday, you can jump to a month or a year by clicking the title, and Today, Latest (the day of your newest clip) and Clear are at the bottom.
 - Under each day in the calendar, small dots in the colors of New, Watched, Tagged and Used show what is on that day. The dots follow your other filters, so with only "New" on you see where unsorted clips are. Hover a day for the numbers.
