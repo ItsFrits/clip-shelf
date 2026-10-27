@@ -27,6 +27,7 @@ import { KeyHint } from './KeyHint'
 import { Meter } from './Meter'
 import { Stars } from './Stars'
 import { TagInput } from './TagInput'
+import { TagList } from './TagList'
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2]
 /** How close (px) the mouse has to be to the side of the video to show the previous or next clip button. */
@@ -71,6 +72,8 @@ export function Player(): React.JSX.Element {
   const noteRef = useRef<HTMLTextAreaElement>(null)
   // Suggested tags the user skipped for the clip that is open right now.
   const [skipped, setSkipped] = useState<string[]>([])
+  // Where the next tag goes in the list (set with the + between two tags). Null means at the end.
+  const [insertAt, setInsertAt] = useState<number | null>(null)
   const tagRef = useRef<HTMLInputElement>(null)
   // The round pause icon in the middle of the video. It stays while paused and fades out when
   // playback resumes. One element, so it never jumps.
@@ -110,6 +113,7 @@ export function Player(): React.JSX.Element {
     let cancelled = false
     watchedMarked.current = false
     setSkipped([])
+    setInsertAt(null)
     setError(null)
     setPrepared(null)
     setPlaying(false)
@@ -290,6 +294,11 @@ export function Player(): React.JSX.Element {
   const status = clipStatus(user)
   const tags = user.tags.map((id) => tagById.get(id)).filter((t): t is NonNullable<typeof t> => !!t)
   const tagNames = tags.map((t) => t.name.toLowerCase())
+  // Add a tag from the input or a suggestion. After a + the tags go in at that place, one after the other.
+  const addHere = (name: string): void => {
+    void addTagByName([key], name, insertAt ?? undefined)
+    if (insertAt !== null) setInsertAt(insertAt + 1)
+  }
   const nextTags = suggestedTags(user.tags, allTags).filter((t) => !skipped.includes(t.id))
   const suggestions = clip.hints.filter((h) => !user.ignoredHints.includes(h) && !tagNames.includes(h.toLowerCase()))
   const folder = folders.find((f) => f.id === clip.files[0]?.folderId)
@@ -637,24 +646,29 @@ export function Player(): React.JSX.Element {
             </label>
           </section>
 
-          <section className="side-sec">
+          <section
+            className="side-sec"
+            onBlur={(e) => {
+              if (insertAt !== null && !e.currentTarget.contains(e.relatedTarget as Node | null)) setInsertAt(null)
+            }}
+          >
             <h2 className="h-label">Tags</h2>
-            <div className="tag-chips">
-              {tags.length === 0 && <span className="muted" style={{ fontSize: 13 }}>No tags yet</span>}
-              {tags.map((t) => (
-                <span key={t.id} className="pill" style={{ fontSize: 13, padding: '3px 6px 3px 10px' }}>
-                  {t.name}
-                  <button aria-label={`Remove tag ${t.name}`} onClick={() => patch([key], { removeTags: [t.id] }, `Remove tag "${t.name}"`)}>
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
+            {tags.length === 0 && <span className="muted" style={{ fontSize: 13 }}>No tags yet</span>}
+            <TagList
+              tags={tags}
+              insertAt={insertAt}
+              onReorder={(ids) => patch([key], { set: { tags: ids } }, 'Reorder tags')}
+              onRemove={(t) => patch([key], { removeTags: [t.id] }, `Remove tag "${t.name}"`)}
+              onInsertHere={(i) => {
+                setInsertAt(i)
+                tagRef.current?.focus()
+              }}
+            />
             <TagInput
               inputRef={tagRef}
               exclude={user.tags}
-              placeholder={settings.showKeyHints ? `Add a tag (${chord('focusTag')})` : 'Add a tag'}
-              onAdd={(name) => void addTagByName([key], name)}
+              placeholder={insertAt !== null ? 'Add a tag here' : settings.showKeyHints ? `Add a tag (${chord('focusTag')})` : 'Add a tag'}
+              onAdd={addHere}
             />
             {nextTags.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -665,7 +679,7 @@ export function Player(): React.JSX.Element {
                       <button
                         className="add"
                         title={`Add "${t.name}"`}
-                        onClick={() => void addTagByName([key], t.name)}
+                        onClick={() => addHere(t.name)}
                       >
                         + {t.name}
                       </button>

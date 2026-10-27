@@ -12,6 +12,8 @@ All notable changes to Clip Shelf. Newest first.
 - Buttons get a little smaller while you hold them down and spring back when you let go. The stars give a small pop. This follows the Animations setting, so it is gone when animations are off.
 - The tabs in Settings light up when you hover over them.
 - The window buttons in the top right get darker together with the rest of the window when Settings or a dialog is open.
+- Tags on a clip can be put in another order. In the player, drag a tag to a new place (the others slide aside, Esc cancels), or focus it with Tab and press Alt and the left or right arrow key. Undo works on it, and it does not change the status of the clip.
+- A small + shows up when you hover between two tags in the player. Click it and the next tag you add goes in at that place instead of at the end. Keep adding and they follow each other in order.
 
 ### Changed
 - Removed the second "Random clip from these results" button above the clips. The Random clip button in the top bar (and the R key) already picks from the current results.

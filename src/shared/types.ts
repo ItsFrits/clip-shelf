@@ -187,6 +187,8 @@ export interface Snapshot {
 
 export interface ClipBulkPatch {
   addTags?: string[]
+  /** Where in the tag list addTags go. Missing means at the end. */
+  addTagsAt?: number
   removeTags?: string[]
   set?: Partial<ClipUser>
 }

@@ -87,7 +87,8 @@ interface AppState {
   randomClip: () => void
 
   patch: (keys: string[], patch: ClipBulkPatch, undoLabel?: string) => void
-  addTagByName: (keys: string[], name: string) => Promise<void>
+  /** Add a tag by name, creating it when it is new. `at` is the place in the tag list, default the end. */
+  addTagByName: (keys: string[], name: string, at?: number) => Promise<void>
   updateTag: (id: string, patch: { name?: string; suggests?: string[] }) => void
   addSuggestion: (tagId: string, name: string) => Promise<void>
   undoLast: () => void
@@ -293,7 +294,7 @@ export const useApp = create<AppState>((set, get) => ({
     void window.api.patchClips(keys, patch)
   },
 
-  addTagByName: async (keys, name) => {
+  addTagByName: async (keys, name, at) => {
     const clean = name.trim()
     if (!clean || keys.length === 0) return
     let tag = get().user.tags.find((t) => t.name.toLowerCase() === clean.toLowerCase())
@@ -306,7 +307,7 @@ export const useApp = create<AppState>((set, get) => ({
         return { user: { ...s.user, tags }, tagById: tagMap(tags) }
       })
     }
-    get().patch(keys, { addTags: [tag.id] }, `Tag "${tag.name}"`)
+    get().patch(keys, { addTags: [tag.id], addTagsAt: at }, `Tag "${tag.name}"`)
   },
 
   updateTag: (id, patch) => {

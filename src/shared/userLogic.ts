@@ -52,7 +52,12 @@ export function applyPatch(u: ClipUser, p: ClipBulkPatch): ClipUser {
   if (p.set) next = { ...next, ...p.set }
   if (p.removeTags?.length) next.tags = next.tags.filter((t) => !p.removeTags!.includes(t))
   if (p.addTags?.length) {
-    for (const t of p.addTags) if (!next.tags.includes(t)) next.tags.push(t)
+    let at = p.addTagsAt === undefined ? next.tags.length : Math.min(Math.max(Math.trunc(p.addTagsAt) || 0, 0), next.tags.length)
+    for (const t of p.addTags) {
+      if (next.tags.includes(t)) continue
+      next.tags.splice(at, 0, t)
+      at++
+    }
   }
   // Tagging, rating or writing a note means you have seen the clip. An explicit watched value wins.
   if (!next.watched && p.set?.watched === undefined) {

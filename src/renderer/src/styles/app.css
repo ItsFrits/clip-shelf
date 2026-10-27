@@ -2063,3 +2063,74 @@ html[data-anim='off'] button:active {
 .opt {
   --press: 1;
 }
+
+/* ---------- tags of a clip: drag to reorder, + to insert ---------- */
+.clip-tags {
+  position: relative;
+  /* Room for the + at both ends, which sits half outside the first and last pill. */
+  padding: 0 10px;
+  margin: 0 -10px;
+}
+.tag-slot {
+  position: relative;
+  display: inline-flex;
+}
+.tag-pill {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.tag-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.tag-slot.dragging .tag-pill {
+  opacity: 0.25;
+  outline: 1px dashed var(--border-2);
+}
+.tag-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 90;
+  pointer-events: none;
+  cursor: grabbing;
+  justify-content: flex-start;
+  background: var(--card);
+  border: 1px solid var(--accent);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+}
+.tag-plus {
+  position: absolute;
+  z-index: 3;
+  left: -12px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  --press: 0.85;
+}
+.tag-plus.after {
+  left: auto;
+  right: -12px;
+}
+.tag-plus:hover,
+.tag-plus:focus-visible {
+  opacity: 1;
+}
+.tag-caret {
+  align-self: stretch;
+  width: 2px;
+  margin: 0 -2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
