@@ -118,6 +118,12 @@ export interface TrackLevel {
   muted: boolean
 }
 
+export type SortField = 'date' | 'rating' | 'length' | 'size' | 'name' | 'random'
+export interface SortRule {
+  field: SortField
+  dir: 'asc' | 'desc'
+}
+
 export type AnimationMode = 'system' | 'on' | 'off'
 export type AnimationSpeed = 'slow' | 'normal' | 'fast'
 /** Settings open as a window over the library, or as a page that replaces it. */
@@ -163,7 +169,10 @@ export interface Settings {
   hideSorted: boolean
   thumbSize: number
   group: 'day' | 'week' | 'month' | 'none'
-  sort: 'oldest' | 'newest'
+  /** How the clips are ordered. The first rule counts most, the next ones break ties. */
+  sortRules: SortRule[]
+  /** Decides the order when sorting at random. A new number shuffles again. */
+  randomSeed: number
 }
 
 export interface UserData {

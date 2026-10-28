@@ -457,7 +457,8 @@ useApp.subscribe((s, prev) => {
     s.user.tags !== prev.user.tags ||
     s.filters !== prev.filters ||
     a.hideSorted !== b.hideSorted ||
-    a.sort !== b.sort
+    a.sortRules !== b.sortRules ||
+    a.randomSeed !== b.randomSeed
   ) {
     const visible = computeVisible(
       s.clips.values(),

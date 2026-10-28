@@ -37,7 +37,11 @@ const run = (f: Partial<typeof DEFAULT_FILTERS>, s: Partial<typeof DEFAULT_SETTI
 describe('computeVisible', () => {
   it('shows everything by default, oldest first', () => {
     expect(run({})).toEqual(['a', 'b', 'c', 'd'])
-    expect(run({}, { sort: 'newest' })).toEqual(['d', 'c', 'b', 'a'])
+    expect(run({}, { sortRules: [{ field: 'date', dir: 'desc' }] })).toEqual(['d', 'c', 'b', 'a'])
+  })
+  it('sorts by rating, with the next rule breaking ties and unrated last', () => {
+    const rules = [{ field: 'rating' as const, dir: 'desc' as const }, { field: 'date' as const, dir: 'desc' as const }]
+    expect(run({}, { sortRules: rules })).toEqual(['a', 'd', 'c', 'b'])
   })
   it('filters by status, and "watched" means watched without a tag', () => {
     expect(run({ statuses: ['watched'] })).toEqual(['b'])

@@ -1,5 +1,6 @@
 import { FULL_RATING_RANGE, isRatingFiltered, ratingMatches } from '@shared/rating'
 import type { Clip, FolderInfo, Settings, Tag, UserData } from '@shared/types'
+import { sortClips } from '@shared/sort'
 import { type ClipStatus, EMPTY_CLIP_USER, clipStatus } from '@shared/userLogic'
 import { fmtDay, fmtMonth, fmtShortDate, startOfDay, startOfMonth, startOfWeek } from './format'
 
@@ -147,7 +148,7 @@ export function computeVisible(
   clips: Iterable<Clip>,
   ctx: FilterContext,
   f: Filters,
-  settings: Pick<Settings, 'hideSorted' | 'sort'>
+  settings: Pick<Settings, 'hideSorted' | 'sortRules' | 'randomSeed'>
 ): Clip[] {
   const window = dateWindow(f)
   const tokens = f.query.toLowerCase().split(/\s+/).filter(Boolean)
@@ -176,9 +177,7 @@ export function computeVisible(
     }
     out.push(c)
   }
-  const dir = settings.sort === 'newest' ? -1 : 1
-  out.sort((a, b) => (a.date - b.date) * dir || (a.name < b.name ? -1 : 1))
-  return out
+  return sortClips(out, (key) => ctx.user.clips[key]?.rating ?? 0, settings.sortRules, settings.randomSeed)
 }
 
 export interface ClipGroup {

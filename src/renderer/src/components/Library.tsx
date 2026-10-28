@@ -1,14 +1,16 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film, FolderPlus, Grid3x3 } from 'lucide-react'
+import { Film, FolderPlus, Grid3x3 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FULL_RATING_RANGE, ratingChipLabel } from '@shared/rating'
 import type { Clip } from '@shared/types'
 import { STATUS_LABEL, dateLabel, groupClips, isFiltered } from '../lib/filter'
 import { plural } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
+import { canGroup } from '@shared/sort'
 import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { ClipCard } from './ClipCard'
 import { SelectionBar } from './SelectionBar'
+import { SortMenu } from './SortMenu'
 
 const GAP = 14
 const HEADER_H = 52
@@ -64,7 +66,10 @@ export function Library(): React.JSX.Element {
   const cardW = (width - GAP * (cols - 1)) / cols
   const cardH = Math.ceil(((cardW - 14) * 9) / 16) + CARD_CHROME
 
-  const groups = useMemo(() => groupClips(visible, settings.group), [visible, settings.group])
+  // Day, week and month groups only make sense when the clips are in date order.
+  const groupable = canGroup(settings.sortRules)
+  const group = groupable ? settings.group : 'none'
+  const groups = useMemo(() => groupClips(visible, group), [visible, group])
   const rows = useMemo(() => {
     const out: Row[] = []
     for (const g of groups) {
@@ -88,7 +93,7 @@ export function Library(): React.JSX.Element {
   }, [cardH, rows, virt])
 
   // Back to the top when the filters change.
-  const filterSig = JSON.stringify([filters, settings.hideSorted, settings.sort, settings.group])
+  const filterSig = JSON.stringify([filters, settings.hideSorted, settings.sortRules, settings.randomSeed, group])
   useEffect(() => {
     if (firstFilterRun.current) {
       firstFilterRun.current = false
@@ -193,17 +198,24 @@ export function Library(): React.JSX.Element {
             <span className="muted" style={{ fontSize: 13 }}>
               Group by
             </span>
-            <div className="seg" role="group" aria-label="Group by">
+            <div
+              className={'seg' + (groupable ? '' : ' disabled')}
+              role="group"
+              aria-label="Group by"
+              title={groupable ? undefined : 'Groups follow the date. Put Date first in the sort menu to use them.'}
+            >
               {(['day', 'week', 'month', 'none'] as const).map((g) => (
-                <button key={g} className={settings.group === g ? 'on' : ''} onClick={() => updateSettings({ group: g })}>
+                <button
+                  key={g}
+                  className={group === g ? 'on' : ''}
+                  disabled={!groupable}
+                  onClick={() => updateSettings({ group: g })}
+                >
                   {g === 'none' ? 'No groups' : g[0].toUpperCase() + g.slice(1)}
                 </button>
               ))}
             </div>
-            <button className="btn" onClick={() => updateSettings({ sort: settings.sort === 'oldest' ? 'newest' : 'oldest' })}>
-              {settings.sort === 'oldest' ? <ArrowUpNarrowWide size={16} /> : <ArrowDownWideNarrow size={16} />}
-              {settings.sort === 'oldest' ? 'Oldest first' : 'Newest first'}
-            </button>
+            <SortMenu />
             <label className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
               <Grid3x3 size={14} />
               Size
@@ -293,7 +305,7 @@ export function Library(): React.JSX.Element {
                 ) : (
                   <div className="cards-row" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, height: '100%' }}>
                     {row.clips.map((c) => (
-                      <ClipCard key={c.key} clip={c} showDate={settings.group !== 'day'} />
+                      <ClipCard key={c.key} clip={c} showDate={group !== 'day'} />
                     ))}
                   </div>
                 )}

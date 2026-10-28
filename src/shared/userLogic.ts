@@ -33,7 +33,8 @@ export const DEFAULT_SETTINGS: Settings = {
   hideSorted: false,
   thumbSize: 3,
   group: 'day',
-  sort: 'oldest'
+  sortRules: [{ field: 'date', dir: 'asc' }],
+  randomSeed: 1
 }
 
 export function isDefaultClipUser(u: ClipUser): boolean {

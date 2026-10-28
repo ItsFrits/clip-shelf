@@ -10,6 +10,7 @@ import {
   isDefaultClipUser,
   markTagsUsed
 } from '../shared/userLogic'
+import { migrateSortSettings } from '../shared/sort'
 import { JsonStore } from './lib/jsonStore'
 
 function emptyUserData(): UserData {
@@ -24,6 +25,14 @@ function emptyUserData(): UserData {
   }
 }
 
+/** Fill in new settings, and turn old ones into the new form. */
+function normalizeSettings(raw: unknown): UserData['settings'] {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const settings = { ...DEFAULT_SETTINGS, ...r, ...migrateSortSettings(r) } as UserData['settings'] & { sort?: unknown }
+  delete settings.sort
+  return settings
+}
+
 function normalize(raw: unknown, defaults: UserData): UserData {
   const r = (raw ?? {}) as Partial<UserData>
   return {
@@ -32,7 +41,7 @@ function normalize(raw: unknown, defaults: UserData): UserData {
     tags: Array.isArray(r.tags) ? r.tags : [],
     clips: r.clips && typeof r.clips === 'object' ? r.clips : {},
     projects: Array.isArray(r.projects) ? r.projects : [],
-    settings: { ...DEFAULT_SETTINGS, ...(r.settings ?? {}) },
+    settings: normalizeSettings(r.settings),
     lastBackupAt: typeof r.lastBackupAt === 'number' ? r.lastBackupAt : null
   }
 }

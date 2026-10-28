@@ -4,6 +4,18 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+### Added
+- A sort menu in the library. Instead of one Newest/Oldest button you can now sort on Date, Rating, Length, Size, Name or Random, with up to five rules. The top rule counts most, the next ones decide when clips are equal (for example highest rated first, and newest first among clips with the same rating). Change a direction with one click, remove a rule with the X, and change the priority by dragging the handle or with Alt and the up or down arrow key.
+- Random sorting keeps the same order until you press "Shuffle again", so clips do not jump around while you work. Random is always the last rule.
+
+### Changed
+- Group by (Day, Week, Month) only works when Date is the first sort rule. Otherwise it is greyed out, with a hint saying why. Your choice is kept for when you sort by date again.
+- Unrated clips count as the lowest rating when sorting.
+- Your old Newest/Oldest choice is carried over to the new sort menu.
+
+### Removed
+- The "Sort mode" button in the top bar, which did not do anything yet.
+
 ## 0.4.0
 
 ### Added

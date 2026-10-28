@@ -1,4 +1,4 @@
-import { LayoutGrid, Play, Search, Settings, Shuffle, Sparkles } from 'lucide-react'
+import { LayoutGrid, Play, Search, Settings, Shuffle } from 'lucide-react'
 import { useMemo } from 'react'
 import { formatChord, effectiveKeymap } from '@shared/keymap'
 import { useApp } from '../lib/store'
@@ -38,10 +38,6 @@ export function TopBar(): React.JSX.Element {
           <Shuffle size={18} strokeWidth={2} />
           Random clip
           <KeyHint style={ON_ACCENT}>{chord('random')}</KeyHint>
-        </button>
-        <button className="btn lg" disabled title="Coming in the next version">
-          <Sparkles size={18} strokeWidth={1.75} />
-          <span className="lbl">Sort mode</span>
         </button>
         <button className="btn lg" disabled title="Coming in the next version">
           <LayoutGrid size={18} strokeWidth={1.75} />
