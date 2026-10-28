@@ -22,11 +22,10 @@ export const DEFAULT_DIRECTION: Record<SortField, SortRule['dir']> = {
 }
 
 export const DEFAULT_SORT: SortRule[] = [{ field: 'date', dir: 'desc' }]
-export const MAX_SORT_RULES = 5
 
 /**
  * Make a list of sort rules safe: known fields only, each field once, nothing after Random (it
- * decides the whole order), at most MAX_SORT_RULES, and never empty.
+ * decides the whole order), and never empty.
  */
 export function sanitizeSortRules(raw: unknown): SortRule[] {
   const out: SortRule[] = []
@@ -36,7 +35,7 @@ export function sanitizeSortRules(raw: unknown): SortRule[] {
       if (!field || !SORT_FIELDS.includes(field) || out.some((r) => r.field === field)) continue
       const dir = (item as SortRule).dir === 'asc' || (item as SortRule).dir === 'desc' ? (item as SortRule).dir : DEFAULT_DIRECTION[field]
       out.push({ field, dir })
-      if (field === 'random' || out.length >= MAX_SORT_RULES) break
+      if (field === 'random') break
     }
   }
   return out.length > 0 ? out : DEFAULT_SORT.map((r) => ({ ...r }))
@@ -127,13 +126,12 @@ function randomLast(rules: SortRule[]): SortRule[] {
 
 /** Fields that can still be added. */
 export function availableFields(rules: readonly SortRule[]): SortField[] {
-  if (rules.length >= MAX_SORT_RULES) return []
   return SORT_FIELDS.filter((f) => !rules.some((r) => r.field === f))
 }
 
 /** Add a rule at the end (before Random, when that is there). */
 export function addRule(rules: readonly SortRule[], field: SortField): SortRule[] {
-  if (rules.some((r) => r.field === field) || rules.length >= MAX_SORT_RULES) return [...rules]
+  if (rules.some((r) => r.field === field)) return [...rules]
   return randomLast([...rules, { field, dir: DEFAULT_DIRECTION[field] }])
 }
 

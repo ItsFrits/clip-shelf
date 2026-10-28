@@ -5,7 +5,7 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
-- A sort menu in the library. Instead of one Newest/Oldest button you can now sort on Date, Rating, Length, Size, Name or Random, with up to five rules. The top rule counts most, the next ones decide when clips are equal (for example highest rated first, and newest first among clips with the same rating). Change a direction with one click, remove a rule with the X, and change the priority by dragging the handle or with Alt and the up or down arrow key.
+- A sort menu in the library. Instead of one Newest/Oldest button you can now sort on Date, Rating, Length, Size, Name or Random, as many rules as there are fields. The top rule counts most, the next ones decide when clips are equal (for example highest rated first, and newest first among clips with the same rating). Change a direction with one click, remove a rule with the X, and change the priority by dragging the handle or with Alt and the up or down arrow key.
 - Random sorting keeps the same order until you press "Shuffle again", so clips do not jump around while you work. Random is always the last rule.
 - Tooltips in the whole app now have their own look, instead of the plain system ones. They show up after a short moment, also when you reach a button with the keyboard, and they stay out of the way of the window edges.
 - Every clip card now shows its file size next to its name. When you sort on name or size, that part lights up so you can see what the order is based on.
@@ -13,7 +13,7 @@ All notable changes to Clip Shelf. Newest first.
 ### Changed
 - The default order is now newest first. Press Reset in the sort menu to switch back to it if you had set something else.
 - The Group by buttons are as tall as the buttons next to them.
-- Dropdown lists (like the one behind Add rule) are dark now, like the rest of the app.
+- The sort menu has its own dropdown lists in the style of the app, with arrow key, Enter and Esc support, instead of the plain system ones. Other dropdowns are dark for now.
 - Group by (Day, Week, Month) only works when Date is the first sort rule. Otherwise it is greyed out, with a hint saying why. Your choice is kept for when you sort by date again.
 - Unrated clips count as the lowest rating when sorting.
 - Your old Newest/Oldest choice is carried over to the new sort menu.

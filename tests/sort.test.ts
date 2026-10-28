@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { Clip, SortRule } from '../src/shared/types'
 import {
   DEFAULT_SORT,
-  MAX_SORT_RULES,
   addRule,
   availableFields,
   canGroup,
@@ -69,11 +68,11 @@ describe('sanitizeSortRules', () => {
     expect(sanitizeSortRules([])).toEqual([desc('date')])
     expect(sanitizeSortRules([{ field: 'nope', dir: 'asc' }])).toEqual([desc('date')])
   })
-  it('drops duplicates, rules after random, and extra rules', () => {
+  it('drops duplicates and rules after random', () => {
     expect(sanitizeSortRules([asc('name'), asc('name'), desc('size')])).toEqual([asc('name'), desc('size')])
     expect(sanitizeSortRules([asc('random'), asc('name')])).toEqual([asc('random')])
-    const all = sanitizeSortRules([asc('date'), asc('rating'), asc('length'), asc('size'), asc('name'), asc('random')])
-    expect(all.length).toBeLessThanOrEqual(MAX_SORT_RULES)
+    const all = [asc('date'), asc('rating'), asc('length'), asc('size'), asc('name'), asc('random')]
+    expect(sanitizeSortRules(all)).toEqual(all)
   })
   it('fills in a missing direction', () => {
     expect(sanitizeSortRules([{ field: 'rating' }])).toEqual([desc('rating')])
@@ -103,12 +102,12 @@ describe('editing rules', () => {
     expect(addRule([asc('date'), asc('random')], 'name')).toEqual([asc('date'), asc('name'), asc('random')])
     expect(addRule([asc('date')], 'date')).toEqual([asc('date')])
   })
-  it('stops at the maximum', () => {
-    const full = [asc('date'), desc('rating'), desc('length'), desc('size'), asc('name')]
-    expect(availableFields(full)).toEqual([])
-    expect(addRule(full, 'random')).toEqual(full)
+  it('offers the fields that are not used yet', () => {
     expect(availableFields([asc('date')])).toContain('rating')
     expect(availableFields([asc('date')])).not.toContain('date')
+    const all = [asc('date'), desc('rating'), desc('length'), desc('size'), asc('name'), asc('random')]
+    expect(availableFields(all)).toEqual([])
+    expect(addRule(all, 'random')).toEqual(all)
   })
   it('never removes the last rule', () => {
     expect(removeRule([asc('date')], 0)).toEqual([asc('date')])

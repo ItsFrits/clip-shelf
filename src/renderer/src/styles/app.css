@@ -2148,11 +2148,15 @@ html[data-anim='off'] button:active {
   font-size: 14px;
 }
 .sortmenu-rules {
-  display: flex;
-  flex-direction: column;
-  gap: 6px; /* ROW_GAP in SortMenu.tsx */
+  /* The rows are laid on top of each other and moved with a transform (see SortMenu.tsx). */
+  position: relative;
+  transition: height var(--anim-med) var(--ease);
 }
 .sortrule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2161,10 +2165,12 @@ html[data-anim='off'] button:active {
   border-radius: 10px;
   background: var(--card);
   border: 1px solid var(--border);
-  transition: border-color var(--anim-fast) var(--ease), box-shadow var(--anim-fast) var(--ease);
-  position: relative;
+  transition: transform var(--anim-med) var(--ease), border-color var(--anim-fast) var(--ease), box-shadow var(--anim-fast) var(--ease);
 }
 .sortrule.dragging {
+  /* The held rule follows the pointer at once, so it has no transition on its position. */
+  transition: border-color var(--anim-fast) var(--ease), box-shadow var(--anim-fast) var(--ease);
+  will-change: transform;
   z-index: 2;
   border-color: var(--accent);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -2203,10 +2209,22 @@ html[data-anim='off'] button:active {
   flex: 1;
   min-width: 0;
   height: 28px;
-  padding: 0 6px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
   border-radius: 8px;
   border: 1px solid var(--border-2);
   background: var(--input);
+}
+.sortrule-field:hover,
+.sortrule-field.open {
+  border-color: #4a5266;
+}
+.sortrule-field.open {
+  border-color: var(--accent);
 }
 .sortrule-dir {
   flex: none;
@@ -2239,31 +2257,6 @@ html[data-anim='off'] button:active {
   justify-content: space-between;
   align-items: center;
 }
-.sortmenu-add {
-  position: relative;
-  cursor: pointer;
-}
-.sortmenu-add.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.sortmenu-add select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-/* Dropdowns: dark, like the rest of the app (the list that opens is drawn by the system). */
-select {
-  color-scheme: dark;
-}
-select option {
-  background: var(--panel-2);
-  color: var(--text);
-}
-
 /* The Group by pills are as tall as the buttons next to them. */
 .lib-tools .seg button {
   height: 36px;
@@ -2321,4 +2314,53 @@ select option {
     opacity: 0;
     transform: translateY(var(--tip-from, -3px));
   }
+}
+
+/* Dropdown list (see Dropdown.tsx) */
+.dd-chevron {
+  color: var(--text-3);
+  margin-left: auto;
+}
+.dd-list {
+  position: fixed;
+  z-index: 70;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border-2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+  animation: cal-in var(--anim-fast) ease-out;
+  user-select: none;
+}
+.dd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 32px; /* ITEM_H in Dropdown.tsx */
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dd-item.active {
+  background: var(--input);
+  color: var(--text);
+}
+.dd-item.chosen {
+  color: var(--accent-soft);
+}
+.dd-item svg {
+  color: var(--accent);
+}
+
+/* Other dropdowns that are still the system's own: at least make them dark. */
+select {
+  color-scheme: dark;
+}
+select option {
+  background: var(--panel-2);
+  color: var(--text);
 }
