@@ -70,7 +70,7 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
     )
     return dayStatusMap(visible.map((c) => ({ date: c.date, status: clipStatus(user.clips[c.key] ?? EMPTY_CLIP_USER) })))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips, user, folders, filters.query, filters.statuses, filters.tagIds, filters.excludeTagIds, filters.tagMode, filters.minRating, filters.maxRating, filters.showUnrated, filters.folderIds, settings.hideSorted])
+  }, [clips, user, folders, filters.query, filters.statuses, filters.tagIds, filters.excludeTagIds, filters.tagMode, filters.minRating, filters.maxRating, filters.showUnrated, filters.folderIds])
 
   const years = useMemo(() => {
     const list = yearsWithClips([...clips.values()].map((c) => c.date))

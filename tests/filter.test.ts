@@ -47,7 +47,6 @@ describe('computeVisible', () => {
   it('filters by status, and "watched" means watched without a tag', () => {
     expect(run({ statuses: ['watched'] })).toEqual(['b'])
     expect(run({ statuses: ['new'] })).toEqual(['d'])
-    expect(run({}, { hideSorted: true })).toEqual(['d'])
   })
   it('filters by tags with any / all', () => {
     expect(run({ tagIds: ['t1', 't2'], tagMode: 'any' })).toEqual(['a', 'c'])

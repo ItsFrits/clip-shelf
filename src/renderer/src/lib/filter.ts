@@ -130,7 +130,7 @@ export interface FilterContext {
   folders: FolderInfo[]
 }
 
-export function isFiltered(f: Filters, hideSorted: boolean): boolean {
+export function isFiltered(f: Filters): boolean {
   return (
     f.query.trim() !== '' ||
     f.statuses.length !== ALL_STATUSES.length ||
@@ -138,18 +138,12 @@ export function isFiltered(f: Filters, hideSorted: boolean): boolean {
     f.excludeTagIds.length > 0 ||
     isRatingFiltered(f) ||
     (f.dateMode !== 'all' && !(f.dateMode === 'range' && !f.rangeFrom && !f.rangeTo)) ||
-    f.folderIds.length > 0 ||
-    hideSorted
+    f.folderIds.length > 0
   )
 }
 
-/** Apply every filter, then sort. */
-export function computeVisible(
-  clips: Iterable<Clip>,
-  ctx: FilterContext,
-  f: Filters,
-  settings: Pick<Settings, 'hideSorted' | 'sortRules' | 'randomSeed'>
-): Clip[] {
+/** The clips that pass every filter, in no particular order. */
+export function filterClips(clips: Iterable<Clip>, ctx: FilterContext, f: Filters): Clip[] {
   const window = dateWindow(f)
   const tokens = f.query.toLowerCase().split(/\s+/).filter(Boolean)
   const tagName = new Map(ctx.tags.map((t) => [t.id, t.name.toLowerCase()]))
@@ -161,7 +155,6 @@ export function computeVisible(
   for (const c of clips) {
     const u = ctx.user.clips[c.key] ?? EMPTY_CLIP_USER
     const status = clipStatus(u)
-    if (settings.hideSorted && status !== 'new') continue
     if (!statusSet.has(status)) continue
     if (!ratingMatches(u.rating, f)) continue
     if (window && (c.date < window[0] || c.date >= window[1])) continue
@@ -177,7 +170,17 @@ export function computeVisible(
     }
     out.push(c)
   }
-  return sortClips(out, (key) => ctx.user.clips[key]?.rating ?? 0, settings.sortRules, settings.randomSeed)
+  return out
+}
+
+/** Apply every filter, then sort. */
+export function computeVisible(
+  clips: Iterable<Clip>,
+  ctx: FilterContext,
+  f: Filters,
+  settings: Pick<Settings, 'sortRules' | 'randomSeed'>
+): Clip[] {
+  return sortClips(filterClips(clips, ctx, f), (key) => ctx.user.clips[key]?.rating ?? 0, settings.sortRules, settings.randomSeed)
 }
 
 export interface ClipGroup {

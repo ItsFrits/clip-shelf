@@ -90,6 +90,26 @@ export interface SavedFilters {
   folderIds: string[]
 }
 
+/** The parts of the library view a preset can also keep, besides status, tags and rating. */
+export interface PresetParts {
+  date: boolean
+  folders: boolean
+  sort: boolean
+}
+
+/** A named combination of filters (and optionally a date, folders and a sort order) you can switch to. */
+export interface Preset {
+  id: string
+  name: string
+  /** The filters of the preset. Date and folders only count when `parts` says so. */
+  filters: SavedFilters
+  parts: PresetParts
+  /** The sort rules. Only used when `parts.sort` is on. */
+  sortRules: SortRule[]
+  /** A key combination such as "Alt+1", or null. */
+  hotkey: string | null
+}
+
 export interface ClipUser {
   tags: string[]
   /** 0 means not rated. */
@@ -147,6 +167,10 @@ export interface Settings {
   animationSpeed: AnimationSpeed
   /** The filters as you left them, so the library opens where you stopped. */
   savedFilters: SavedFilters | null
+  /** The presets, in the order they are shown. Null until the default presets have been added. */
+  presets: Preset[] | null
+  /** The preset the filters were taken from. The filters can have been changed since. */
+  activePresetId: string | null
   /** The app version the user last saw, to show a "what's new" notice after an update. */
   lastSeenVersion: string
   /** Volume (0 to 1) that stays the same when switching clips. */
@@ -166,7 +190,6 @@ export interface Settings {
   keymap: Record<string, string[]>
   ignorePatterns: string[]
   autoBackup: boolean
-  hideSorted: boolean
   thumbSize: number
   group: 'day' | 'week' | 'month' | 'none'
   /** How the clips are ordered. The first rule counts most, the next ones break ties. */

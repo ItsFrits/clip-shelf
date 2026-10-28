@@ -1,4 +1,4 @@
-import { ChevronLeft, FolderPlus, RefreshCw, RotateCcw, Trash2, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronUp, FolderPlus, RefreshCw, RotateCcw, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ACTIONS,
@@ -8,10 +8,12 @@ import {
   findConflict,
   formatChord
 } from '@shared/keymap'
-import type { AnimationMode, AnimationSpeed, FolderInfo, SettingsView } from '@shared/types'
+import { defaultPresets, presetForKey, uniqueName } from '@shared/presets'
+import type { AnimationMode, AnimationSpeed, FolderInfo, Preset, SettingsView } from '@shared/types'
 import { resolveMotion } from '@shared/uiPrefs'
 import { sortTags } from '@shared/userLogic'
 import { fmtBytes, fmtCount } from '../lib/format'
+import { presetSummary, resolvePreset } from '../lib/presets'
 import { type SettingsTab, useApp, useSettings } from '../lib/store'
 import { AboutTab } from './AboutTab'
 import { TagInput } from './TagInput'
@@ -22,6 +24,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'folders', label: 'Folders' },
   { id: 'playback', label: 'Playback & editor' },
   { id: 'tags', label: 'Tags' },
+  { id: 'presets', label: 'Presets' },
   { id: 'hotkeys', label: 'Hotkeys' },
   { id: 'backup', label: 'Backup & updates' },
   { id: 'about', label: 'About' }
@@ -46,6 +49,7 @@ function SettingsBody(): React.JSX.Element {
           {tab === 'folders' && <FoldersTab />}
           {tab === 'playback' && <PlaybackTab />}
           {tab === 'tags' && <TagsTab />}
+          {tab === 'presets' && <PresetsTab />}
           {tab === 'hotkeys' && <HotkeysTab />}
           {tab === 'backup' && <BackupTab />}
           {tab === 'about' && <AboutTab />}
@@ -423,6 +427,11 @@ function HotkeysTab(): React.JSX.Element {
         setError({ id: capturing, text: `${formatChord(chord)} is already used for “${other?.label}”. Pick another key.` })
         return
       }
+      const usedBy = presetForKey(settings.presets ?? [], chord)
+      if (usedBy) {
+        setError({ id: capturing, text: `${formatChord(chord)} is already used for the preset “${usedBy.name}”. Pick another key.` })
+        return
+      }
       update({ keymap: { ...settings.keymap, [capturing]: [chord] } })
       setCapture(null)
       setError(null)
@@ -487,6 +496,195 @@ function HotkeysTab(): React.JSX.Element {
         </div>
       ))}
     </>
+  )
+}
+
+// ------------------------------------------------------------------ presets
+
+function PresetsTab(): React.JSX.Element {
+  const settings = useSettings()
+  const update = useApp((s) => s.updateSettings)
+  const ask = useApp((s) => s.ask)
+  const setCapturing = useApp((s) => s.setCapturing)
+  const tags = useApp((s) => s.user.tags)
+  const folders = useApp((s) => s.user.folders)
+  const presets = settings.presets ?? []
+  const [capturing, setCapture] = useState<string | null>(null)
+  const [error, setError] = useState<{ id: string; text: string } | null>(null)
+
+  const save = (next: Preset[], extra: Partial<typeof settings> = {}): void => update({ presets: next, ...extra })
+  const patch = (id: string, change: Partial<Preset>): void => save(presets.map((p) => (p.id === id ? { ...p, ...change } : p)))
+
+  // Press the key you want for a preset. Escape cancels.
+  useEffect(() => {
+    setCapturing(capturing !== null)
+    if (!capturing) return
+    const onKey = (e: KeyboardEvent): void => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.key === 'Escape') {
+        setCapture(null)
+        setError(null)
+        return
+      }
+      const chord = chordFromEvent(e)
+      if (!chord) return
+      const other = presetForKey(presets, chord)
+      const map = effectiveKeymap(settings.keymap)
+      const action = ACTIONS.find((a) => a.scope !== 'player' && (map[a.id] ?? []).includes(chord))
+      if (other && other.id !== capturing) {
+        setError({ id: capturing, text: `${formatChord(chord)} is already used for the preset “${other.name}”. Pick another key.` })
+        return
+      }
+      if (action) {
+        setError({ id: capturing, text: `${formatChord(chord)} is already used for “${action.label}”. Pick another key.` })
+        return
+      }
+      patch(capturing, { hotkey: chord })
+      setCapture(null)
+      setError(null)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => {
+      window.removeEventListener('keydown', onKey, true)
+      setCapturing(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capturing, presets, settings.keymap])
+
+  const move = (index: number, dir: -1 | 1): void => {
+    const next = [...presets]
+    const [item] = next.splice(index, 1)
+    next.splice(index + dir, 0, item)
+    save(next)
+  }
+  const remove = async (p: Preset): Promise<void> => {
+    const ok = await ask({ title: `Delete “${p.name}”?`, body: 'The preset is removed. Your clips and tags are not touched.', confirmLabel: 'Delete', danger: true })
+    if (!ok) return
+    save(presets.filter((x) => x.id !== p.id), settings.activePresetId === p.id ? { activePresetId: null } : {})
+  }
+  const addDefaults = (): void => {
+    const missing = defaultPresets(() => crypto.randomUUID()).filter((d) => !presets.some((p) => p.name.toLowerCase() === d.name.toLowerCase()))
+    const taken = new Set(presets.map((p) => p.hotkey).filter(Boolean))
+    // A key that is already taken is left empty, you can pick another one.
+    save([...presets, ...missing.map((d) => (d.hotkey && taken.has(d.hotkey) ? { ...d, hotkey: null } : d))])
+  }
+  const tagName = (id: string): string | undefined => tags.find((t) => t.id === id)?.name
+  const folderName = (id: string): string | undefined => folders.find((f) => f.id === id)?.name
+  const hasAllDefaults = defaultPresets(() => '').every((d) => presets.some((p) => p.name.toLowerCase() === d.name.toLowerCase()))
+
+  return (
+    <>
+      <h1>Presets</h1>
+      <div className="sec-card">
+        <Row title="Your presets" desc="A preset is a set of filters you can switch to in the sidebar, or with its key. To make one, set the filters you want in the library and choose “New preset…” in the preset list.">
+          <button className="btn small" disabled={hasAllDefaults} onClick={addDefaults}>
+            Add the default presets again
+          </button>
+        </Row>
+      </div>
+      <div className="sec-card">
+        {presets.length === 0 && <div className="muted" style={{ fontSize: 13 }}>You have no presets yet.</div>}
+        {presets.map((p, i) => (
+          <PresetRow
+            key={p.id}
+            preset={p}
+            summary={presetSummary(resolvePreset(p, tags.map((t) => t.id), folders.map((f) => f.id)), tagName, folderName)}
+            isFirst={i === 0}
+            isLast={i === presets.length - 1}
+            capturing={capturing === p.id}
+            error={error?.id === p.id ? error.text : null}
+            onRename={(name) => patch(p.id, { name: uniqueName(name, presets, p.id) })}
+            onChange={() => {
+              setError(null)
+              setCapture(capturing === p.id ? null : p.id)
+            }}
+            onClear={() => patch(p.id, { hotkey: null })}
+            onMove={(dir) => move(i, dir)}
+            onDelete={() => void remove(p)}
+          />
+        ))}
+      </div>
+      <div className="sec-card">
+        <Row title="Show all clips" desc="The key for “All clips” (no filters) is set under Hotkeys, in the Library list.">
+          <span className="chord">{(effectiveKeymap(settings.keymap).presetAll ?? []).map(formatChord).join(' / ') || 'Not set'}</span>
+        </Row>
+      </div>
+    </>
+  )
+}
+
+function PresetRow({
+  preset,
+  summary,
+  isFirst,
+  isLast,
+  capturing,
+  error,
+  onRename,
+  onChange,
+  onClear,
+  onMove,
+  onDelete
+}: {
+  preset: Preset
+  summary: string[]
+  isFirst: boolean
+  isLast: boolean
+  capturing: boolean
+  error: string | null
+  onRename: (name: string) => void
+  onChange: () => void
+  onClear: () => void
+  onMove: (dir: -1 | 1) => void
+  onDelete: () => void
+}): React.JSX.Element {
+  const [name, setName] = useState(preset.name)
+  useEffect(() => setName(preset.name), [preset.name])
+  const commit = (): void => {
+    const clean = name.trim()
+    if (!clean) setName(preset.name)
+    else if (clean !== preset.name) onRename(clean)
+  }
+  return (
+    <div className="preset-row">
+      <div className="preset-row-main">
+        <input
+          className="field preset-row-name"
+          value={name}
+          maxLength={60}
+          aria-label={`Name of the preset ${preset.name}`}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur()
+            if (e.key === 'Escape') {
+              e.stopPropagation()
+              setName(preset.name)
+              e.currentTarget.blur()
+            }
+          }}
+        />
+        <div className="preset-row-sub muted">{summary.length > 0 ? summary.join(' · ') : 'No filters'}</div>
+        {error && <div className="err">{error}</div>}
+      </div>
+      <span className={'chord' + (capturing ? ' capturing' : '')}>{capturing ? 'Press a key…' : preset.hotkey ? formatChord(preset.hotkey) : 'No key'}</span>
+      <button className="btn small" onClick={onChange}>
+        {capturing ? 'Cancel' : 'Change'}
+      </button>
+      <button className="btn small ghost" disabled={!preset.hotkey} onClick={onClear} aria-label={`Remove the key of ${preset.name}`} title="Remove the key">
+        <X size={14} />
+      </button>
+      <button className="btn small ghost" disabled={isFirst} onClick={() => onMove(-1)} aria-label={`Move ${preset.name} up`} title="Move up">
+        <ChevronUp size={14} />
+      </button>
+      <button className="btn small ghost" disabled={isLast} onClick={() => onMove(1)} aria-label={`Move ${preset.name} down`} title="Move down">
+        <ChevronDown size={14} />
+      </button>
+      <button className="btn small ghost" onClick={onDelete} aria-label={`Delete ${preset.name}`} title="Delete">
+        <Trash2 size={14} />
+      </button>
+    </div>
   )
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { ConfirmDialog, Toasts } from './components/Overlays'
 import { Library } from './components/Library'
+import { NewPresetDialog } from './components/NewPresetDialog'
 import { Player } from './components/Player'
 import { Settings } from './components/Settings'
 import { Sidebar } from './components/Sidebar'
@@ -35,7 +36,7 @@ export default function App(): React.JSX.Element {
   // The window buttons of the system sit on top of the page, so they are darkened by hand to
   // match the dark layer behind the settings window and dialogs.
   const modalOpen = view === 'settings' && settingsView === 'window'
-  const confirmOpen = useApp((s) => s.confirm !== null)
+  const confirmOpen = useApp((s) => s.confirm !== null || s.newPresetOpen)
   const modalWasOpen = useRef(false)
   useEffect(() => {
     const alpha = combineDim([modalOpen ? MODAL_DIM : 0, confirmOpen ? DIALOG_DIM : 0])
@@ -84,6 +85,7 @@ export default function App(): React.JSX.Element {
       {view === 'settings' && settingsView === 'window' && <Settings modal />}
       <StatusBar />
       <ConfirmDialog />
+      <NewPresetDialog />
       <Toasts />
       <Tooltips />
     </div>

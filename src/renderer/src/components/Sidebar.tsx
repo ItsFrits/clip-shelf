@@ -15,6 +15,7 @@ import {
 import { fmtCount } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
 import { DatePicker } from './DatePicker'
+import { PresetPicker } from './PresetPicker'
 import { TagSortControl } from './TagSortControl'
 
 const DATE_MODES: { id: DateMode; label: string }[] = [
@@ -64,7 +65,6 @@ export function Sidebar(): React.JSX.Element {
   const filters = useApp((s) => s.filters)
   const setFilters = useApp((s) => s.setFilters)
   const openSettings = useApp((s) => s.openSettings)
-  const updateSettings = useApp((s) => s.updateSettings)
   const settings = useSettings()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [navEl, setNavEl] = useState<HTMLElement | null>(null)
@@ -138,18 +138,12 @@ export function Sidebar(): React.JSX.Element {
       </section>
 
       <section className="side-sec">
+        <h2 className="h-label">Preset</h2>
+        <PresetPicker />
+      </section>
+
+      <section className="side-sec">
         <h2 className="h-label">Status</h2>
-        <div className="toggle-row">
-          <span style={{ fontSize: 13, lineHeight: 1.3 }}>Hide watched &amp; tagged clips</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.hideSorted}
-            aria-label="Hide watched and tagged clips"
-            className={'switch' + (settings.hideSorted ? ' on' : '')}
-            onClick={() => updateSettings({ hideSorted: !settings.hideSorted })}
-          />
-        </div>
         {ALL_STATUSES.map((s) => (
           <label key={s} className="check-row">
             <input type="checkbox" checked={filters.statuses.includes(s)} onChange={() => toggleStatus(s)} />

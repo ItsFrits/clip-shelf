@@ -10,6 +10,7 @@ import {
   isDefaultClipUser,
   markTagsUsed
 } from '../shared/userLogic'
+import { defaultPresets, sanitizePresets } from '../shared/presets'
 import { migrateSortSettings } from '../shared/sort'
 import { JsonStore } from './lib/jsonStore'
 
@@ -20,28 +21,36 @@ function emptyUserData(): UserData {
     tags: [],
     clips: {},
     projects: [],
-    settings: { ...DEFAULT_SETTINGS },
+    settings: normalizeSettings({}, [], []),
     lastBackupAt: null
   }
 }
 
 /** Fill in new settings, and turn old ones into the new form. */
-function normalizeSettings(raw: unknown): UserData['settings'] {
+function normalizeSettings(raw: unknown, tagIds: string[], folderIds: string[]): UserData['settings'] {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const settings = { ...DEFAULT_SETTINGS, ...r, ...migrateSortSettings(r) } as UserData['settings'] & { sort?: unknown }
+  const settings = { ...DEFAULT_SETTINGS, ...r, ...migrateSortSettings(r) } as UserData['settings'] & { sort?: unknown; hideSorted?: unknown }
   delete settings.sort
+  delete settings.hideSorted
+  // The first time there are no presets yet: start with the default ones. After that the list is yours.
+  settings.presets = Array.isArray(r.presets)
+    ? sanitizePresets(r.presets, tagIds, folderIds, Date.now())
+    : defaultPresets(() => randomUUID())
+  if (settings.activePresetId && !settings.presets.some((p) => p.id === settings.activePresetId)) settings.activePresetId = null
   return settings
 }
 
 function normalize(raw: unknown, defaults: UserData): UserData {
   const r = (raw ?? {}) as Partial<UserData>
+  const tags = Array.isArray(r.tags) ? r.tags : []
+  const folders = Array.isArray(r.folders) ? r.folders : defaults.folders
   return {
     v: 1,
-    folders: Array.isArray(r.folders) ? r.folders : defaults.folders,
-    tags: Array.isArray(r.tags) ? r.tags : [],
+    folders,
+    tags,
     clips: r.clips && typeof r.clips === 'object' ? r.clips : {},
     projects: Array.isArray(r.projects) ? r.projects : [],
-    settings: normalizeSettings(r.settings),
+    settings: normalizeSettings(r.settings, tags.map((t) => t.id), folders.map((f) => f.id)),
     lastBackupAt: typeof r.lastBackupAt === 'number' ? r.lastBackupAt : null
   }
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type {
   Clip,
   ClipBulkPatch,
+  PresetParts,
   ClipUser,
   FolderInfo,
   JobProgress,
@@ -12,13 +13,23 @@ import type {
   UserData
 } from '@shared/types'
 import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '@shared/savedFilters'
+import { effectiveKeymap } from '@shared/keymap'
+import {
+  capturePreset,
+  filtersWithPreset,
+  freeKey,
+  isDefaultFilters,
+  isPresetModified,
+  scopedFilters,
+  uniqueName
+} from '@shared/presets'
 import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, markTagsUsed, whatsNewNotice } from '@shared/userLogic'
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { settingsTabOnOpen } from '@shared/uiPrefs'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
 
 export type View = 'library' | 'player' | 'settings'
-export type SettingsTab = 'general' | 'folders' | 'playback' | 'tags' | 'hotkeys' | 'backup' | 'about'
+export type SettingsTab = 'general' | 'folders' | 'playback' | 'tags' | 'presets' | 'hotkeys' | 'backup' | 'about'
 
 export interface Toast {
   id: number
@@ -74,6 +85,14 @@ interface AppState {
   init: () => Promise<void>
   setFilters: (patch: Partial<Filters>) => void
   resetFilters: () => void
+  /** Switch to a preset, or to all clips (null). Gives a toast to go back when there were unsaved changes. */
+  applyPreset: (id: string | null) => void
+  /** Save the changes made to the active preset. */
+  savePresetChanges: () => void
+  /** Make a new preset from the filters as they are now, and make it the active one. */
+  createPreset: (name: string, parts: PresetParts) => string
+  /** Keep the filters but stop following the active preset. */
+  ignorePreset: () => void
   setView: (view: View) => void
   openSettings: (tab?: SettingsTab) => void
 
@@ -100,6 +119,9 @@ interface AppState {
   dismissToast: (id: number) => void
   ask: (opts: Omit<ConfirmState, 'resolve'>) => Promise<boolean>
   setCapturing: (on: boolean) => void
+  /** The dialog for making a new preset from the current filters. */
+  newPresetOpen: boolean
+  setNewPresetOpen: (open: boolean) => void
 }
 
 const emptyUser = (): UserData => ({
@@ -219,8 +241,71 @@ export const useApp = create<AppState>((set, get) => ({
   setFilters: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })),
   resetFilters: () => {
     set((s) => ({ filters: { ...DEFAULT_FILTERS, anchor: Date.now(), query: s.filters.query } }))
-    get().updateSettings({ hideSorted: false })
   },
+  applyPreset: (id) => {
+    const s = get()
+    const settings = s.user.settings
+    const presets = settings.presets ?? []
+    const target = id ? presets.find((p) => p.id === id) : null
+    if (id && !target) return
+    const tagIds = s.user.tags.map((t) => t.id)
+    const folderIds = s.user.folders.map((f) => f.id)
+    const resolve = (p: (typeof presets)[number]): typeof p => ({ ...p, filters: scopedFilters(sanitizeSavedFilters(p.filters, tagIds, folderIds, 0), p.parts) })
+    const current = toSavedFilters(s.filters)
+    const active = presets.find((p) => p.id === settings.activePresetId)
+    const unsaved = active ? isPresetModified(resolve(active), current, settings.sortRules) : !isDefaultFilters(current)
+    const before = { filters: s.filters, activePresetId: settings.activePresetId, sortRules: settings.sortRules }
+
+    if (target) {
+      const next = sanitizeSavedFilters(filtersWithPreset(resolve(target), current), tagIds, folderIds, Date.now())
+      set({ filters: { ...s.filters, ...next } })
+      get().updateSettings({ activePresetId: target.id, ...(target.parts.sort ? { sortRules: target.sortRules } : {}) })
+    } else {
+      set({ filters: { ...DEFAULT_FILTERS, anchor: Date.now(), query: s.filters.query } })
+      get().updateSettings({ activePresetId: null })
+    }
+    if (unsaved) {
+      const message = !target
+        ? 'Showing all clips. Your changes were not saved.'
+        : target.id === before.activePresetId
+          ? `Went back to “${target.name}” as it was saved.`
+          : `Switched to “${target.name}”. Your changes were not saved.`
+      get().toast(message, {
+        actionLabel: 'Undo',
+        action: () => {
+          set({ filters: before.filters })
+          get().updateSettings({ activePresetId: before.activePresetId, sortRules: before.sortRules })
+        }
+      })
+    }
+  },
+  savePresetChanges: () => {
+    const s = get()
+    const settings = s.user.settings
+    const presets = settings.presets ?? []
+    const active = presets.find((p) => p.id === settings.activePresetId)
+    if (!active) return
+    const saved = capturePreset(active, toSavedFilters(s.filters), active.parts, settings.sortRules)
+    // A preset that does not keep the sort order keeps the one it had.
+    const next = active.parts.sort ? saved : { ...saved, sortRules: active.sortRules }
+    get().updateSettings({ presets: presets.map((p) => (p.id === active.id ? next : p)) })
+  },
+  createPreset: (name, parts) => {
+    const s = get()
+    const settings = s.user.settings
+    const presets = settings.presets ?? []
+    const id = crypto.randomUUID()
+    const taken = Object.values(effectiveKeymap(settings.keymap)).flat()
+    const preset = capturePreset(
+      { id, name: uniqueName(name, presets), hotkey: freeKey(presets, taken) },
+      toSavedFilters(s.filters),
+      parts,
+      settings.sortRules
+    )
+    get().updateSettings({ presets: [...presets, preset], activePresetId: id })
+    return id
+  },
+  ignorePreset: () => get().updateSettings({ activePresetId: null }),
   setView: (view) => set({ view }),
   openSettings: (tab) =>
     set((s) => ({
@@ -444,7 +529,9 @@ export const useApp = create<AppState>((set, get) => ({
         }
       })
     }),
-  setCapturing: (on) => set({ capturingKey: on })
+  setCapturing: (on) => set({ capturingKey: on }),
+  newPresetOpen: false,
+  setNewPresetOpen: (open) => set({ newPresetOpen: open })
 }))
 
 // Keep the list of visible clips up to date whenever something it depends on changes.
@@ -456,7 +543,6 @@ useApp.subscribe((s, prev) => {
     s.user.clips !== prev.user.clips ||
     s.user.tags !== prev.user.tags ||
     s.filters !== prev.filters ||
-    a.hideSorted !== b.hideSorted ||
     a.sortRules !== b.sortRules ||
     a.randomSeed !== b.randomSeed
   ) {

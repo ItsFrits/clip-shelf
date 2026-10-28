@@ -93,7 +93,7 @@ export function Library(): React.JSX.Element {
   }, [cardH, rows, virt])
 
   // Back to the top when the filters change.
-  const filterSig = JSON.stringify([filters, settings.hideSorted, settings.sortRules, settings.randomSeed, group])
+  const filterSig = JSON.stringify([filters, settings.sortRules, settings.randomSeed, group])
   useEffect(() => {
     if (firstFilterRun.current) {
       firstFilterRun.current = false
@@ -136,7 +136,7 @@ export function Library(): React.JSX.Element {
   }, [visible, user.clips])
 
   const anyOnline = folders.some((f) => f.online)
-  const filtered = isFiltered(filters, settings.hideSorted)
+  const filtered = isFiltered(filters)
   const chips: { id: string; label: string; remove: () => void }[] = []
   if (filters.statuses.length !== 4) {
     chips.push({
@@ -169,7 +169,6 @@ export function Library(): React.JSX.Element {
       remove: () => setFilters({ folderIds: filters.folderIds.filter((f) => f !== id) })
     })
   }
-  if (settings.hideSorted) chips.push({ id: 'hide', label: 'Hiding watched & tagged', remove: () => updateSettings({ hideSorted: false }) })
 
   const noFolders = folders.length === 0
   const loading = !noFolders && clips.size === 0

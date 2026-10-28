@@ -15,6 +15,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'back', label: 'Back / clear selection', scope: 'global', defaults: ['Escape'] },
   { id: 'random', label: 'Random clip', scope: 'global', defaults: ['R'] },
 
+  { id: 'presetAll', label: 'Show all clips (no filters)', scope: 'library', defaults: [] },
   { id: 'selectAll', label: 'Select all visible clips', scope: 'library', defaults: ['Ctrl+A'] },
   { id: 'deleteClips', label: 'Move selected clips to recycle bin', scope: 'library', defaults: ['Delete'] },
 

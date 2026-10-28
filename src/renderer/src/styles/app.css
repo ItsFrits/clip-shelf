@@ -2364,3 +2364,206 @@ select option {
   background: var(--panel-2);
   color: var(--text);
 }
+
+/* Presets (see PresetPicker.tsx) */
+.preset-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preset-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--input);
+  color: var(--text);
+  text-align: left;
+  font-weight: 600;
+}
+.preset-trigger:hover,
+.preset-trigger.open {
+  border-color: #4a5266;
+}
+.preset-trigger.open {
+  border-color: var(--accent);
+}
+.preset-trigger-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preset-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.preset-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.preset-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pp-list {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border-2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+  animation: cal-in var(--anim-fast) ease-out;
+  overflow: hidden;
+  user-select: none;
+}
+.pp-pinned {
+  padding: 6px 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pp-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 8px 4px;
+  padding: 0 10px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+}
+.pp-search:focus-within {
+  border-color: var(--accent);
+}
+.pp-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  user-select: text;
+}
+.pp-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 6px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-2);
+}
+.pp-row.active {
+  background: var(--input);
+  color: var(--text);
+}
+.pp-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text);
+}
+.pp-row.chosen .pp-name {
+  color: var(--accent-soft);
+}
+.pp-row svg {
+  color: var(--accent);
+}
+.pp-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+.pp-key {
+  flex: none;
+}
+.pp-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-new .pp-name {
+  color: var(--accent-soft);
+}
+.pp-empty {
+  padding: 10px;
+  font-size: 12px;
+}
+.np-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Presets tab in Settings */
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.preset-row:last-child {
+  border-bottom: 0;
+}
+.preset-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.preset-row-name {
+  height: 34px;
+  font-weight: 600;
+}
+.preset-row-sub {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preset-row .err {
+  color: var(--danger);
+  font-size: 12px;
+}

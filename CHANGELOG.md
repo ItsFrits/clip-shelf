@@ -5,6 +5,12 @@ All notable changes to Clip Shelf. Newest first.
 ## Unreleased
 
 ### Added
+- Presets. A preset is a set of filters (status, tags and rating, and if you want also the date, the folders and the sort order) that you can switch to with one click. The new Preset list in the sidebar has All clips on top, then New preset… and a search field, and then your presets, each with the number of clips it shows and its first filters.
+- "New preset…" (also "Save as preset…" while your filters are Custom) makes a preset from the filters as they are now, including changes you have not saved. The preset you came from stays as it was saved, like a new branch in git.
+- When you change the filters of a preset, a bar under the list asks what to do: Save changes to the preset, Revert to how it was saved, or Ignore to keep the filters but stop following the preset (they become Custom).
+- Switching to another preset while you have unsaved changes does not ask anything. A message with Undo brings your previous filters back.
+- Every preset gets the first free key from Alt+1 to Alt+9, and then Alt+0. In Settings, the new Presets tab lets you rename, reorder and delete presets, change or remove their keys, and add the default presets again. The key for All clips can be set under Hotkeys.
+- Two presets to start with: Unwatched (only new clips) and To tag (new and watched clips). You can delete them.
 - A sort menu in the library. Instead of one Newest/Oldest button you can now sort on Date, Rating, Length, Size, Name or Random, as many rules as there are fields. The top rule counts most, the next ones decide when clips are equal (for example highest rated first, and newest first among clips with the same rating). Change a direction with one click, remove a rule with the X, and change the priority by dragging the handle or with Alt and the up or down arrow key.
 - Random sorting keeps the same order until you press "Shuffle again", so clips do not jump around while you work. Random is always the last rule.
 - Tooltips in the whole app now have their own look, instead of the plain system ones. They show up after a short moment, also when you reach a button with the keyboard, and they stay out of the way of the window edges.
@@ -19,6 +25,7 @@ All notable changes to Clip Shelf. Newest first.
 - Your old Newest/Oldest choice is carried over to the new sort menu.
 
 ### Removed
+- The switch "Hide watched & tagged clips" in the sidebar. The To tag preset does the same.
 - The "Sort mode" button in the top bar, which did not do anything yet.
 
 ## 0.4.0

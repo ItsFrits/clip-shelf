@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { ACTIONS, type ActionScope, chordFromEvent, effectiveKeymap } from '@shared/keymap'
+import { presetForKey } from '@shared/presets'
 import { useApp } from './store'
 
 type Handler = () => void
@@ -39,6 +40,9 @@ export function runAction(id: string): boolean {
       else if (s.view === 'settings') s.setView('library')
       else if (s.selected.size > 0) s.clearSelection()
       else return false
+      return true
+    case 'presetAll':
+      s.applyPreset(null)
       return true
     case 'selectAll':
       s.selectAll()
@@ -91,6 +95,14 @@ export function useHotkeys(): void {
           if (active instanceof HTMLButtonElement) active.blur()
           if (typing && chord === 'Escape' && active instanceof HTMLElement) active.blur()
           return
+        }
+      }
+      // The keys of the presets work in the library.
+      if (s.view === 'library') {
+        const preset = presetForKey(s.user.settings.presets ?? [], chord)
+        if (preset) {
+          e.preventDefault()
+          s.applyPreset(preset.id)
         }
       }
     }
