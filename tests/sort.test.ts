@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Clip, SortRule } from '../src/shared/types'
 import {
+  DEFAULT_SORT,
   MAX_SORT_RULES,
   addRule,
   availableFields,
@@ -63,10 +64,10 @@ describe('sortClips', () => {
 })
 
 describe('sanitizeSortRules', () => {
-  it('falls back to oldest first', () => {
-    expect(sanitizeSortRules(undefined)).toEqual([asc('date')])
-    expect(sanitizeSortRules([])).toEqual([asc('date')])
-    expect(sanitizeSortRules([{ field: 'nope', dir: 'asc' }])).toEqual([asc('date')])
+  it('falls back to newest first', () => {
+    expect(sanitizeSortRules(undefined)).toEqual([desc('date')])
+    expect(sanitizeSortRules([])).toEqual([desc('date')])
+    expect(sanitizeSortRules([{ field: 'nope', dir: 'asc' }])).toEqual([desc('date')])
   })
   it('drops duplicates, rules after random, and extra rules', () => {
     expect(sanitizeSortRules([asc('name'), asc('name'), desc('size')])).toEqual([asc('name'), desc('size')])
@@ -83,7 +84,7 @@ describe('migrateSortSettings', () => {
   it('turns the old choice into rules', () => {
     expect(migrateSortSettings({ sort: 'newest' }).sortRules).toEqual([desc('date')])
     expect(migrateSortSettings({ sort: 'oldest' }).sortRules).toEqual([asc('date')])
-    expect(migrateSortSettings({}).sortRules).toEqual([asc('date')])
+    expect(migrateSortSettings({}).sortRules).toEqual([desc('date')])
   })
   it('keeps rules that are already there, and the seed', () => {
     const m = migrateSortSettings({ sortRules: [desc('rating')], randomSeed: 7.9, sort: 'newest' })
@@ -134,6 +135,7 @@ describe('editing rules', () => {
 describe('sortButtonLabel', () => {
   it('names the first rule and counts the others', () => {
     expect(sortButtonLabel([asc('date')])).toBe('Oldest first')
+    expect(sortButtonLabel(DEFAULT_SORT)).toBe('Newest first')
     expect(sortButtonLabel([desc('rating'), asc('date')])).toBe('Highest rated first +1')
     expect(sortButtonLabel([asc('random')])).toBe('Random order')
   })

@@ -33,7 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hideSorted: false,
   thumbSize: 3,
   group: 'day',
-  sortRules: [{ field: 'date', dir: 'asc' }],
+  sortRules: [{ field: 'date', dir: 'desc' }],
   randomSeed: 1
 }
 

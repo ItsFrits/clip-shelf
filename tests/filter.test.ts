@@ -32,12 +32,13 @@ const user: UserData = {
 }
 const ctx = { user, tags: user.tags, folders: [] }
 const run = (f: Partial<typeof DEFAULT_FILTERS>, s: Partial<typeof DEFAULT_SETTINGS> = {}): string[] =>
-  computeVisible(clips, ctx, { ...DEFAULT_FILTERS, ...f }, { ...DEFAULT_SETTINGS, ...s }).map((c) => c.key)
+  computeVisible(clips, ctx, { ...DEFAULT_FILTERS, ...f }, { ...DEFAULT_SETTINGS, sortRules: [{ field: 'date', dir: 'asc' }], ...s }).map((c) => c.key)
 
 describe('computeVisible', () => {
-  it('shows everything by default, oldest first', () => {
+  it('shows everything, oldest first or newest first', () => {
     expect(run({})).toEqual(['a', 'b', 'c', 'd'])
     expect(run({}, { sortRules: [{ field: 'date', dir: 'desc' }] })).toEqual(['d', 'c', 'b', 'a'])
+    expect(computeVisible(clips, ctx, DEFAULT_FILTERS, DEFAULT_SETTINGS).map((c) => c.key)).toEqual(['d', 'c', 'b', 'a'])
   })
   it('sorts by rating, with the next rule breaking ties and unrated last', () => {
     const rules = [{ field: 'rating' as const, dir: 'desc' as const }, { field: 'date' as const, dir: 'desc' as const }]

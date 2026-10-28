@@ -293,31 +293,6 @@ svg {
 .help:focus-visible {
   color: var(--text);
 }
-.help::after {
-  content: attr(data-tip);
-  position: absolute;
-  top: calc(100% + 8px);
-  left: -48px;
-  width: 220px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--card);
-  border: 1px solid var(--border-2);
-  color: var(--text);
-  font-size: 12px;
-  line-height: 1.4;
-  letter-spacing: normal;
-  text-transform: none;
-  font-weight: 400;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-  display: none;
-  pointer-events: none;
-  z-index: 20;
-}
-.help:hover::after,
-.help:focus-visible::after {
-  display: block;
-}
 .seg.tag-sort button {
   flex: 1;
   padding: 4px 8px;
@@ -2145,7 +2120,8 @@ html[data-anim='off'] button:active {
 .seg button:disabled:hover {
   color: var(--text-2);
 }
-.btn.open {
+.btn.open,
+.btn.open:hover:not(:disabled) {
   border-color: var(--accent);
 }
 .sortmenu {
@@ -2160,6 +2136,7 @@ html[data-anim='off'] button:active {
   flex-direction: column;
   gap: 10px;
   animation: cal-in var(--anim-fast) ease-out;
+  user-select: none;
 }
 .sortmenu-head {
   display: flex;
@@ -2173,22 +2150,28 @@ html[data-anim='off'] button:active {
 .sortmenu-rules {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 6px; /* ROW_GAP in SortMenu.tsx */
 }
 .sortrule {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  height: 40px; /* ROW_H in SortMenu.tsx */
   padding: 0 6px 0 2px;
   border-radius: 10px;
   background: var(--card);
   border: 1px solid var(--border);
   transition: border-color var(--anim-fast) var(--ease), box-shadow var(--anim-fast) var(--ease);
+  position: relative;
 }
 .sortrule.dragging {
+  z-index: 2;
   border-color: var(--accent);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.sortrule.dragging .sortrule-grip {
+  cursor: grabbing;
+  color: var(--text);
 }
 .sortrule-grip {
   display: grid;
@@ -2270,4 +2253,72 @@ html[data-anim='off'] button:active {
   width: 100%;
   opacity: 0;
   cursor: pointer;
+}
+
+/* Dropdowns: dark, like the rest of the app (the list that opens is drawn by the system). */
+select {
+  color-scheme: dark;
+}
+select option {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+/* The Group by pills are as tall as the buttons next to them. */
+.lib-tools .seg button {
+  height: 36px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Name and size on a card */
+.card-file {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.card-file .cf-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-file .cf-size {
+  flex: none;
+}
+.card-file .sorted {
+  color: var(--text);
+}
+
+/* Tooltips (see Tooltips.tsx) */
+.tip {
+  position: fixed;
+  z-index: 200;
+  max-width: 260px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border-2);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  overflow-wrap: anywhere;
+  animation: tip-in var(--anim-fast) var(--ease);
+}
+.tip.above {
+  --tip-from: 3px;
+}
+.tip.below {
+  --tip-from: -3px;
+}
+@keyframes tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--tip-from, -3px));
+  }
 }

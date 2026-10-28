@@ -15,10 +15,15 @@ import {
   setRuleField,
   sortButtonLabel
 } from '@shared/sort'
+import { motionMs } from '../lib/motion'
 import { useApp, useSettings } from '../lib/store'
 
 const WIDTH = 360
 const DRAG_START = 3
+/** Height of a rule and the gap between rules. Keep in sync with .sortrule and .sortmenu-rules in the CSS. */
+const ROW_H = 40
+const ROW_GAP = 6
+const SLOT = ROW_H + ROW_GAP
 
 /** The sort button in the library toolbar, and the popup with the sort rules. */
 export function SortMenu(): React.JSX.Element {
@@ -55,8 +60,13 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
   // While a rule is dragged: the order it would have, and the rule that is being held.
   const [dragOrder, setDragOrder] = useState<SortRule[] | null>(null)
   const [dragging, setDragging] = useState<SortField | null>(null)
-  const press = useRef<{ field: SortField; pointerId: number; startY: number } | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const press = useRef<{ field: SortField; pointerId: number; startY: number; grab: number; listTop: number } | null>(null)
   const liveOrder = useRef<SortRule[] | null>(null)
+  // Where the held rule is, in pixels from the top of the list (so it follows the pointer).
+  const heldTop = useRef(0)
+  const lastTop = useRef(new Map<string, number>())
+  const dropFrom = useRef<{ field: SortField; from: number } | null>(null)
 
   const shown = dragOrder ?? rules
   const setRules = (next: SortRule[]): void => updateSettings({ sortRules: next })
@@ -102,41 +112,75 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
     return () => setCapturing(false)
   }, [setCapturing])
 
-  // Give the keyboard focus back to the grip of the rule that was just moved.
+  // Put the held rule under the pointer. It sits in its slot in the list and is moved by a transform.
+  const holdTransform = (field: SortField, order: readonly SortRule[]): void => {
+    const el = rowRefs.current.get(field)
+    const index = order.findIndex((r) => r.field === field)
+    if (el && index >= 0) el.style.transform = `translateY(${heldTop.current - index * SLOT}px)`
+  }
+
+  // After every change of order: slide the other rules to their new places, put the held rule back under
+  // the pointer, let a dropped rule glide into its slot, and give the keyboard focus back.
   useLayoutEffect(() => {
-    if (!focusField.current) return
-    ref.current?.querySelector<HTMLElement>(`[data-grip="${focusField.current}"]`)?.focus()
-    focusField.current = null
+    const ms = motionMs(160)
+    const held = press.current && dragging ? press.current.field : null
+    const tops = lastTop.current
+    for (const rule of shown) {
+      const el = rowRefs.current.get(rule.field)
+      if (!el) continue
+      const now = el.offsetTop
+      const before = tops.get(rule.field)
+      if (ms > 0 && before !== undefined && before !== now && rule.field !== held) {
+        el.animate([{ transform: `translateY(${before - now}px)` }, { transform: 'translateY(0)' }], { duration: ms, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
+      }
+      tops.set(rule.field, now)
+    }
+    if (held) holdTransform(held, shown)
+    const drop = dropFrom.current
+    if (drop) {
+      dropFrom.current = null
+      const el = rowRefs.current.get(drop.field)
+      if (el && ms > 0 && drop.from !== 0) {
+        el.animate([{ transform: `translateY(${drop.from}px)` }, { transform: 'translateY(0)' }], { duration: ms, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
+      }
+    }
+    if (focusField.current) {
+      ref.current?.querySelector<HTMLElement>(`[data-grip="${focusField.current}"]`)?.focus()
+      focusField.current = null
+    }
   })
 
   const startDrag = (e: React.PointerEvent, field: SortField): void => {
-    if (e.button !== 0) return
-    press.current = { field, pointerId: e.pointerId, startY: e.clientY }
+    // React also sends pointer events from a disabled button, so check here: one rule, or Random, cannot move.
+    if (e.button !== 0 || rules.length < 2 || field === 'random') return
+    const row = rowRefs.current.get(field)
+    const list = listRef.current
+    if (!row || !list) return
+    const rowTop = row.getBoundingClientRect().top
+    press.current = { field, pointerId: e.pointerId, startY: e.clientY, grab: e.clientY - rowTop, listTop: list.getBoundingClientRect().top }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const moveDrag = (e: React.PointerEvent): void => {
     const p = press.current
     if (!p) return
-    if (!dragging && Math.abs(e.clientY - p.startY) < DRAG_START) return
-    if (!dragging) setDragging(p.field)
-    const base = liveOrder.current ?? rules
-    const from = base.findIndex((r) => r.field === p.field)
-    // The rule goes before the first other rule whose middle is below the pointer.
-    const others = base.filter((r) => r.field !== p.field)
-    let to = others.length
-    for (let i = 0; i < others.length; i++) {
-      const el = rowRefs.current.get(others[i].field)
-      if (!el) continue
-      const r = el.getBoundingClientRect()
-      if (e.clientY < r.top + r.height / 2) {
-        to = i
-        break
-      }
+    if (!dragging) {
+      if (Math.abs(e.clientY - p.startY) < DRAG_START) return
+      setDragging(p.field)
     }
-    if (to === from) return
-    const next = moveRule(base, from, to)
-    liveOrder.current = next
-    setDragOrder(next)
+    const base = liveOrder.current ?? rules
+    // The rule follows the pointer, but stays inside the list (and above Random).
+    const last = base.length - (base[base.length - 1].field === 'random' ? 2 : 1)
+    heldTop.current = Math.min(Math.max(e.clientY - p.grab - p.listTop, 0), last * SLOT)
+    // The slot it is closest to is where it goes.
+    const to = Math.round(heldTop.current / SLOT)
+    const from = base.findIndex((r) => r.field === p.field)
+    if (to !== from) {
+      const next = moveRule(base, from, to)
+      liveOrder.current = next
+      setDragOrder(next)
+    } else {
+      holdTransform(p.field, base)
+    }
   }
   const endDrag = (e: React.PointerEvent): void => {
     const p = press.current
@@ -144,7 +188,14 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
     if (!p) return
     if (e.currentTarget.hasPointerCapture(p.pointerId)) e.currentTarget.releasePointerCapture(p.pointerId)
     const next = liveOrder.current
+    const order = next ?? rules
     liveOrder.current = null
+    const el = rowRefs.current.get(p.field)
+    if (el && el.style.transform) {
+      const index = order.findIndex((r) => r.field === p.field)
+      dropFrom.current = { field: p.field, from: heldTop.current - index * SLOT }
+      el.style.transform = ''
+    }
     setDragOrder(null)
     setDragging(null)
     if (next) {
@@ -179,7 +230,7 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
         <strong>Sort clips</strong>
         <span className="muted">The top rule counts most. The next ones decide when clips are equal.</span>
       </div>
-      <div className="sortmenu-rules">
+      <div className="sortmenu-rules" ref={listRef}>
         {shown.map((rule, i) => {
           const info = FIELD_INFO[rule.field]
           const isRandom = rule.field === 'random'

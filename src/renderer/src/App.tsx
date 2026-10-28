@@ -5,6 +5,7 @@ import { Player } from './components/Player'
 import { Settings } from './components/Settings'
 import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
+import { Tooltips } from './components/Tooltips'
 import { TopBar } from './components/TopBar'
 import { useHotkeys } from './lib/hotkeys'
 import { DIALOG_DIM, MODAL_DIM, combineDim, resolveMotion } from '@shared/uiPrefs'
@@ -84,6 +85,7 @@ export default function App(): React.JSX.Element {
       <StatusBar />
       <ConfirmDialog />
       <Toasts />
+      <Tooltips />
     </div>
   )
 }

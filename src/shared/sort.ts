@@ -21,7 +21,7 @@ export const DEFAULT_DIRECTION: Record<SortField, SortRule['dir']> = {
   random: 'asc'
 }
 
-export const DEFAULT_SORT: SortRule[] = [{ field: 'date', dir: 'asc' }]
+export const DEFAULT_SORT: SortRule[] = [{ field: 'date', dir: 'desc' }]
 export const MAX_SORT_RULES = 5
 
 /**
@@ -49,8 +49,8 @@ export function sanitizeSortRules(raw: unknown): SortRule[] {
 export function migrateSortSettings(raw: Record<string, unknown>): { sortRules: SortRule[]; randomSeed: number } {
   const sortRules = Array.isArray(raw.sortRules)
     ? sanitizeSortRules(raw.sortRules)
-    : raw.sort === 'newest'
-      ? [{ field: 'date' as const, dir: 'desc' as const }]
+    : raw.sort === 'oldest'
+      ? [{ field: 'date' as const, dir: 'asc' as const }]
       : DEFAULT_SORT.map((r) => ({ ...r }))
   const seed = raw.randomSeed
   return { sortRules, randomSeed: typeof seed === 'number' && Number.isFinite(seed) ? Math.trunc(seed) : 1 }
@@ -103,18 +103,19 @@ export function sortClips(clips: Clip[], ratingOf: (key: string) => number, rule
         return shuffleValue(c.key, seed)
     }
   }
-  const out = [...clips]
-  out.sort((a, b) => {
-    for (const r of rules) {
-      const x = value(a, r.field)
-      const y = value(b, r.field)
+  // Work out each clip's values once, not on every comparison (there can be thousands of clips).
+  const rows = clips.map((clip) => ({ clip, values: rules.map((r) => value(clip, r.field)) }))
+  rows.sort((a, b) => {
+    for (let i = 0; i < rules.length; i++) {
+      const x = a.values[i]
+      const y = b.values[i]
       if (x === y) continue
       const cmp = x < y ? -1 : 1
-      return r.field === 'random' || r.dir === 'asc' ? cmp : -cmp
+      return rules[i].field === 'random' || rules[i].dir === 'asc' ? cmp : -cmp
     }
-    return a.date - b.date || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
+    return a.clip.date - b.clip.date || (a.clip.name < b.clip.name ? -1 : a.clip.name > b.clip.name ? 1 : 0)
   })
-  return out
+  return rows.map((r) => r.clip)
 }
 
 /** Random decides the whole order, so it always stays last. */

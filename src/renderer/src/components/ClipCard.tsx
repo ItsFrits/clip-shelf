@@ -3,7 +3,7 @@ import { memo } from 'react'
 import type { Clip } from '@shared/types'
 import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
-import { fmtDay, fmtDuration, fmtTime } from '../lib/format'
+import { fmtBytes, fmtDay, fmtDuration, fmtTime } from '../lib/format'
 import { useApp } from '../lib/store'
 
 interface Props {
@@ -22,6 +22,10 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
     const online = new Set(s.folders.filter((f) => f.online).map((f) => f.id))
     return !clip.files.some((f) => online.has(f.folderId))
   })
+
+  // When you sort on name or size, that part of the card lights up so you can see what the order is based on.
+  const sortedOnName = useApp((s) => s.user.settings.sortRules.some((r) => r.field === 'name'))
+  const sortedOnSize = useApp((s) => s.user.settings.sortRules.some((r) => r.field === 'size'))
 
   const status = clipStatus(user)
   const tags = user.tags.map((id) => tagById.get(id)?.name).filter((n): n is string => !!n)
@@ -116,7 +120,8 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
         )}
       </div>
       <div className="card-file" title={clip.files[0]?.path}>
-        {clip.name}
+        <span className={'cf-name' + (sortedOnName ? ' sorted' : '')}>{clip.name}</span>
+        <span className={'cf-size' + (sortedOnSize ? ' sorted' : '')}>{fmtBytes(clip.size)}</span>
       </div>
     </div>
   )
