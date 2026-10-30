@@ -40,7 +40,11 @@ export default function App(): React.JSX.Element {
   const modalWasOpen = useRef(false)
   useEffect(() => {
     const alpha = combineDim([modalOpen ? MODAL_DIM : 0, confirmOpen ? DIALOG_DIM : 0])
-    const motion = resolveMotion(animations, animationSpeed, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    const motion = resolveMotion(
+      animations,
+      animationSpeed,
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
     // Only the opening of the settings window fades in. Closing and dialogs are instant.
     const fadeMs = modalOpen && !modalWasOpen.current && !motion.off ? 50 * motion.scale : 0
     modalWasOpen.current = modalOpen

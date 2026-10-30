@@ -17,7 +17,9 @@ const report = (text: string): void => {
   if (reported++ < 20) window.api.logError(text)
 }
 window.addEventListener('error', (e) => report(`${e.message} (${e.filename}:${e.lineno})`))
-window.addEventListener('unhandledrejection', (e) => report('Unhandled rejection: ' + String(e.reason?.stack ?? e.reason)))
+window.addEventListener('unhandledrejection', (e) =>
+  report('Unhandled rejection: ' + String(e.reason?.stack ?? e.reason))
+)
 
 // No StrictMode: the player connects a video element to the Web Audio graph, which can only happen once.
 createRoot(document.getElementById('root')!).render(<App />)

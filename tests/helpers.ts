@@ -18,7 +18,16 @@ export function makeMp4(
   trackNames: string[] = [],
   field: 'handler_name' | 'title' = 'handler_name'
 ): void {
-  const args = ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `testsrc=size=320x180:rate=30:duration=${seconds}`]
+  const args = [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-f',
+    'lavfi',
+    '-i',
+    `testsrc=size=320x180:rate=30:duration=${seconds}`
+  ]
   for (let i = 0; i < audioTracks; i++) {
     args.push('-f', 'lavfi', '-i', `sine=frequency=${440 * (i + 1)}:duration=${seconds}`)
   }
@@ -30,12 +39,28 @@ export function makeMp4(
 }
 
 export function makeM4a(file: string, seconds = 3): void {
-  execFileSync(tools.ffmpegPath, ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `sine=frequency=220:duration=${seconds}`, '-c:a', 'aac', file])
+  execFileSync(tools.ffmpegPath, [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-f',
+    'lavfi',
+    '-i',
+    `sine=frequency=220:duration=${seconds}`,
+    '-c:a',
+    'aac',
+    file
+  ])
 }
 
 export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
-export async function waitFor(cond: () => boolean, timeoutMs = 15000, label = 'condition'): Promise<void> {
+export async function waitFor(
+  cond: () => boolean,
+  timeoutMs = 15000,
+  label = 'condition'
+): Promise<void> {
   const start = Date.now()
   while (!cond()) {
     if (Date.now() - start > timeoutMs) throw new Error('Timed out waiting for ' + label)

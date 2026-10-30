@@ -45,15 +45,27 @@ describe('isDefaultFilters', () => {
 describe('isPresetModified', () => {
   it('is not modified right after saving, whatever the order', () => {
     const p = preset(f({ statuses: ['watched', 'new'], tagIds: ['b', 'a'], tagMode: 'all' }))
-    expect(isPresetModified(p, f({ statuses: ['new', 'watched'], tagIds: ['a', 'b'], tagMode: 'all' }), desc)).toBe(false)
+    expect(
+      isPresetModified(
+        p,
+        f({ statuses: ['new', 'watched'], tagIds: ['a', 'b'], tagMode: 'all' }),
+        desc
+      )
+    ).toBe(false)
   })
   it('is modified when a status, tag or rating changes', () => {
     const p = preset(f({ statuses: ['new'], tagIds: ['a'] }))
     expect(isPresetModified(p, f({ statuses: ['new', 'tagged'], tagIds: ['a'] }), desc)).toBe(true)
     expect(isPresetModified(p, f({ statuses: ['new'], tagIds: ['a', 'b'] }), desc)).toBe(true)
-    expect(isPresetModified(p, f({ statuses: ['new'], tagIds: ['a'], minRating: 2 }), desc)).toBe(true)
-    expect(isPresetModified(p, f({ statuses: ['new'], tagIds: ['a'], showUnrated: false }), desc)).toBe(true)
-    expect(isPresetModified(p, f({ statuses: ['new'], tagIds: ['a'], excludeTagIds: ['z'] }), desc)).toBe(true)
+    expect(isPresetModified(p, f({ statuses: ['new'], tagIds: ['a'], minRating: 2 }), desc)).toBe(
+      true
+    )
+    expect(
+      isPresetModified(p, f({ statuses: ['new'], tagIds: ['a'], showUnrated: false }), desc)
+    ).toBe(true)
+    expect(
+      isPresetModified(p, f({ statuses: ['new'], tagIds: ['a'], excludeTagIds: ['z'] }), desc)
+    ).toBe(true)
   })
   it('ignores the tag mode until there are two tags', () => {
     const p = preset(f({ tagIds: ['a'], tagMode: 'any' }))
@@ -63,13 +75,29 @@ describe('isPresetModified', () => {
   })
   it('ignores date and folders when the preset does not keep them', () => {
     const p = preset(f({ statuses: ['new'] }))
-    expect(isPresetModified(p, f({ statuses: ['new'], dateMode: 'week', anchor: WEEK, folderIds: ['x'] }), desc)).toBe(false)
+    expect(
+      isPresetModified(
+        p,
+        f({ statuses: ['new'], dateMode: 'week', anchor: WEEK, folderIds: ['x'] }),
+        desc
+      )
+    ).toBe(false)
   })
   it('compares date and folders when the preset keeps them', () => {
-    const p = preset(f({ dateMode: 'week', anchor: WEEK, folderIds: ['x'] }), { date: true, folders: true, sort: false })
-    expect(isPresetModified(p, f({ dateMode: 'week', anchor: WEEK, folderIds: ['x'] }), desc)).toBe(false)
-    expect(isPresetModified(p, f({ dateMode: 'month', anchor: WEEK, folderIds: ['x'] }), desc)).toBe(true)
-    expect(isPresetModified(p, f({ dateMode: 'week', anchor: WEEK, folderIds: [] }), desc)).toBe(true)
+    const p = preset(f({ dateMode: 'week', anchor: WEEK, folderIds: ['x'] }), {
+      date: true,
+      folders: true,
+      sort: false
+    })
+    expect(isPresetModified(p, f({ dateMode: 'week', anchor: WEEK, folderIds: ['x'] }), desc)).toBe(
+      false
+    )
+    expect(
+      isPresetModified(p, f({ dateMode: 'month', anchor: WEEK, folderIds: ['x'] }), desc)
+    ).toBe(true)
+    expect(isPresetModified(p, f({ dateMode: 'week', anchor: WEEK, folderIds: [] }), desc)).toBe(
+      true
+    )
   })
   it('compares the sort order only when the preset keeps it', () => {
     expect(isPresetModified(preset(f()), f(), asc)).toBe(false)
@@ -83,16 +111,28 @@ describe('filtersWithPreset', () => {
   it('keeps the current date and folders when the preset does not keep them', () => {
     const cur = f({ dateMode: 'week', anchor: WEEK, folderIds: ['x'], statuses: ['used'] })
     const out = filtersWithPreset(preset(f({ statuses: ['new'], tagIds: ['a'] })), cur)
-    expect(out).toMatchObject({ statuses: ['new'], tagIds: ['a'], dateMode: 'week', anchor: WEEK, folderIds: ['x'] })
+    expect(out).toMatchObject({
+      statuses: ['new'],
+      tagIds: ['a'],
+      dateMode: 'week',
+      anchor: WEEK,
+      folderIds: ['x']
+    })
   })
   it('uses the date and folders of the preset when it keeps them', () => {
-    const p = preset(f({ dateMode: 'month', anchor: WEEK, folderIds: ['y'] }), { date: true, folders: true, sort: false })
+    const p = preset(f({ dateMode: 'month', anchor: WEEK, folderIds: ['y'] }), {
+      date: true,
+      folders: true,
+      sort: false
+    })
     const out = filtersWithPreset(p, f({ dateMode: 'week', anchor: 5, folderIds: ['x'] }))
     expect(out).toMatchObject({ dateMode: 'month', anchor: WEEK, folderIds: ['y'] })
   })
   it('gives a view that is not modified', () => {
     const p = preset(f({ statuses: ['new', 'watched'], tagIds: ['a'], minRating: 3 }))
-    expect(isPresetModified(p, filtersWithPreset(p, f({ dateMode: 'week', anchor: WEEK })), desc)).toBe(false)
+    expect(
+      isPresetModified(p, filtersWithPreset(p, f({ dateMode: 'week', anchor: WEEK })), desc)
+    ).toBe(false)
   })
 })
 
@@ -133,7 +173,13 @@ describe('sanitizePresets', () => {
   })
   it('drops unknown tags and folders, and double ids and keys', () => {
     const raw = [
-      { id: 'a', name: ' One ', filters: { tagIds: ['t1', 'gone'], folderIds: ['gone'] }, parts: { folders: true }, hotkey: 'Alt+1' },
+      {
+        id: 'a',
+        name: ' One ',
+        filters: { tagIds: ['t1', 'gone'], folderIds: ['gone'] },
+        parts: { folders: true },
+        hotkey: 'Alt+1'
+      },
       { id: 'a', name: 'Same id' },
       { id: 'b', name: 'Two', hotkey: 'Alt+1' }
     ]
@@ -144,7 +190,11 @@ describe('sanitizePresets', () => {
     expect(out.map((p) => p.hotkey)).toEqual(['Alt+1', null])
   })
   it('keeps a good preset as it was', () => {
-    const p = preset(f({ statuses: ['new'], tagIds: ['a'], minRating: 3 }), { date: false, folders: false, sort: true }, { hotkey: 'Alt+3' })
+    const p = preset(
+      f({ statuses: ['new'], tagIds: ['a'], minRating: 3 }),
+      { date: false, folders: false, sort: true },
+      { hotkey: 'Alt+3' }
+    )
     expect(sanitizePresets([p], ['a'], [], NOW)).toEqual([p])
   })
 })
@@ -198,7 +248,13 @@ describe('setPresetPart', () => {
     expect(out.filters).toEqual(base.filters)
   })
   it('forgets a part when it is switched off', () => {
-    const on = setPresetPart(setPresetPart(base, 'date', true, view, rules), 'folders', true, view, rules)
+    const on = setPresetPart(
+      setPresetPart(base, 'date', true, view, rules),
+      'folders',
+      true,
+      view,
+      rules
+    )
     const off = setPresetPart(on, 'date', false, view, rules)
     expect(off.parts).toEqual({ date: false, folders: true, sort: false })
     expect(off.filters.dateMode).toBe('all')
@@ -207,7 +263,9 @@ describe('setPresetPart', () => {
   it('does not change a preset that is not modified by the view afterwards', () => {
     const on = setPresetPart(base, 'date', true, view, rules)
     expect(isPresetModified(on, view, rules)).toBe(true)
-    expect(isPresetModified(on, { ...f({ statuses: ['new'] }), dateMode: 'week', anchor: WEEK }, rules)).toBe(false)
+    expect(
+      isPresetModified(on, { ...f({ statuses: ['new'] }), dateMode: 'week', anchor: WEEK }, rules)
+    ).toBe(false)
   })
 })
 
@@ -223,6 +281,8 @@ describe('uniqueName', () => {
 
 describe('scopedFilters', () => {
   it('treats an empty range as no date', () => {
-    expect(scopedFilters(f({ dateMode: 'range' }), { date: true, folders: false, sort: false }).dateMode).toBe('all')
+    expect(
+      scopedFilters(f({ dateMode: 'range' }), { date: true, folders: false, sort: false }).dateMode
+    ).toBe('all')
   })
 })

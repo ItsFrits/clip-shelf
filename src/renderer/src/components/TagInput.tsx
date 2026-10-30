@@ -13,7 +13,14 @@ interface Props {
 }
 
 /** Type to find a tag, or create a new one. Enter adds the highlighted tag. */
-export function TagInput({ onAdd, exclude = [], placeholder, inputRef, menuUp, autoFocus }: Props): React.JSX.Element {
+export function TagInput({
+  onAdd,
+  exclude = [],
+  placeholder,
+  inputRef,
+  menuUp,
+  autoFocus
+}: Props): React.JSX.Element {
   const tags = useApp((s) => s.user.tags)
   const [text, setText] = useState('')
   const [open, setOpen] = useState(false)

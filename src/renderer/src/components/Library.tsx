@@ -73,7 +73,8 @@ export function Library(): React.JSX.Element {
   const rows = useMemo(() => {
     const out: Row[] = []
     for (const g of groups) {
-      if (g.label) out.push({ kind: 'header', id: 'h' + g.id, label: g.label, count: g.clips.length })
+      if (g.label)
+        out.push({ kind: 'header', id: 'h' + g.id, label: g.label, count: g.clips.length })
       for (let i = 0; i < g.clips.length; i += cols) {
         out.push({ kind: 'cards', id: `${g.id}:${i}`, clips: g.clips.slice(i, i + cols) })
       }
@@ -81,6 +82,9 @@ export function Library(): React.JSX.Element {
     return out
   }, [groups, cols])
 
+  // TanStack Virtual returns functions that React Compiler cannot memoize. The app does not use the
+  // compiler, so this is fine.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virt = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
@@ -107,7 +111,9 @@ export function Library(): React.JSX.Element {
     const r = restore.current
     if (!ready || r.done || rows.length === 0) return
     r.done = true
-    const target = r.key ? rows.findIndex((row) => row.kind === 'cards' && row.clips.some((c) => c.key === r.key)) : -1
+    const target = r.key
+      ? rows.findIndex((row) => row.kind === 'cards' && row.clips.some((c) => c.key === r.key))
+      : -1
     if (target >= 0) virt.scrollToIndex(target, { align: 'center' })
     else if (r.offset > 0) scrollRef.current?.scrollTo({ top: r.offset })
   }, [ready, rows, virt])
@@ -118,7 +124,8 @@ export function Library(): React.JSX.Element {
     const keys: string[] = []
     for (const it of items) {
       const row = rows[it.index]
-      if (row?.kind === 'cards') for (const c of row.clips) if (!c.hasThumb || !c.durationMs) keys.push(c.key)
+      if (row?.kind === 'cards')
+        for (const c of row.clips) if (!c.hasThumb || !c.durationMs) keys.push(c.key)
     }
     return keys
   }, [items, rows])
@@ -160,8 +167,21 @@ export function Library(): React.JSX.Element {
     })
   }
   const ratingLabel = ratingChipLabel(filters)
-  if (ratingLabel) chips.push({ id: 'rating', label: ratingLabel, remove: () => setFilters({ ...FULL_RATING_RANGE }) })
-  if (filters.dateMode !== 'all' && (filters.dateMode !== 'range' || filters.rangeFrom || filters.rangeTo)) chips.push({ id: 'date', label: dateLabel(filters), remove: () => setFilters({ dateMode: 'all' }) })
+  if (ratingLabel)
+    chips.push({
+      id: 'rating',
+      label: ratingLabel,
+      remove: () => setFilters({ ...FULL_RATING_RANGE })
+    })
+  if (
+    filters.dateMode !== 'all' &&
+    (filters.dateMode !== 'range' || filters.rangeFrom || filters.rangeTo)
+  )
+    chips.push({
+      id: 'date',
+      label: dateLabel(filters),
+      remove: () => setFilters({ dateMode: 'all' })
+    })
   for (const id of filters.folderIds) {
     chips.push({
       id: 'folder' + id,
@@ -189,8 +209,8 @@ export function Library(): React.JSX.Element {
               )}
             </div>
             <span className="muted">
-              {plural(visible.length, 'clip')} in this view · {counts.fresh.toLocaleString('en-US')} still new ·{' '}
-              {counts.reviewed.toLocaleString('en-US')} reviewed
+              {plural(visible.length, 'clip')} in this view · {counts.fresh.toLocaleString('en-US')}{' '}
+              still new · {counts.reviewed.toLocaleString('en-US')} reviewed
             </span>
           </div>
           <div className="lib-tools">
@@ -201,7 +221,11 @@ export function Library(): React.JSX.Element {
               className={'seg' + (groupable ? '' : ' disabled')}
               role="group"
               aria-label="Group by"
-              title={groupable ? undefined : 'Groups follow the date. Put Date first in the sort menu to use them.'}
+              title={
+                groupable
+                  ? undefined
+                  : 'Groups follow the date. Put Date first in the sort menu to use them.'
+              }
             >
               {(['day', 'week', 'month', 'none'] as const).map((g) => (
                 <button
@@ -215,7 +239,10 @@ export function Library(): React.JSX.Element {
               ))}
             </div>
             <SortMenu />
-            <label className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+            <label
+              className="muted"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}
+            >
               <Grid3x3 size={14} />
               Size
               <input
@@ -253,7 +280,9 @@ export function Library(): React.JSX.Element {
         <div className="empty">
           <Film size={48} strokeWidth={1.25} />
           <h2>Add your first clips folder</h2>
-          <span>Clip Shelf watches the folders you choose. Your files are never changed or moved.</span>
+          <span>
+            Clip Shelf watches the folders you choose. Your files are never changed or moved.
+          </span>
           <button className="btn primary lg" onClick={() => openSettings('folders')}>
             <FolderPlus size={18} />
             Add a folder
@@ -283,8 +312,13 @@ export function Library(): React.JSX.Element {
         onScroll={(e) => {
           savedScroll = e.currentTarget.scrollTop
         }}
-        style={{ display: noFolders || loading || noMatch ? 'none' : undefined }}>
-        <div ref={innerRef} className={'grid-inner' + (selectionActive ? ' has-selection' : '')} style={{ height: virt.getTotalSize() + (selectionActive ? 90 : 0) }}>
+        style={{ display: noFolders || loading || noMatch ? 'none' : undefined }}
+      >
+        <div
+          ref={innerRef}
+          className={'grid-inner' + (selectionActive ? ' has-selection' : '')}
+          style={{ height: virt.getTotalSize() + (selectionActive ? 90 : 0) }}
+        >
           {items.map((it) => {
             const row = rows[it.index]
             if (!row) return null
@@ -292,7 +326,10 @@ export function Library(): React.JSX.Element {
               <div
                 key={row.id}
                 className="row-abs"
-                style={{ transform: `translateY(${it.start}px)`, height: row.kind === 'header' ? HEADER_H : cardH }}
+                style={{
+                  transform: `translateY(${it.start}px)`,
+                  height: row.kind === 'header' ? HEADER_H : cardH
+                }}
               >
                 {row.kind === 'header' ? (
                   <div className="group-head">
@@ -302,7 +339,13 @@ export function Library(): React.JSX.Element {
                     </span>
                   </div>
                 ) : (
-                  <div className="cards-row" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, height: '100%' }}>
+                  <div
+                    className="cards-row"
+                    style={{
+                      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                      height: '100%'
+                    }}
+                  >
                     {row.clips.map((c) => (
                       <ClipCard key={c.key} clip={c} showDate={group !== 'day'} />
                     ))}

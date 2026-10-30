@@ -13,7 +13,8 @@ import {
   yearsWithClips
 } from '../src/shared/calendar'
 
-const d = (y: number, m: number, day: number, h = 12): number => new Date(y, m - 1, day, h).getTime()
+const d = (y: number, m: number, day: number, h = 12): number =>
+  new Date(y, m - 1, day, h).getTime()
 
 describe('monthGrid', () => {
   it('starts on a Monday and always has six full weeks', () => {
@@ -92,6 +93,8 @@ describe('day counts', () => {
 
 describe('yearsWithClips', () => {
   it('lists each year once, newest first', () => {
-    expect(yearsWithClips([d(2024, 5, 1), d(2026, 1, 1), d(2024, 12, 31), d(2025, 6, 6)])).toEqual([2026, 2025, 2024])
+    expect(yearsWithClips([d(2024, 5, 1), d(2026, 1, 1), d(2024, 12, 31), d(2025, 6, 6)])).toEqual([
+      2026, 2025, 2024
+    ])
   })
 })

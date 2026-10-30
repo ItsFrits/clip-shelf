@@ -14,7 +14,13 @@ export function TagSortControl(): React.JSX.Element {
   return (
     <div className="seg tag-sort" role="group" aria-label="Sort tags">
       {OPTIONS.map((o) => (
-        <button key={o.id} type="button" className={sort === o.id ? 'on' : ''} title={o.title} onClick={() => updateSettings({ tagSort: o.id })}>
+        <button
+          key={o.id}
+          type="button"
+          className={sort === o.id ? 'on' : ''}
+          title={o.title}
+          onClick={() => updateSettings({ tagSort: o.id })}
+        >
           {o.label}
         </button>
       ))}

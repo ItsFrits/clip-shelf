@@ -28,8 +28,9 @@ export function makeEmitter(getWindow: () => BrowserWindow | null) {
 export function registerIpc(ctx: IpcContext): void {
   const { library, user, updater, getWindow, logDir } = ctx
   const emit = makeEmitter(getWindow)
-  const handle = (name: string, fn: (...args: any[]) => unknown): void => {
-    ipcMain.handle('api:' + name, (_e, ...args) => fn(...args))
+  // The handlers name their own argument types, so the arguments are passed on as they come in.
+  const handle = (name: string, fn: (...args: never[]) => unknown): void => {
+    ipcMain.handle('api:' + name, (_e, ...args) => fn(...(args as never[])))
   }
 
   handle('getSnapshot', (): Snapshot => ({
@@ -81,7 +82,11 @@ export function registerIpc(ctx: IpcContext): void {
   handle('exportBackup', async () => {
     const win = getWindow()
     const name = `clip-shelf-backup-${new Date().toISOString().slice(0, 10)}.json`
-    const opts = { title: 'Save backup', defaultPath: name, filters: [{ name: 'JSON', extensions: ['json'] }] }
+    const opts = {
+      title: 'Save backup',
+      defaultPath: name,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    }
     const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts)
     if (res.canceled || !res.filePath) return null
     user.exportTo(res.filePath)
@@ -118,9 +123,19 @@ export function registerIpc(ctx: IpcContext): void {
   let titleTimer: ReturnType<typeof setInterval> | undefined
   ipcMain.on('api:setTitleBarDim', (_e, alpha: unknown, fadeMs: unknown) => {
     const win = getWindow()
-    if (!win || win.isDestroyed() || process.platform === 'darwin' || typeof win.setTitleBarOverlay !== 'function') return
-    const target = typeof alpha === 'number' && Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 0
-    const duration = typeof fadeMs === 'number' && Number.isFinite(fadeMs) ? Math.min(1000, Math.max(0, fadeMs)) : 0
+    if (
+      !win ||
+      win.isDestroyed() ||
+      process.platform === 'darwin' ||
+      typeof win.setTitleBarOverlay !== 'function'
+    )
+      return
+    const target =
+      typeof alpha === 'number' && Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 0
+    const duration =
+      typeof fadeMs === 'number' && Number.isFinite(fadeMs)
+        ? Math.min(1000, Math.max(0, fadeMs))
+        : 0
     const apply = (a: number): void => {
       titleDim = a
       try {

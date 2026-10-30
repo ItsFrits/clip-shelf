@@ -59,6 +59,20 @@ function run(cmd: string, args: string[], timeoutMs: number): Promise<RunResult>
   })
 }
 
+/** The parts of an ffprobe stream that are used here. */
+interface ProbeStream {
+  codec_type?: string
+  codec_name?: string
+  channels?: number
+  duration?: string | number
+  width?: number
+  height?: number
+  avg_frame_rate?: string
+  r_frame_rate?: string
+  disposition?: { attached_pic?: number }
+  tags?: Record<string, unknown>
+}
+
 function parseFps(rate: string | undefined): number | undefined {
   if (!rate) return undefined
   const [a, b] = rate.split('/').map(Number)
@@ -123,7 +137,11 @@ export async function readMp4AudioTrackNames(file: string): Promise<(string | un
   }
 }
 
-function* boxes(buf: Buffer, start: number, end: number): Generator<{ type: string; from: number; to: number }> {
+function* boxes(
+  buf: Buffer,
+  start: number,
+  end: number
+): Generator<{ type: string; from: number; to: number }> {
   let pos = start
   while (pos + 8 <= end) {
     let size = buf.readUInt32BE(pos)
@@ -151,7 +169,8 @@ function namesFromMoov(moov: Buffer): (string | undefined)[] {
       if (child.type === 'mdia') {
         for (const m of boxes(moov, child.from, child.to)) {
           // hdlr: version/flags (4), predefined (4), handler type (4), ...
-          if (m.type === 'hdlr' && m.to - m.from >= 12) isAudio = moov.toString('latin1', m.from + 8, m.from + 12) === 'soun'
+          if (m.type === 'hdlr' && m.to - m.from >= 12)
+            isAudio = moov.toString('latin1', m.from + 8, m.from + 12) === 'soun'
         }
       } else if (child.type === 'udta') {
         for (const u of boxes(moov, child.from, child.to)) {
@@ -183,7 +202,7 @@ export class MediaTools {
     if (res.code !== 0) return { rev: PROBE_REV, failed: true }
     try {
       const json = JSON.parse(res.stdout)
-      const streams: Record<string, any>[] = json.streams ?? []
+      const streams: ProbeStream[] = json.streams ?? []
       const video = streams.find((s) => s.codec_type === 'video' && !s.disposition?.attached_pic)
       const audio = streams.filter((s) => s.codec_type === 'audio')
       const dur = Number(json.format?.duration ?? video?.duration)
@@ -220,13 +239,24 @@ export class MediaTools {
     const res = await run(
       this.ffmpegPath,
       [
-        '-hide_banner', '-loglevel', 'error', '-y',
-        '-ss', (Math.max(0, atMs) / 1000).toFixed(3),
-        '-i', file,
-        '-frames:v', '1',
-        '-vf', `scale=${width}:-2`,
-        '-q:v', '5',
-        '-f', 'image2', '-update', '1',
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-y',
+        '-ss',
+        (Math.max(0, atMs) / 1000).toFixed(3),
+        '-i',
+        file,
+        '-frames:v',
+        '1',
+        '-vf',
+        `scale=${width}:-2`,
+        '-q:v',
+        '5',
+        '-f',
+        'image2',
+        '-update',
+        '1',
         tmp
       ],
       60_000

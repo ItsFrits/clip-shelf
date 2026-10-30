@@ -43,7 +43,14 @@ function StarRow({
       <span className="muted">{label}</span>
       <div className="stars" role="radiogroup" aria-label={`${ariaPrefix} stars`}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <button key={n} type="button" role="radio" aria-checked={n === value} aria-label={`${ariaPrefix} ${n} ${n === 1 ? 'star' : 'stars'}`} onClick={() => onPick(n)}>
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={n === value}
+            aria-label={`${ariaPrefix} ${n} ${n === 1 ? 'star' : 'stars'}`}
+            onClick={() => onPick(n)}
+          >
             <Star size={22} strokeWidth={1.75} fill={n <= value ? 'currentColor' : 'none'} />
           </button>
         ))}
@@ -85,13 +92,19 @@ export function Sidebar(): React.JSX.Element {
   const total = clips.size
   const reviewed = total - counts.status.new
   const sortedTags = useMemo(
-    () => sortTags(user.tags, counts.tags, settings.tagSort).map((t) => ({ ...t, count: counts.tags.get(t.id) ?? 0 })),
+    () =>
+      sortTags(user.tags, counts.tags, settings.tagSort).map((t) => ({
+        ...t,
+        count: counts.tags.get(t.id) ?? 0
+      })),
     [user.tags, counts.tags, settings.tagSort]
   )
 
   const toggleStatus = (s: ClipStatus): void => {
     const on = filters.statuses.includes(s)
-    setFilters({ statuses: on ? filters.statuses.filter((x) => x !== s) : [...filters.statuses, s] })
+    setFilters({
+      statuses: on ? filters.statuses.filter((x) => x !== s) : [...filters.statuses, s]
+    })
   }
   // One click shows a tag, a second click hides it, a third clears it.
   const clickTag = (id: string): void => {
@@ -99,7 +112,11 @@ export function Sidebar(): React.JSX.Element {
     setFilters({ tagIds: next.include, excludeTagIds: next.exclude })
   }
   const tagName = (id: string): string => user.tags.find((t) => t.id === id)?.name ?? '?'
-  const tagSentence = describeTagFilter(filters.tagIds.map(tagName), filters.excludeTagIds.map(tagName), filters.tagMode)
+  const tagSentence = describeTagFilter(
+    filters.tagIds.map(tagName),
+    filters.excludeTagIds.map(tagName),
+    filters.tagMode
+  )
   const toggleFolder = (id: string): void => {
     setFilters({
       folderIds: filters.folderIds.includes(id)
@@ -146,7 +163,11 @@ export function Sidebar(): React.JSX.Element {
         <h2 className="h-label">Status</h2>
         {ALL_STATUSES.map((s) => (
           <label key={s} className="check-row">
-            <input type="checkbox" checked={filters.statuses.includes(s)} onChange={() => toggleStatus(s)} />
+            <input
+              type="checkbox"
+              checked={filters.statuses.includes(s)}
+              onChange={() => toggleStatus(s)}
+            />
             <span className="dot" style={{ background: STATUS_COLOR[s] }} />
             <span className="label">{STATUS_LABEL[s]}</span>
             <span className="mono muted" style={{ fontSize: 12 }}>
@@ -177,12 +198,28 @@ export function Sidebar(): React.JSX.Element {
             className={'seg tag-sort tag-mode' + (filters.tagIds.length > 1 ? '' : ' dim')}
             role="radiogroup"
             aria-label="How several shown tags combine"
-            title={filters.tagIds.length > 1 ? undefined : 'This only matters when you show two or more tags.'}
+            title={
+              filters.tagIds.length > 1
+                ? undefined
+                : 'This only matters when you show two or more tags.'
+            }
           >
-            <button type="button" role="radio" aria-checked={filters.tagMode === 'any'} className={filters.tagMode === 'any' ? 'on' : ''} onClick={() => setFilters({ tagMode: 'any' })}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={filters.tagMode === 'any'}
+              className={filters.tagMode === 'any' ? 'on' : ''}
+              onClick={() => setFilters({ tagMode: 'any' })}
+            >
               Match any (OR)
             </button>
-            <button type="button" role="radio" aria-checked={filters.tagMode === 'all'} className={filters.tagMode === 'all' ? 'on' : ''} onClick={() => setFilters({ tagMode: 'all' })}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={filters.tagMode === 'all'}
+              className={filters.tagMode === 'all' ? 'on' : ''}
+              onClick={() => setFilters({ tagMode: 'all' })}
+            >
               Match all (AND)
             </button>
           </div>
@@ -198,7 +235,11 @@ export function Sidebar(): React.JSX.Element {
               <button
                 key={t.id}
                 type="button"
-                className={'chip' + (filters.tagIds.includes(t.id) ? ' on' : '') + (filters.excludeTagIds.includes(t.id) ? ' out' : '')}
+                className={
+                  'chip' +
+                  (filters.tagIds.includes(t.id) ? ' on' : '') +
+                  (filters.excludeTagIds.includes(t.id) ? ' out' : '')
+                }
                 title={
                   filters.tagIds.includes(t.id)
                     ? 'Showing clips with this tag. Click to hide them instead.'
@@ -236,7 +277,11 @@ export function Sidebar(): React.JSX.Element {
           onPick={(n) => setFilters(pickMaxRating(filters, n))}
         />
         <label className="check-row">
-          <input type="checkbox" checked={filters.showUnrated} onChange={() => setFilters({ showUnrated: !filters.showUnrated })} />
+          <input
+            type="checkbox"
+            checked={filters.showUnrated}
+            onChange={() => setFilters({ showUnrated: !filters.showUnrated })}
+          />
           <span className="label">Show unrated clips</span>
           <span className="mono muted" style={{ fontSize: 12 }}>
             {fmtCount(counts.unrated)}
@@ -258,9 +303,18 @@ export function Sidebar(): React.JSX.Element {
             </button>
           ))}
         </div>
-        {(filters.dateMode === 'day' || filters.dateMode === 'week' || filters.dateMode === 'month' || filters.dateMode === 'year') && (
+        {(filters.dateMode === 'day' ||
+          filters.dateMode === 'week' ||
+          filters.dateMode === 'month' ||
+          filters.dateMode === 'year') && (
           <div className="date-nav" ref={setNavEl}>
-            <button type="button" aria-label="Previous" onClick={() => setFilters({ anchor: shiftAnchor(filters.dateMode, filters.anchor, -1) })}>
+            <button
+              type="button"
+              aria-label="Previous"
+              onClick={() =>
+                setFilters({ anchor: shiftAnchor(filters.dateMode, filters.anchor, -1) })
+              }
+            >
               <ChevronLeft size={16} />
             </button>
             <button
@@ -273,7 +327,13 @@ export function Sidebar(): React.JSX.Element {
             >
               {dateLabel(filters)}
             </button>
-            <button type="button" aria-label="Next" onClick={() => setFilters({ anchor: shiftAnchor(filters.dateMode, filters.anchor, 1) })}>
+            <button
+              type="button"
+              aria-label="Next"
+              onClick={() =>
+                setFilters({ anchor: shiftAnchor(filters.dateMode, filters.anchor, 1) })
+              }
+            >
               <ChevronRight size={16} />
             </button>
           </div>
@@ -310,7 +370,11 @@ export function Sidebar(): React.JSX.Element {
           </>
         )}
         {pickerOpen && filters.dateMode !== 'all' && navEl && (
-          <DatePicker key={filters.dateMode} anchorEl={navEl} onClose={() => setPickerOpen(false)} />
+          <DatePicker
+            key={filters.dateMode}
+            anchorEl={navEl}
+            onClose={() => setPickerOpen(false)}
+          />
         )}
       </section>
 
@@ -325,14 +389,21 @@ export function Sidebar(): React.JSX.Element {
           const on = filters.folderIds.includes(f.id)
           const color = !f.online ? '#e0b052' : 'var(--s-tagged)'
           return (
-            <div key={f.id} className="folder-row" onClick={() => toggleFolder(f.id)} title={f.path}>
+            <div
+              key={f.id}
+              className="folder-row"
+              onClick={() => toggleFolder(f.id)}
+              title={f.path}
+            >
               <input type="checkbox" checked={on} readOnly style={{ pointerEvents: 'none' }} />
               <span className="dot" style={{ background: color }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13 }}>{f.name}</div>
                 <div className="path">{f.path}</div>
               </div>
-              <span style={{ fontSize: 12, color }}>{!f.online ? 'Offline' : f.scanning ? 'Scanning' : 'Live'}</span>
+              <span style={{ fontSize: 12, color }}>
+                {!f.online ? 'Offline' : f.scanning ? 'Scanning' : 'Live'}
+              </span>
             </div>
           )
         })}

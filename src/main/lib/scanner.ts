@@ -24,7 +24,11 @@ export interface ScanResult {
 }
 
 /** Run an async function over a list with a limited number of calls in flight. */
-export async function mapLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
+export async function mapLimit<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>
+): Promise<void> {
   let next = 0
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
     while (next < items.length) {
@@ -70,7 +74,11 @@ export async function scanFolder(root: string, opts: ScanOptions): Promise<ScanR
           const s = stem(e.name).toLowerCase()
           // If there are several (for example .m4a and .wav), the first extension in AUDIO_EXTS wins.
           const prev = audioByStem.get(s)
-          if (!prev || AUDIO_EXTS.indexOf(extname(full).toLowerCase()) < AUDIO_EXTS.indexOf(extname(prev).toLowerCase())) {
+          if (
+            !prev ||
+            AUDIO_EXTS.indexOf(extname(full).toLowerCase()) <
+              AUDIO_EXTS.indexOf(extname(prev).toLowerCase())
+          ) {
             audioByStem.set(s, full)
           }
         }
@@ -129,7 +137,13 @@ export async function scanOne(
         if (audioPath) break
       }
     }
-    return { path: videoPath, size: st.size, mtimeMs: st.mtimeMs, audioPath, hints: folderHints(root, dir) }
+    return {
+      path: videoPath,
+      size: st.size,
+      mtimeMs: st.mtimeMs,
+      audioPath,
+      hints: folderHints(root, dir)
+    }
   } catch {
     return null
   }

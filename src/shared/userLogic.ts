@@ -55,7 +55,10 @@ export function applyPatch(u: ClipUser, p: ClipBulkPatch): ClipUser {
   if (p.set) next = { ...next, ...p.set }
   if (p.removeTags?.length) next.tags = next.tags.filter((t) => !p.removeTags!.includes(t))
   if (p.addTags?.length) {
-    let at = p.addTagsAt === undefined ? next.tags.length : Math.min(Math.max(Math.trunc(p.addTagsAt) || 0, 0), next.tags.length)
+    let at =
+      p.addTagsAt === undefined
+        ? next.tags.length
+        : Math.min(Math.max(Math.trunc(p.addTagsAt) || 0, 0), next.tags.length)
     for (const t of p.addTags) {
       if (next.tags.includes(t)) continue
       next.tags.splice(at, 0, t)
@@ -86,7 +89,11 @@ export function clipStatus(u: ClipUser): ClipStatus {
  * After an update, point to the release notes once. A brand new install (nothing in the library yet)
  * only records the version and shows nothing.
  */
-export function whatsNewNotice(lastSeen: string, current: string, hadData: boolean): { remember: boolean; notify: boolean } {
+export function whatsNewNotice(
+  lastSeen: string,
+  current: string,
+  hadData: boolean
+): { remember: boolean; notify: boolean } {
   if (!current || lastSeen === current) return { remember: false, notify: false }
   return { remember: true, notify: lastSeen !== '' || hadData }
 }
@@ -125,7 +132,11 @@ export function suggestedTags(clipTagIds: string[], tags: Tag[]): Tag[] {
 }
 
 /** Remove or replace tag ids in every suggestion list, for example after a tag is merged or deleted. */
-export function cleanSuggestions(tags: Tag[], removed: Set<string>, replacement: string | null): Tag[] {
+export function cleanSuggestions(
+  tags: Tag[],
+  removed: Set<string>,
+  replacement: string | null
+): Tag[] {
   return tags.map((t) => {
     if (!t.suggests?.length) return t
     const next: string[] = []
@@ -144,7 +155,11 @@ export function cleanSuggestions(tags: Tag[], removed: Set<string>, replacement:
  * "recent" the tags that were put on a clip most recently (tags never used since then come last).
  * Ties always fall back to A-Z.
  */
-export function sortTags<T extends Tag>(tags: T[], counts: Map<string, number>, mode: TagSort): T[] {
+export function sortTags<T extends Tag>(
+  tags: T[],
+  counts: Map<string, number>,
+  mode: TagSort
+): T[] {
   const byName = (a: T, b: T): number => a.name.localeCompare(b.name)
   const key =
     mode === 'count'

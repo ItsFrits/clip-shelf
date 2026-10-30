@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '../src/shared/savedFilters'
+import {
+  DEFAULT_SAVED_FILTERS,
+  sanitizeSavedFilters,
+  toSavedFilters
+} from '../src/shared/savedFilters'
 
 const NOW = new Date(2026, 9, 19).getTime()
 const WEEK = new Date(2026, 8, 7).getTime()
 
 describe('sanitizeSavedFilters', () => {
   it('gives no filters when nothing was saved', () => {
-    expect(sanitizeSavedFilters(null, [], [], NOW)).toEqual({ ...DEFAULT_SAVED_FILTERS, anchor: NOW })
-    expect(sanitizeSavedFilters('nonsense', [], [], NOW)).toEqual({ ...DEFAULT_SAVED_FILTERS, anchor: NOW })
+    expect(sanitizeSavedFilters(null, [], [], NOW)).toEqual({
+      ...DEFAULT_SAVED_FILTERS,
+      anchor: NOW
+    })
+    expect(sanitizeSavedFilters('nonsense', [], [], NOW)).toEqual({
+      ...DEFAULT_SAVED_FILTERS,
+      anchor: NOW
+    })
   })
 
   it('keeps valid filters, including the chosen week', () => {
@@ -29,48 +39,104 @@ describe('sanitizeSavedFilters', () => {
   })
 
   it('drops tags and folders that no longer exist', () => {
-    const out = sanitizeSavedFilters({ tagIds: ['t1', 'gone'], folderIds: ['gone', 'f1'] }, ['t1'], ['f1'], NOW)
+    const out = sanitizeSavedFilters(
+      { tagIds: ['t1', 'gone'], folderIds: ['gone', 'f1'] },
+      ['t1'],
+      ['f1'],
+      NOW
+    )
     expect(out.tagIds).toEqual(['t1'])
     expect(out.folderIds).toEqual(['f1'])
   })
 
   it('hiding a tag wins when it is in both lists, and unknown hidden tags are dropped', () => {
-    const out = sanitizeSavedFilters({ tagIds: ['t1', 't2'], excludeTagIds: ['t2', 'gone'] }, ['t1', 't2'], [], NOW)
+    const out = sanitizeSavedFilters(
+      { tagIds: ['t1', 't2'], excludeTagIds: ['t2', 'gone'] },
+      ['t1', 't2'],
+      [],
+      NOW
+    )
     expect(out.tagIds).toEqual(['t1'])
     expect(out.excludeTagIds).toEqual(['t2'])
   })
 
   it('opens filters saved before hiding tags existed', () => {
-    expect(sanitizeSavedFilters({ tagIds: ['t1'], tagMode: 'any' }, ['t1'], [], NOW).excludeTagIds).toEqual([])
+    expect(
+      sanitizeSavedFilters({ tagIds: ['t1'], tagMode: 'any' }, ['t1'], [], NOW).excludeTagIds
+    ).toEqual([])
   })
 
   it('turns an old saved minimum into a range that hides unrated clips', () => {
-    expect(sanitizeSavedFilters({ minRating: 3 }, [], [], NOW)).toMatchObject({ minRating: 3, maxRating: 5, showUnrated: false })
-    expect(sanitizeSavedFilters({ minRating: 0 }, [], [], NOW)).toMatchObject({ minRating: 1, maxRating: 5, showUnrated: true })
+    expect(sanitizeSavedFilters({ minRating: 3 }, [], [], NOW)).toMatchObject({
+      minRating: 3,
+      maxRating: 5,
+      showUnrated: false
+    })
+    expect(sanitizeSavedFilters({ minRating: 0 }, [], [], NOW)).toMatchObject({
+      minRating: 1,
+      maxRating: 5,
+      showUnrated: true
+    })
   })
 
   it('never ends up with no statuses at all', () => {
-    expect(sanitizeSavedFilters({ statuses: [] }, [], [], NOW).statuses).toEqual(['new', 'watched', 'tagged', 'used'])
-    expect(sanitizeSavedFilters({ statuses: ['bogus'] }, [], [], NOW).statuses).toEqual(['new', 'watched', 'tagged', 'used'])
+    expect(sanitizeSavedFilters({ statuses: [] }, [], [], NOW).statuses).toEqual([
+      'new',
+      'watched',
+      'tagged',
+      'used'
+    ])
+    expect(sanitizeSavedFilters({ statuses: ['bogus'] }, [], [], NOW).statuses).toEqual([
+      'new',
+      'watched',
+      'tagged',
+      'used'
+    ])
   })
 
   it('ignores broken values', () => {
     const out = sanitizeSavedFilters(
-      { minRating: 9, dateMode: 'decade', tagMode: 'x', rangeFrom: '2026-1-1', rangeTo: 5, anchor: 'yesterday' },
+      {
+        minRating: 9,
+        dateMode: 'decade',
+        tagMode: 'x',
+        rangeFrom: '2026-1-1',
+        rangeTo: 5,
+        anchor: 'yesterday'
+      },
       [],
       [],
       NOW
     )
-    expect(out).toMatchObject({ minRating: 5, maxRating: 5, showUnrated: false, dateMode: 'all', tagMode: 'any', rangeFrom: '', rangeTo: '', anchor: NOW })
+    expect(out).toMatchObject({
+      minRating: 5,
+      maxRating: 5,
+      showUnrated: false,
+      dateMode: 'all',
+      tagMode: 'any',
+      rangeFrom: '',
+      rangeTo: '',
+      anchor: NOW
+    })
   })
 
   it('keeps the chosen day', () => {
-    expect(sanitizeSavedFilters({ dateMode: 'day', anchor: WEEK }, [], [], NOW)).toMatchObject({ dateMode: 'day', anchor: WEEK })
+    expect(sanitizeSavedFilters({ dateMode: 'day', anchor: WEEK }, [], [], NOW)).toMatchObject({
+      dateMode: 'day',
+      anchor: WEEK
+    })
   })
 
   it('starts at today when no week, month or year was chosen', () => {
     expect(sanitizeSavedFilters({ dateMode: 'all', anchor: WEEK }, [], [], NOW).anchor).toBe(NOW)
-    expect(sanitizeSavedFilters({ dateMode: 'range', anchor: WEEK, rangeFrom: '2026-01-01' }, [], [], NOW).anchor).toBe(NOW)
+    expect(
+      sanitizeSavedFilters(
+        { dateMode: 'range', anchor: WEEK, rangeFrom: '2026-01-01' },
+        [],
+        [],
+        NOW
+      ).anchor
+    ).toBe(NOW)
     expect(sanitizeSavedFilters({ dateMode: 'month', anchor: WEEK }, [], [], NOW).anchor).toBe(WEEK)
   })
 })
@@ -83,7 +149,14 @@ describe('toSavedFilters', () => {
   })
 
   it('is the same after a round trip through the sanitizer', () => {
-    const f = toSavedFilters({ ...DEFAULT_SAVED_FILTERS, dateMode: 'month', anchor: WEEK, tagIds: ['t1'], minRating: 3, maxRating: 4 })
+    const f = toSavedFilters({
+      ...DEFAULT_SAVED_FILTERS,
+      dateMode: 'month',
+      anchor: WEEK,
+      tagIds: ['t1'],
+      minRating: 3,
+      maxRating: 4
+    })
     expect(toSavedFilters(sanitizeSavedFilters(f, ['t1'], [], NOW))).toEqual(f)
   })
 })

@@ -110,7 +110,11 @@ export class Library {
       (raw, defaults) => {
         const r = (raw ?? {}) as Partial<IndexData>
         if (r.v !== 1 || typeof r.files !== 'object' || !r.files) return defaults
-        return { v: 1, files: r.files, probes: r.probes && typeof r.probes === 'object' ? r.probes : {} }
+        return {
+          v: 1,
+          files: r.files,
+          probes: r.probes && typeof r.probes === 'object' ? r.probes : {}
+        }
       }
     )
     this.queue = new JobQueue(
@@ -143,7 +147,8 @@ export class Library {
     }
     for (const key of this.byKey.keys()) this.rebuild(key, false)
 
-    for (const f of this.user.data.folders) this.runtime.set(f.id, { online: false, scanning: false })
+    for (const f of this.user.data.folders)
+      this.runtime.set(f.id, { online: false, scanning: false })
     this.queueMedia([...this.clips.keys()])
     void this.cleanAudioCache()
 
@@ -165,7 +170,8 @@ export class Library {
   async idle(): Promise<void> {
     for (let i = 0; i < 400; i++) {
       const scanning = [...this.runtime.values()].some((r) => r.scanning)
-      if (!scanning && this.queue.size === 0 && !this.deltaTimer && this.refreshTimers.size === 0) return
+      if (!scanning && this.queue.size === 0 && !this.deltaTimer && this.refreshTimers.size === 0)
+        return
       await new Promise((r) => setTimeout(r, 50))
     }
   }
@@ -256,7 +262,12 @@ export class Library {
   private rebuild(key: string, announce = true): void {
     const files = this.index.get().files
     const paths = this.byKey.get(key)
-    const recs = paths ? [...paths].sort().map((p) => files[p]).filter(Boolean) : []
+    const recs = paths
+      ? [...paths]
+          .sort()
+          .map((p) => files[p])
+          .filter(Boolean)
+      : []
     if (recs.length === 0) {
       this.clips.delete(key)
       if (announce) {
@@ -305,7 +316,9 @@ export class Library {
     if (this.deltaTimer || this.disposed) return
     this.deltaTimer = setTimeout(() => {
       this.deltaTimer = null
-      const upserts = [...this.pendingUp].map((k) => this.clips.get(k)).filter((c): c is Clip => !!c)
+      const upserts = [...this.pendingUp]
+        .map((k) => this.clips.get(k))
+        .filter((c): c is Clip => !!c)
       const removes = [...this.pendingRm]
       this.pendingUp.clear()
       this.pendingRm.clear()
@@ -405,7 +418,8 @@ export class Library {
       // Only forget files if we could read the whole folder and it is still there.
       if (result.ok && (await isOnlineDir(f.path))) {
         for (const rec of Object.values(this.index.get().files)) {
-          if (rec.folderId === f.id && !seen.has(rec.path)) touched.push(...this.removeRecord(rec.path))
+          if (rec.folderId === f.id && !seen.has(rec.path))
+            touched.push(...this.removeRecord(rec.path))
         }
       }
       this.finishChange(touched)
@@ -443,7 +457,8 @@ export class Library {
     const s = stem(audioPath).toLowerCase()
     try {
       for (const name of await fsp.readdir(dir)) {
-        if (isVideoFile(name) && stem(name).toLowerCase() === s) this.scheduleRefresh(folderId, join(dir, name))
+        if (isVideoFile(name) && stem(name).toLowerCase() === s)
+          this.scheduleRefresh(folderId, join(dir, name))
       }
     } catch {
       /* folder went away */
@@ -519,7 +534,8 @@ export class Library {
     }
     await this.poll()
     // Tag suggestions may have been switched on or off.
-    for (const rec of Object.values(this.index.get().files)) if (rec.folderId === id) this.rebuild(rec.key)
+    for (const rec of Object.values(this.index.get().files))
+      if (rec.folderId === id) this.rebuild(rec.key)
   }
 
   async removeFolder(id: string): Promise<void> {
@@ -547,7 +563,9 @@ export class Library {
 
   private needsMedia(key: string): boolean {
     const probe = this.index.get().probes[key]
-    return !probe || probe.rev !== PROBE_REV || (!this.thumbs.has(key) && !this.thumbFailed.has(key))
+    return (
+      !probe || probe.rev !== PROBE_REV || (!this.thumbs.has(key) && !this.thumbFailed.has(key))
+    )
   }
 
   private queueMedia(keys: string[]): void {
@@ -611,11 +629,14 @@ export class Library {
       kind: 'embedded'
     })
     const auxTrack = (position: number): PreparedTrack | null =>
-      aux ? { label: 'Microphone', number: num(position), url: `clip://aux/${key}`, kind: 'file' } : null
+      aux
+        ? { label: 'Microphone', number: num(position), url: `clip://aux/${key}`, kind: 'file' }
+        : null
 
     if (embedded.length <= 1) {
       const tracks: PreparedTrack[] = []
-      if (embedded.length === 1) tracks.push(videoTrack(embedded[0].title ?? (aux ? 'Game audio' : 'Audio')))
+      if (embedded.length === 1)
+        tracks.push(videoTrack(embedded[0].title ?? (aux ? 'Game audio' : 'Audio')))
       const mic = auxTrack(tracks.length)
       if (mic) tracks.push(mic)
       return { tracks, useVideoAudio: embedded.length === 1 }
@@ -688,7 +709,8 @@ export class Library {
         }
         try {
           await trash(file.path)
-          if (file.audioPath && existsSync(file.audioPath)) await trash(file.audioPath).catch(() => undefined)
+          if (file.audioPath && existsSync(file.audioPath))
+            await trash(file.audioPath).catch(() => undefined)
           touched.push(...this.removeRecord(file.path))
         } catch {
           allGone = false

@@ -87,11 +87,16 @@ export class Mixer {
     for (const c of this.channels) {
       const a = c.audio
       if (!a || a.readyState < 2) continue
-      if (Math.abs(a.currentTime - this.video.currentTime) > 0.08) a.currentTime = this.video.currentTime
+      if (Math.abs(a.currentTime - this.video.currentTime) > 0.08)
+        a.currentTime = this.video.currentTime
     }
   }
 
-  private makeNodes(): { gain: GainNode; analyser: AnalyserNode; buffer: Float32Array<ArrayBuffer> } {
+  private makeNodes(): {
+    gain: GainNode
+    analyser: AnalyserNode
+    buffer: Float32Array<ArrayBuffer>
+  } {
     const gain = this.ctx.createGain()
     const analyser = this.ctx.createAnalyser()
     analyser.fftSize = 1024
@@ -131,7 +136,15 @@ export class Mixer {
       const nodes = this.makeNodes()
       nodes.gain.gain.value = volume
       source.connect(nodes.gain)
-      this.channels.push({ label: t.label, isVideo: false, audio, source, volume, muted: false, ...nodes })
+      this.channels.push({
+        label: t.label,
+        isVideo: false,
+        audio,
+        source,
+        volume,
+        muted: false,
+        ...nodes
+      })
       ready.push(
         new Promise<void>((resolve) => {
           const done = (): void => resolve()

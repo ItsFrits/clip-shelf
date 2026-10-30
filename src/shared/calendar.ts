@@ -63,7 +63,12 @@ export function monthGrid(year: number, month: number): GridDay[] {
   for (let i = 0; i < 42; i++) {
     const ts = addDays(start, i)
     const d = new Date(ts)
-    out.push({ ts, key: dayKey(ts), day: d.getDate(), inMonth: d.getMonth() === month && d.getFullYear() === year })
+    out.push({
+      ts,
+      key: dayKey(ts),
+      day: d.getDate(),
+      inMonth: d.getMonth() === month && d.getFullYear() === year
+    })
   }
   return out
 }
@@ -90,11 +95,16 @@ export function rangePreset(kind: RangePreset, now: number): { from: string; to:
   const today = startOfDay(now)
   if (kind === 'last7') return { from: dayKey(addDays(today, -6)), to: dayKey(today) }
   if (kind === 'last30') return { from: dayKey(addDays(today, -29)), to: dayKey(today) }
-  return { from: dayKey(new Date(new Date(today).getFullYear(), 0, 1).getTime()), to: dayKey(today) }
+  return {
+    from: dayKey(new Date(new Date(today).getFullYear(), 0, 1).getTime()),
+    to: dayKey(today)
+  }
 }
 
 /** How many clips of each status there are on each day. */
-export function dayStatusMap(items: Iterable<{ date: number; status: DayStatus }>): Map<string, DayCounts> {
+export function dayStatusMap(
+  items: Iterable<{ date: number; status: DayStatus }>
+): Map<string, DayCounts> {
   const map = new Map<string, DayCounts>()
   for (const it of items) {
     const key = dayKey(it.date)

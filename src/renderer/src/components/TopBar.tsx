@@ -2,7 +2,8 @@ import { LayoutGrid, Play, Search, Settings, Shuffle } from 'lucide-react'
 import { useMemo } from 'react'
 import { formatChord, effectiveKeymap } from '@shared/keymap'
 import { useApp } from '../lib/store'
-import { KeyHint, ON_ACCENT } from './KeyHint'
+import { KeyHint } from './KeyHint'
+import { ON_ACCENT } from '../lib/keyHintStyle'
 
 export function TopBar(): React.JSX.Element {
   const query = useApp((s) => s.filters.query)

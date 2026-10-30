@@ -29,7 +29,13 @@ const DRAG_START = 4
  * The tags of one clip as pills. Drag a pill to move it (the others slide aside), or focus it and
  * press Alt+Left or Alt+Right. A small + between two pills adds the next tag at that place.
  */
-export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: Props): React.JSX.Element {
+export function TagList({
+  tags,
+  insertAt,
+  onReorder,
+  onRemove,
+  onInsertHere
+}: Props): React.JSX.Element {
   const setCapturing = useApp((s) => s.setCapturing)
   const listRef = useRef<HTMLDivElement>(null)
   const slots = useRef(new Map<string, HTMLElement>())
@@ -38,7 +44,14 @@ export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: P
   const focusAfter = useRef<string | null>(null)
   const [order, setOrder] = useState<string[] | null>(null)
   const [ghost, setGhost] = useState<Ghost | null>(null)
-  const press = useRef<{ id: string; pointerId: number; startX: number; startY: number; grabX: number; grabY: number } | null>(null)
+  const press = useRef<{
+    id: string
+    pointerId: number
+    startX: number
+    startY: number
+    grabX: number
+    grabY: number
+  } | null>(null)
   const live = useRef<string[] | null>(null)
 
   const byId = new Map(tags.map((t) => [t.id, t]))
@@ -55,7 +68,10 @@ export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: P
       const before = lastPos.current.get(id)
       if (ms > 0 && before && (before.x !== now.x || before.y !== now.y)) {
         el.animate(
-          [{ transform: `translate(${before.x - now.x}px, ${before.y - now.y}px)` }, { transform: 'translate(0, 0)' }],
+          [
+            { transform: `translate(${before.x - now.x}px, ${before.y - now.y}px)` },
+            { transform: 'translate(0, 0)' }
+          ],
           { duration: ms, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' }
         )
       }
@@ -89,7 +105,14 @@ export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: P
     const slot = slots.current.get(id)
     if (!slot) return
     const rect = slot.getBoundingClientRect()
-    press.current = { id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, grabX: e.clientX - rect.left, grabY: e.clientY - rect.top }
+    press.current = {
+      id,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      grabX: e.clientX - rect.left,
+      grabY: e.clientY - rect.top
+    }
     listRef.current?.setPointerCapture(e.pointerId)
   }
 
@@ -104,18 +127,32 @@ export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: P
       const rect = slot.getBoundingClientRect()
       live.current = [...baseIds]
       setOrder([...baseIds])
-      setGhost({ id: p.id, width: rect.width, height: rect.height, x: e.clientX - p.grabX, y: e.clientY - p.grabY, grabX: p.grabX, grabY: p.grabY })
+      setGhost({
+        id: p.id,
+        width: rect.width,
+        height: rect.height,
+        x: e.clientX - p.grabX,
+        y: e.clientY - p.grabY,
+        grabX: p.grabX,
+        grabY: p.grabY
+      })
       setCapturing(true)
       window.addEventListener('keydown', onEscape, true)
       return
     }
-    if (ghostRef.current) ghostRef.current.style.transform = `translate(${e.clientX - p.grabX}px, ${e.clientY - p.grabY}px) scale(1.06)`
+    if (ghostRef.current)
+      ghostRef.current.style.transform = `translate(${e.clientX - p.grabX}px, ${e.clientY - p.grabY}px) scale(1.06)`
     // Where would the pill go? Compare the pointer with the other pills, in the layout (not mid-slide).
     const box = list.getBoundingClientRect()
     const others = live.current.filter((id) => id !== p.id)
     const boxes = others.map((id) => {
       const el = slots.current.get(id)!
-      return { left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight }
+      return {
+        left: el.offsetLeft,
+        top: el.offsetTop,
+        width: el.offsetWidth,
+        height: el.offsetHeight
+      }
     })
     const to = dropIndex(boxes, { x: e.clientX - box.left, y: e.clientY - box.top })
     const next = [...others.slice(0, to), p.id, ...others.slice(to)]
@@ -165,25 +202,43 @@ export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: P
                 }}
                 className={'tag-slot' + (dragging ? ' dragging' : '')}
               >
-                <button type="button" className="tag-plus" aria-label={`Add the next tag before ${t.name}`} title="Add a tag here" onClick={() => onInsertHere(i)}>
+                <button
+                  type="button"
+                  className="tag-plus"
+                  aria-label={`Add the next tag before ${t.name}`}
+                  title="Add a tag here"
+                  onClick={() => onInsertHere(i)}
+                >
                   +
                 </button>
                 <span
                   className="pill tag-pill"
                   role="listitem"
                   tabIndex={0}
-                  title={tags.length > 1 ? 'Drag to move, or press Alt and an arrow key' : undefined}
+                  title={
+                    tags.length > 1 ? 'Drag to move, or press Alt and an arrow key' : undefined
+                  }
                   style={{ fontSize: 13, padding: '3px 6px 3px 10px' }}
                   onPointerDown={(e) => onPointerDown(e, id)}
                   onKeyDown={(e) => onKeyDown(e, i)}
                 >
                   {t.name}
-                  <button type="button" aria-label={`Remove tag ${t.name}`} onClick={() => onRemove(t)}>
+                  <button
+                    type="button"
+                    aria-label={`Remove tag ${t.name}`}
+                    onClick={() => onRemove(t)}
+                  >
                     ×
                   </button>
                 </span>
                 {i === ids.length - 1 && (
-                  <button type="button" className="tag-plus after" aria-label="Add the next tag at the end" title="Add a tag here" onClick={() => onInsertHere(ids.length)}>
+                  <button
+                    type="button"
+                    className="tag-plus after"
+                    aria-label="Add the next tag at the end"
+                    title="Add a tag here"
+                    onClick={() => onInsertHere(ids.length)}
+                  >
                     +
                   </button>
                 )}
@@ -191,13 +246,20 @@ export function TagList({ tags, insertAt, onReorder, onRemove, onInsertHere }: P
             </Fragment>
           )
         })}
-        {insertAt === ids.length && ids.length > 0 && <span className="tag-caret" aria-hidden="true" />}
+        {insertAt === ids.length && ids.length > 0 && (
+          <span className="tag-caret" aria-hidden="true" />
+        )}
       </div>
       {ghost && byId.get(ghost.id) && (
         <div
           ref={ghostRef}
           className="pill tag-ghost"
-          style={{ width: ghost.width, height: ghost.height, fontSize: 13, transform: `translate(${ghost.x}px, ${ghost.y}px) scale(1.06)` }}
+          style={{
+            width: ghost.width,
+            height: ghost.height,
+            fontSize: 13,
+            transform: `translate(${ghost.x}px, ${ghost.y}px) scale(1.06)`
+          }}
         >
           {byId.get(ghost.id)!.name}
         </div>

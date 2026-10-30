@@ -11,7 +11,11 @@ const SHOWN_AT_FIRST = 5
 function Inline({ text }: { text: string }): React.JSX.Element {
   return (
     <>
-      {text.split('`').map((part, i) => (i % 2 === 1 ? <code key={i}>{part}</code> : <span key={i}>{part}</span>))}
+      {text
+        .split('`')
+        .map((part, i) =>
+          i % 2 === 1 ? <code key={i}>{part}</code> : <span key={i}>{part}</span>
+        )}
     </>
   )
 }
@@ -38,7 +42,10 @@ export function AboutTab(): React.JSX.Element {
 
   // A build you install never shows unreleased notes. They only make sense while developing.
   const entries = useMemo(
-    () => parseChangelog(changelogText).filter((e) => appInfo.packaged === false || e.title.toLowerCase() !== 'unreleased'),
+    () =>
+      parseChangelog(changelogText).filter(
+        (e) => appInfo.packaged === false || e.title.toLowerCase() !== 'unreleased'
+      ),
     [appInfo.packaged]
   )
   const visible = showAll ? entries : entries.slice(0, SHOWN_AT_FIRST)
@@ -65,16 +72,22 @@ export function AboutTab(): React.JSX.Element {
       <h1>About</h1>
       <div className="sec-card">
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26 }}>Clip Shelf</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26 }}>
+            Clip Shelf
+          </span>
           <span className="mono muted">{appInfo.version ? 'v' + appInfo.version : ''}</span>
         </div>
         <span className="muted" style={{ fontSize: 13 }}>
-          Browse, tag and organize gameplay clips from many folders, then drag them into your video editor. Your clip files are never changed.
+          Browse, tag and organize gameplay clips from many folders, then drag them into your video
+          editor. Your clip files are never changed.
         </span>
       </div>
 
       <div className="sec-card">
-        <Row title="Report a problem or suggest something" desc="Opens GitHub. Use “Copy diagnostics” first and paste it in, so I know which version and setup you have.">
+        <Row
+          title="Report a problem or suggest something"
+          desc="Opens GitHub. Use “Copy diagnostics” first and paste it in, so I know which version and setup you have."
+        >
           <div style={{ display: 'flex', gap: 8, flex: 'none' }}>
             <button className="btn" onClick={() => void copyDiagnostics()}>
               Copy diagnostics
@@ -85,7 +98,10 @@ export function AboutTab(): React.JSX.Element {
             </a>
           </div>
         </Row>
-        <Row title="Log files" desc="Warnings and errors are written to a log file. Attach it to a bug report when something goes wrong.">
+        <Row
+          title="Log files"
+          desc="Warnings and errors are written to a log file. Attach it to a bug report when something goes wrong."
+        >
           <button className="btn" onClick={() => void window.api.openLogsFolder()}>
             <FolderOpen size={14} />
             Open logs folder
@@ -107,11 +123,17 @@ export function AboutTab(): React.JSX.Element {
           <section key={e.title} className="sec-card changelog">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <h3>{unreleased ? 'In development' : e.title}</h3>
-              {e.version && e.version === appInfo.version && <span className="pill-note">Installed</span>}
+              {e.version && e.version === appInfo.version && (
+                <span className="pill-note">Installed</span>
+              )}
             </div>
             {e.groups.map((g, gi) => (
               <div key={gi}>
-                {g.heading && <div className="h-label" style={{ margin: '4px 0 6px' }}>{g.heading}</div>}
+                {g.heading && (
+                  <div className="h-label" style={{ margin: '4px 0 6px' }}>
+                    {g.heading}
+                  </div>
+                )}
                 <ul>
                   {g.items.map((it, ii) => (
                     <li key={ii}>
@@ -125,7 +147,11 @@ export function AboutTab(): React.JSX.Element {
         )
       })}
       {!showAll && entries.length > SHOWN_AT_FIRST && (
-        <button className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => setShowAll(true)}>
+        <button
+          className="btn"
+          style={{ alignSelf: 'flex-start' }}
+          onClick={() => setShowAll(true)}
+        >
           Show older versions
         </button>
       )}

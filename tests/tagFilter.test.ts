@@ -23,8 +23,12 @@ describe('describeTagFilter', () => {
     expect(describeTagFilter([], [], 'any')).toBe('')
   })
   it('spells out OR and AND', () => {
-    expect(describeTagFilter(['Air dribble', 'Sidewall'], [], 'any')).toBe('Showing clips tagged Air dribble OR Sidewall')
-    expect(describeTagFilter(['Air dribble', 'Sidewall'], [], 'all')).toBe('Showing clips tagged Air dribble AND Sidewall')
+    expect(describeTagFilter(['Air dribble', 'Sidewall'], [], 'any')).toBe(
+      'Showing clips tagged Air dribble OR Sidewall'
+    )
+    expect(describeTagFilter(['Air dribble', 'Sidewall'], [], 'all')).toBe(
+      'Showing clips tagged Air dribble AND Sidewall'
+    )
     expect(describeTagFilter(['Air dribble'], [], 'all')).toBe('Showing clips tagged Air dribble')
   })
   it('adds hidden tags', () => {

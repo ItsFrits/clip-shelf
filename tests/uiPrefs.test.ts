@@ -28,7 +28,10 @@ describe('resolveMotion', () => {
   })
   it('treats unknown values safely', () => {
     expect(resolveMotion('weird' as never, 'weird' as never, true)).toEqual({ off: true, scale: 1 })
-    expect(resolveMotion('weird' as never, 'weird' as never, false)).toEqual({ off: false, scale: 1 })
+    expect(resolveMotion('weird' as never, 'weird' as never, false)).toEqual({
+      off: false,
+      scale: 1
+    })
   })
 })
 

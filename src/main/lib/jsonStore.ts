@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, copyFileSync, statSync } from 'fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+  copyFileSync,
+  statSync
+} from 'fs'
 import { promises as fsp } from 'fs'
 import { dirname } from 'path'
 
@@ -88,7 +96,8 @@ export class JsonStore<T extends object> {
     const tmp = this.file + '.tmp'
     writeFileSync(tmp, JSON.stringify(this.data))
     try {
-      if (existsSync(this.file) && !existsSync(this.file + '.bak')) copyFileSync(this.file, this.file + '.bak')
+      if (existsSync(this.file) && !existsSync(this.file + '.bak'))
+        copyFileSync(this.file, this.file + '.bak')
     } catch {
       /* ignore */
     }

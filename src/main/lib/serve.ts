@@ -46,7 +46,8 @@ export async function serveFile(path: string, rangeHeader: string | null): Promi
     // Web Audio needs cross-origin approval to read media from a custom scheme.
     'Access-Control-Allow-Origin': '*'
   }
-  if (size === 0) return new Response(null, { status: 200, headers: { ...headers, 'Content-Length': '0' } })
+  if (size === 0)
+    return new Response(null, { status: 200, headers: { ...headers, 'Content-Length': '0' } })
 
   let start = 0
   let end = size - 1
@@ -54,7 +55,10 @@ export async function serveFile(path: string, rangeHeader: string | null): Promi
   if (rangeHeader) {
     const r = parseRange(rangeHeader, size)
     if (!r) {
-      return new Response(null, { status: 416, headers: { ...headers, 'Content-Range': `bytes */${size}` } })
+      return new Response(null, {
+        status: 416,
+        headers: { ...headers, 'Content-Range': `bytes */${size}` }
+      })
     }
     start = r.start
     end = r.end

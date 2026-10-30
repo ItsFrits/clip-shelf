@@ -17,7 +17,13 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { effectiveKeymap, formatChord } from '@shared/keymap'
 import type { PreparedAudio } from '@shared/types'
-import { clipStatus, EMPTY_CLIP_USER, parentDir, suggestedTags, trackProfileKey } from '@shared/userLogic'
+import {
+  clipStatus,
+  EMPTY_CLIP_USER,
+  parentDir,
+  suggestedTags,
+  trackProfileKey
+} from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
 import { baseName, fmtBytes, fmtDayTime, fmtDuration, fmtSeconds } from '../lib/format'
 import { registerPlayerAction } from '../lib/hotkeys'
@@ -37,7 +43,8 @@ export function Player(): React.JSX.Element {
   const key = useApp((s) => s.playerKey)
   const clip = useApp((s) => (s.playerKey ? s.clips.get(s.playerKey) : undefined))
   const playerList = useApp((s) => s.playerList)
-  const user = useApp((s) => (s.playerKey ? s.user.clips[s.playerKey] : undefined)) ?? EMPTY_CLIP_USER
+  const user =
+    useApp((s) => (s.playerKey ? s.user.clips[s.playerKey] : undefined)) ?? EMPTY_CLIP_USER
   const tagById = useApp((s) => s.tagById)
   const allTags = useApp((s) => s.user.tags)
   const folders = useApp((s) => s.folders)
@@ -129,7 +136,13 @@ export function Player(): React.JSX.Element {
         const st = useApp.getState()
         const legacy = st.user.settings.trackVolumes
         const first = st.clips.get(key)?.files[0]?.path ?? ''
-        const profile = st.user.settings.trackProfiles[trackProfileKey(parentDir(first), p.tracks.map((t) => t.label))] ?? {}
+        const profile =
+          st.user.settings.trackProfiles[
+            trackProfileKey(
+              parentDir(first),
+              p.tracks.map((t) => t.label)
+            )
+          ] ?? {}
         const levels = p.tracks.map((t) => ({
           volume: profile[t.label]?.volume ?? legacy[t.label] ?? 1,
           muted: profile[t.label]?.muted ?? false
@@ -246,8 +259,12 @@ export function Player(): React.JSX.Element {
       registerPlayerAction('nextClip', () => stepPlayer(1)),
       registerPlayerAction('focusTag', () => tagRef.current?.focus()),
       registerPlayerAction('focusNote', () => noteRef.current?.focus()),
-      registerPlayerAction('muteMaster', () => updateSettings({ masterMuted: !useApp.getState().user.settings.masterMuted })),
-      registerPlayerAction('toggleLoop', () => updateSettings({ loop: !useApp.getState().user.settings.loop })),
+      registerPlayerAction('muteMaster', () =>
+        updateSettings({ masterMuted: !useApp.getState().user.settings.masterMuted })
+      ),
+      registerPlayerAction('toggleLoop', () =>
+        updateSettings({ loop: !useApp.getState().user.settings.loop })
+      ),
       registerPlayerAction('toggleWatched', () => {
         const k = useApp.getState().playerKey
         if (!k) return
@@ -300,7 +317,9 @@ export function Player(): React.JSX.Element {
     if (insertAt !== null) setInsertAt(insertAt + 1)
   }
   const nextTags = suggestedTags(user.tags, allTags).filter((t) => !skipped.includes(t.id))
-  const suggestions = clip.hints.filter((h) => !user.ignoredHints.includes(h) && !tagNames.includes(h.toLowerCase()))
+  const suggestions = clip.hints.filter(
+    (h) => !user.ignoredHints.includes(h) && !tagNames.includes(h.toLowerCase())
+  )
   const folder = folders.find((f) => f.id === clip.files[0]?.folderId)
   const aux = clip.files.find((f) => f.audioPath)?.audioPath
   const editor = settings.editorName.trim() || 'editor'
@@ -308,7 +327,10 @@ export function Player(): React.JSX.Element {
 
   // Clips in the same folder with the same tracks share their volume and mute settings.
   const profileKey = prepared
-    ? trackProfileKey(parentDir(clip.files[0]?.path ?? ''), prepared.tracks.map((t) => t.label))
+    ? trackProfileKey(
+        parentDir(clip.files[0]?.path ?? ''),
+        prepared.tracks.map((t) => t.label)
+      )
     : null
   const hasSavedLevels = !!profileKey && !!settings.trackProfiles[profileKey]
 
@@ -316,7 +338,9 @@ export function Player(): React.JSX.Element {
     const label = prepared?.tracks[i]?.label
     if (!label || !profileKey) return
     const all = useApp.getState().user.settings.trackProfiles
-    updateSettings({ trackProfiles: { ...all, [profileKey]: { ...all[profileKey], [label]: level } } })
+    updateSettings({
+      trackProfiles: { ...all, [profileKey]: { ...all[profileKey], [label]: level } }
+    })
   }
   const setTrackVolume = (i: number, v: number): void => {
     mixer?.setVolume(i, v)
@@ -342,7 +366,10 @@ export function Player(): React.JSX.Element {
   }
 
   const remove = async (): Promise<void> => {
-    const nextKey = playerList[index + 1] && useApp.getState().clips.has(playerList[index + 1]) ? playerList[index + 1] : null
+    const nextKey =
+      playerList[index + 1] && useApp.getState().clips.has(playerList[index + 1])
+        ? playerList[index + 1]
+        : null
     const done = await trashKeys([key])
     if (!done) return
     if (nextKey) useApp.setState({ playerKey: nextKey })
@@ -358,7 +385,15 @@ export function Player(): React.JSX.Element {
         </button>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
           <span className="player-title">{fmtDayTime(clip.date)}</span>
-          <span className="mono muted" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span
+            className="mono muted"
+            style={{
+              fontSize: 12,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
             {clip.name}
           </span>
         </div>
@@ -377,7 +412,12 @@ export function Player(): React.JSX.Element {
       <div className="player-body">
         <main className="player-main">
           <div
-            className={'video-wrap' + (active ? ' active' : '') + (peek ? ' peek' : '') + (near ? ' near-' + near : '')}
+            className={
+              'video-wrap' +
+              (active ? ' active' : '') +
+              (peek ? ' peek' : '') +
+              (near ? ' near-' + near : '')
+            }
             onMouseMove={(e) => {
               const r = e.currentTarget.getBoundingClientRect()
               const x = e.clientX - r.left
@@ -399,7 +439,9 @@ export function Player(): React.JSX.Element {
               onClick={togglePlay}
               onPlay={() => {
                 setPlaying(true)
-                setIndicator((cur) => (cur?.kind === 'pause' ? { id: ++indicatorId.current, kind: 'play' } : cur))
+                setIndicator((cur) =>
+                  cur?.kind === 'pause' ? { id: ++indicatorId.current, kind: 'play' } : cur
+                )
               }}
               onPause={() => setPlaying(false)}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
@@ -407,7 +449,9 @@ export function Player(): React.JSX.Element {
                 if (settings.autoplayNext && !settings.loop) stepPlayer(1)
                 else if (settings.autoplayNext) stepPlayer(1)
               }}
-              onError={() => setError('This video could not be played. Its format may not be supported.')}
+              onError={() =>
+                setError('This video could not be played. Its format may not be supported.')
+              }
             />
             {indicator && !error && (
               <span
@@ -440,12 +484,19 @@ export function Player(): React.JSX.Element {
                 <ChevronRight size={22} strokeWidth={2} />
               </button>
             )}
-            <span className="badge tl" style={{ top: 14, left: 14, padding: '4px 10px', fontSize: 12 }}>
+            <span
+              className="badge tl"
+              style={{ top: 14, left: 14, padding: '4px 10px', fontSize: 12 }}
+            >
               {folder?.name ?? ''}
               {clip.width ? ` · ${clip.width}×${clip.height}` : ''}
               {clip.fps ? ` · ${Math.round(clip.fps)} fps` : ''}
             </span>
-            <span ref={frameRef} className="badge tr mono" style={{ top: 14, right: 14, padding: '4px 10px', fontSize: 12 }}>
+            <span
+              ref={frameRef}
+              className="badge tr mono"
+              style={{ top: 14, right: 14, padding: '4px 10px', fontSize: 12 }}
+            >
               Frame 0
             </span>
             {error && (
@@ -484,16 +535,41 @@ export function Player(): React.JSX.Element {
               </span>
             </div>
             <div className="transport">
-              <button className="btn icon" aria-label="Previous frame" title={chord('frameBack')} onClick={() => stepFrame(-1)}>
+              <button
+                className="btn icon"
+                aria-label="Previous frame"
+                title={chord('frameBack')}
+                onClick={() => stepFrame(-1)}
+              >
                 <StepBack size={16} />
               </button>
-              <button className="btn primary" style={{ width: 52 }} aria-label={playing ? 'Pause' : 'Play'} title={chord('playPause')} onClick={togglePlay}>
-                {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+              <button
+                className="btn primary"
+                style={{ width: 52 }}
+                aria-label={playing ? 'Pause' : 'Play'}
+                title={chord('playPause')}
+                onClick={togglePlay}
+              >
+                {playing ? (
+                  <Pause size={18} fill="currentColor" />
+                ) : (
+                  <Play size={18} fill="currentColor" />
+                )}
               </button>
-              <button className="btn icon" aria-label="Next frame" title={chord('frameForward')} onClick={() => stepFrame(1)}>
+              <button
+                className="btn icon"
+                aria-label="Next frame"
+                title={chord('frameForward')}
+                onClick={() => stepFrame(1)}
+              >
                 <StepForward size={16} />
               </button>
-              <div className="seg" style={{ marginLeft: 8 }} role="group" aria-label="Playback speed">
+              <div
+                className="seg"
+                style={{ marginLeft: 8 }}
+                role="group"
+                aria-label="Playback speed"
+              >
                 {SPEEDS.map((s) => (
                   <button key={s} className={rate === s ? 'on' : ''} onClick={() => changeRate(s)}>
                     {s}×
@@ -502,11 +578,19 @@ export function Player(): React.JSX.Element {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginLeft: 'auto' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={settings.loop} onChange={(e) => updateSettings({ loop: e.target.checked })} />
+                  <input
+                    type="checkbox"
+                    checked={settings.loop}
+                    onChange={(e) => updateSettings({ loop: e.target.checked })}
+                  />
                   <Repeat size={14} /> Loop
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={settings.autoplayNext} onChange={(e) => updateSettings({ autoplayNext: e.target.checked })} />
+                  <input
+                    type="checkbox"
+                    checked={settings.autoplayNext}
+                    onChange={(e) => updateSettings({ autoplayNext: e.target.checked })}
+                  />
                   Play next clip automatically
                 </label>
               </div>
@@ -514,23 +598,53 @@ export function Player(): React.JSX.Element {
             <div className="hints">
               {settings.showKeyHints && (
                 <>
-                <span><span className="kbd">{chord('playPause')}</span> play</span>
-                <span><span className="kbd">{chord('frameBack')}</span> <span className="kbd">{chord('frameForward')}</span> frame step</span>
-                <span><span className="kbd">{chord('speedDown')}</span> <span className="kbd">{chord('speedUp')}</span> speed</span>
-                <span><span className="kbd">{chord('rate1')}–{chord('rate5')}</span> rate</span>
-                <span><span className="kbd">{chord('focusTag')}</span> tag</span>
-                <span><span className="kbd">{chord('random')}</span> random clip</span>
+                  <span>
+                    <span className="kbd">{chord('playPause')}</span> play
+                  </span>
+                  <span>
+                    <span className="kbd">{chord('frameBack')}</span>{' '}
+                    <span className="kbd">{chord('frameForward')}</span> frame step
+                  </span>
+                  <span>
+                    <span className="kbd">{chord('speedDown')}</span>{' '}
+                    <span className="kbd">{chord('speedUp')}</span> speed
+                  </span>
+                  <span>
+                    <span className="kbd">
+                      {chord('rate1')}–{chord('rate5')}
+                    </span>{' '}
+                    rate
+                  </span>
+                  <span>
+                    <span className="kbd">{chord('focusTag')}</span> tag
+                  </span>
+                  <span>
+                    <span className="kbd">{chord('random')}</span> random clip
+                  </span>
                 </>
               )}
-              <span style={{ marginLeft: 'auto' }}>A clip counts as watched when it plays to the end, or when you tag, rate or write a note.</span>
+              <span style={{ marginLeft: 'auto' }}>
+                A clip counts as watched when it plays to the end, or when you tag, rate or write a
+                note.
+              </span>
             </div>
           </div>
 
           <section className="panel">
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-              <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 20 }}>Audio tracks</h2>
+              <h2
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 20
+                }}
+              >
+                Audio tracks
+              </h2>
               <span className="muted" style={{ fontSize: 13, flex: 1, minWidth: 240 }}>
-                All tracks play together. Volumes and mutes are remembered for clips in this folder with the same tracks. Your files stay untouched.
+                All tracks play together. Volumes and mutes are remembered for clips in this folder
+                with the same tracks. Your files stay untouched.
               </span>
               {hasSavedLevels && (
                 <button
@@ -542,10 +656,16 @@ export function Player(): React.JSX.Element {
                 </button>
               )}
               <div className="seg" role="group" aria-label="Track labels">
-                <button className={settings.trackNames === 'names' ? 'on' : ''} onClick={() => updateSettings({ trackNames: 'names' })}>
+                <button
+                  className={settings.trackNames === 'names' ? 'on' : ''}
+                  onClick={() => updateSettings({ trackNames: 'names' })}
+                >
                   Names
                 </button>
-                <button className={settings.trackNames === 'numbers' ? 'on' : ''} onClick={() => updateSettings({ trackNames: 'numbers' })}>
+                <button
+                  className={settings.trackNames === 'numbers' ? 'on' : ''}
+                  onClick={() => updateSettings({ trackNames: 'numbers' })}
+                >
                   Numbers
                 </button>
               </div>
@@ -562,7 +682,9 @@ export function Player(): React.JSX.Element {
               </button>
               <div className="info">
                 <div style={{ fontWeight: 600 }}>Master volume</div>
-                <div className="src">{settings.masterMuted ? 'Muted' : 'Stays the same for every clip'}</div>
+                <div className="src">
+                  {settings.masterMuted ? 'Muted' : 'Stays the same for every clip'}
+                </div>
               </div>
               <input
                 type="range"
@@ -570,15 +692,23 @@ export function Player(): React.JSX.Element {
                 max={100}
                 value={Math.round(settings.masterVolume * 100)}
                 aria-label="Master volume"
-                style={{ flex: '1 1 180px', minWidth: 120, opacity: settings.masterMuted ? 0.45 : 1 }}
-                onChange={(e) => updateSettings({ masterVolume: Number(e.target.value) / 100, masterMuted: false })}
+                style={{
+                  flex: '1 1 180px',
+                  minWidth: 120,
+                  opacity: settings.masterMuted ? 0.45 : 1
+                }}
+                onChange={(e) =>
+                  updateSettings({ masterVolume: Number(e.target.value) / 100, masterMuted: false })
+                }
               />
               <span className="mono" style={{ width: 44, textAlign: 'right' }}>
                 {Math.round(settings.masterVolume * 100)}%
               </span>
             </div>
             {!prepared && !error && <span className="muted">Preparing audio…</span>}
-            {prepared && prepared.tracks.length === 0 && <span className="muted">This clip has no audio.</span>}
+            {prepared && prepared.tracks.length === 0 && (
+              <span className="muted">This clip has no audio.</span>
+            )}
             {prepared?.tracks.map((t, i) => (
               <div key={t.label + i} className="track-row">
                 <button
@@ -590,8 +720,16 @@ export function Player(): React.JSX.Element {
                   {muted[i] ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </button>
                 <div className="info">
-                  <div style={{ fontWeight: 600 }}>{settings.trackNames === 'numbers' ? t.number : t.label}</div>
-                  <div className="src">{t.kind === 'file' ? (aux ? baseName(aux) : 'Separate file') : 'Inside the video file'}</div>
+                  <div style={{ fontWeight: 600 }}>
+                    {settings.trackNames === 'numbers' ? t.number : t.label}
+                  </div>
+                  <div className="src">
+                    {t.kind === 'file'
+                      ? aux
+                        ? baseName(aux)
+                        : 'Separate file'
+                      : 'Inside the video file'}
+                  </div>
                 </div>
                 <Meter mixer={mixer} index={i} muted={!!muted[i]} />
                 <input
@@ -615,10 +753,17 @@ export function Player(): React.JSX.Element {
           <section className="side-sec">
             <h2 className="h-label">Status</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="dot" style={{ background: STATUS_COLOR[status], width: 10, height: 10 }} />
+              <span
+                className="dot"
+                style={{ background: STATUS_COLOR[status], width: 10, height: 10 }}
+              />
               <b style={{ color: STATUS_COLOR[status] }}>{STATUS_LABEL[status]}</b>
               <span className="muted" style={{ fontSize: 12 }}>
-                {status === 'tagged' ? 'has at least one tag' : status === 'watched' ? 'seen, no tag yet' : ''}
+                {status === 'tagged'
+                  ? 'has at least one tag'
+                  : status === 'watched'
+                    ? 'seen, no tag yet'
+                    : ''}
               </span>
             </div>
             <label className="toggle-row">
@@ -649,11 +794,16 @@ export function Player(): React.JSX.Element {
           <section
             className="side-sec"
             onBlur={(e) => {
-              if (insertAt !== null && !e.currentTarget.contains(e.relatedTarget as Node | null)) setInsertAt(null)
+              if (insertAt !== null && !e.currentTarget.contains(e.relatedTarget as Node | null))
+                setInsertAt(null)
             }}
           >
             <h2 className="h-label">Tags</h2>
-            {tags.length === 0 && <span className="muted" style={{ fontSize: 13 }}>No tags yet</span>}
+            {tags.length === 0 && (
+              <span className="muted" style={{ fontSize: 13 }}>
+                No tags yet
+              </span>
+            )}
             <TagList
               tags={tags}
               insertAt={insertAt}
@@ -667,12 +817,20 @@ export function Player(): React.JSX.Element {
             <TagInput
               inputRef={tagRef}
               exclude={user.tags}
-              placeholder={insertAt !== null ? 'Add a tag here' : settings.showKeyHints ? `Add a tag (${chord('focusTag')})` : 'Add a tag'}
+              placeholder={
+                insertAt !== null
+                  ? 'Add a tag here'
+                  : settings.showKeyHints
+                    ? `Add a tag (${chord('focusTag')})`
+                    : 'Add a tag'
+              }
               onAdd={addHere}
             />
             {nextTags.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span className="muted" style={{ fontSize: 12 }}>Suggested next</span>
+                <span className="muted" style={{ fontSize: 12 }}>
+                  Suggested next
+                </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {nextTags.map((t) => (
                     <span key={t.id} className="pill suggest next">
@@ -697,12 +855,25 @@ export function Player(): React.JSX.Element {
             )}
             {suggestions.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span className="muted" style={{ fontSize: 12 }}>Suggested from the folder name</span>
+                <span className="muted" style={{ fontSize: 12 }}>
+                  Suggested from the folder name
+                </span>
                 {suggestions.map((h) => (
                   <div key={h} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="pill suggest" style={{ cursor: 'default' }}>{h}</span>
-                    <button className="btn small" onClick={() => void addTagByName([key], h)}>Add tag</button>
-                    <button className="btn small ghost" onClick={() => patch([key], { set: { ignoredHints: [...user.ignoredHints, h] } })}>Ignore</button>
+                    <span className="pill suggest" style={{ cursor: 'default' }}>
+                      {h}
+                    </span>
+                    <button className="btn small" onClick={() => void addTagByName([key], h)}>
+                      Add tag
+                    </button>
+                    <button
+                      className="btn small ghost"
+                      onClick={() =>
+                        patch([key], { set: { ignoredHints: [...user.ignoredHints, h] } })
+                      }
+                    >
+                      Ignore
+                    </button>
                   </div>
                 ))}
               </div>
@@ -711,20 +882,48 @@ export function Player(): React.JSX.Element {
 
           <section className="side-sec">
             <h2 className="h-label">Rating</h2>
-            <Stars value={user.rating} onChange={(n) => patch([key], { set: { rating: n } }, 'Rate')} size={28} />
+            <Stars
+              value={user.rating}
+              onChange={(n) => patch([key], { set: { rating: n } }, 'Rate')}
+              size={28}
+            />
           </section>
 
-          <NoteEditor key={key} clipKey={key} value={user.note} inputRef={noteRef} label={settings.showKeyHints ? chord('focusNote') : ''} />
+          <NoteEditor
+            key={key}
+            clipKey={key}
+            value={user.note}
+            inputRef={noteRef}
+            label={settings.showKeyHints ? chord('focusNote') : ''}
+          />
 
           <section className="side-sec">
             <h2 className="h-label">Details</h2>
             <dl className="details">
-              <dt>Length</dt><dd>{fmtDuration(clip.durationMs)}</dd>
-              <dt>Size</dt><dd>{fmtBytes(clip.size)}</dd>
-              <dt>Folder</dt><dd>{folder?.name}</dd>
-              <dt>File</dt><dd className="mono" style={{ fontSize: 12 }}>{clip.files[0]?.path}</dd>
-              {aux && (<><dt>Mic file</dt><dd className="mono" style={{ fontSize: 12 }}>{baseName(aux)}</dd></>)}
-              {clip.files.length > 1 && (<><dt>Copies</dt><dd>{clip.files.length} (same clip in several places)</dd></>)}
+              <dt>Length</dt>
+              <dd>{fmtDuration(clip.durationMs)}</dd>
+              <dt>Size</dt>
+              <dd>{fmtBytes(clip.size)}</dd>
+              <dt>Folder</dt>
+              <dd>{folder?.name}</dd>
+              <dt>File</dt>
+              <dd className="mono" style={{ fontSize: 12 }}>
+                {clip.files[0]?.path}
+              </dd>
+              {aux && (
+                <>
+                  <dt>Mic file</dt>
+                  <dd className="mono" style={{ fontSize: 12 }}>
+                    {baseName(aux)}
+                  </dd>
+                </>
+              )}
+              {clip.files.length > 1 && (
+                <>
+                  <dt>Copies</dt>
+                  <dd>{clip.files.length} (same clip in several places)</dd>
+                </>
+              )}
             </dl>
           </section>
 
@@ -783,7 +982,9 @@ function NoteEditor({ clipKey, value, label, inputRef }: NoteProps): React.JSX.E
   )
   // Save pending text when leaving the clip.
   const latest = useRef(text)
-  latest.current = text
+  useEffect(() => {
+    latest.current = text
+  })
   useEffect(() => () => save(latest.current), [save])
 
   return (
@@ -794,7 +995,11 @@ function NoteEditor({ clipKey, value, label, inputRef }: NoteProps): React.JSX.E
         className="field"
         rows={4}
         value={text}
-        placeholder={label ? `Write something to find this clip later (${label})` : 'Write something to find this clip later'}
+        placeholder={
+          label
+            ? `Write something to find this clip later (${label})`
+            : 'Write something to find this clip later'
+        }
         onChange={(e) => {
           setText(e.target.value)
           if (timer.current) clearTimeout(timer.current)

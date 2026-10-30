@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { folderHints, makeClipKey, makeIgnoreMatcher, parseDateFromName } from '../src/main/lib/naming'
+import {
+  folderHints,
+  makeClipKey,
+  makeIgnoreMatcher,
+  parseDateFromName
+} from '../src/main/lib/naming'
 import { parseRange } from '../src/main/lib/serve'
 import { applyPatch, clipStatus, EMPTY_CLIP_USER } from '../src/shared/userLogic'
 import { chordFromEvent, effectiveKeymap, findConflict } from '../src/shared/keymap'
@@ -12,10 +17,14 @@ describe('parseDateFromName', () => {
     expect(parseDateFromName('Replay 2026-10-09 23-45-30.mp4')).toBe(d(2026, 10, 9, 23, 45, 30))
   })
   it('reads NVIDIA names', () => {
-    expect(parseDateFromName('Rocket League 2024.10.23 - 19.01.35.22.DVR.mp4')).toBe(d(2024, 10, 23, 19, 1, 35))
+    expect(parseDateFromName('Rocket League 2024.10.23 - 19.01.35.22.DVR.mp4')).toBe(
+      d(2024, 10, 23, 19, 1, 35)
+    )
   })
   it('reads Radeon ReLive names (no seconds)', () => {
-    expect(parseDateFromName('Rocket League_replay_2025.08.02-11.26.mp4')).toBe(d(2025, 8, 2, 11, 26))
+    expect(parseDateFromName('Rocket League_replay_2025.08.02-11.26.mp4')).toBe(
+      d(2025, 8, 2, 11, 26)
+    )
   })
   it('returns null for names without a date or an impossible date', () => {
     expect(parseDateFromName('my clip.mp4')).toBeNull()
@@ -77,9 +86,21 @@ describe('user logic', () => {
 
 describe('keymap', () => {
   it('builds chords and finds conflicts', () => {
-    expect(chordFromEvent({ key: 'k', ctrlKey: true, metaKey: false, altKey: false, shiftKey: false })).toBe('Ctrl+K')
-    expect(chordFromEvent({ key: ' ', ctrlKey: false, metaKey: false, altKey: false, shiftKey: false })).toBe('Space')
-    expect(chordFromEvent({ key: 'Shift', ctrlKey: false, metaKey: false, altKey: false, shiftKey: true })).toBeNull()
+    expect(
+      chordFromEvent({ key: 'k', ctrlKey: true, metaKey: false, altKey: false, shiftKey: false })
+    ).toBe('Ctrl+K')
+    expect(
+      chordFromEvent({ key: ' ', ctrlKey: false, metaKey: false, altKey: false, shiftKey: false })
+    ).toBe('Space')
+    expect(
+      chordFromEvent({
+        key: 'Shift',
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: true
+      })
+    ).toBeNull()
     const map = effectiveKeymap({})
     expect(findConflict(map, 'R', 'playPause')).toBe('random')
     expect(findConflict(map, 'F9', 'playPause')).toBeNull()

@@ -77,9 +77,14 @@ export function dateWindow(f: Filters): [number, number] | null {
     case 'month':
       return [startOfMonth(f.anchor), new Date(a.getFullYear(), a.getMonth() + 1, 1).getTime()]
     case 'year':
-      return [new Date(a.getFullYear(), 0, 1).getTime(), new Date(a.getFullYear() + 1, 0, 1).getTime()]
+      return [
+        new Date(a.getFullYear(), 0, 1).getTime(),
+        new Date(a.getFullYear() + 1, 0, 1).getTime()
+      ]
     case 'range': {
-      const from = f.rangeFrom ? startOfDay(new Date(f.rangeFrom + 'T00:00:00').getTime()) : -Infinity
+      const from = f.rangeFrom
+        ? startOfDay(new Date(f.rangeFrom + 'T00:00:00').getTime())
+        : -Infinity
       let to = Infinity
       if (f.rangeTo) {
         const d = new Date(f.rangeTo + 'T00:00:00')
@@ -165,7 +170,9 @@ export function filterClips(clips: Iterable<Clip>, ctx: FilterContext, f: Filter
       if (f.tagMode === 'all' ? !f.tagIds.every(has) : !f.tagIds.some(has)) continue
     }
     if (tokens.length > 0) {
-      const hay = [c.name, u.note, ...u.tags.map((t) => tagName.get(t) ?? ''), ...c.hints].join(' ').toLowerCase()
+      const hay = [c.name, u.note, ...u.tags.map((t) => tagName.get(t) ?? ''), ...c.hints]
+        .join(' ')
+        .toLowerCase()
       if (!tokens.every((t) => hay.includes(t))) continue
     }
     out.push(c)
@@ -180,7 +187,12 @@ export function computeVisible(
   f: Filters,
   settings: Pick<Settings, 'sortRules' | 'randomSeed'>
 ): Clip[] {
-  return sortClips(filterClips(clips, ctx, f), (key) => ctx.user.clips[key]?.rating ?? 0, settings.sortRules, settings.randomSeed)
+  return sortClips(
+    filterClips(clips, ctx, f),
+    (key) => ctx.user.clips[key]?.rating ?? 0,
+    settings.sortRules,
+    settings.randomSeed
+  )
 }
 
 export interface ClipGroup {

@@ -1,4 +1,17 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, GripVertical, Plus, RotateCcw, Shuffle, X } from 'lucide-react'
+/* eslint-disable react-hooks/refs --
+   The rows of the rules are kept in a fixed order in the page (see domOrder and ids below) so that moving a
+   rule is a CSS transition. That order lives in refs on purpose: it is bookkeeping for the DOM, not state
+   to show, and it is changed while rendering so the rows are right in the same pass. */
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  GripVertical,
+  Plus,
+  RotateCcw,
+  Shuffle,
+  X
+} from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { SortField, SortRule } from '@shared/types'
@@ -28,12 +41,12 @@ const SLOT = ROW_H + ROW_GAP
 /** The sort button in the library toolbar, and the popup with the sort rules. */
 export function SortMenu(): React.JSX.Element {
   const [open, setOpen] = useState(false)
-  const btn = useRef<HTMLButtonElement>(null)
+  const [btn, setBtn] = useState<HTMLButtonElement | null>(null)
   const { sortRules } = useSettings()
   return (
     <>
       <button
-        ref={btn}
+        ref={setBtn}
         className={'btn' + (open ? ' open' : '')}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -43,12 +56,18 @@ export function SortMenu(): React.JSX.Element {
         <ArrowUpDown size={16} />
         {sortButtonLabel(sortRules)}
       </button>
-      {open && btn.current && <SortPopup anchorEl={btn.current} onClose={() => setOpen(false)} />}
+      {open && btn && <SortPopup anchorEl={btn} onClose={() => setOpen(false)} />}
     </>
   )
 }
 
-function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () => void }): React.JSX.Element {
+function SortPopup({
+  anchorEl,
+  onClose
+}: {
+  anchorEl: HTMLElement
+  onClose: () => void
+}): React.JSX.Element {
   const settings = useSettings()
   const updateSettings = useApp((s) => s.updateSettings)
   const setCapturing = useApp((s) => s.setCapturing)
@@ -60,7 +79,13 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
   // While a rule is dragged: the order it would have, and the rule that is being held.
   const [dragOrder, setDragOrder] = useState<SortRule[] | null>(null)
   const [dragging, setDragging] = useState<SortField | null>(null)
-  const press = useRef<{ field: SortField; pointerId: number; startY: number; grab: number; listTop: number } | null>(null)
+  const press = useRef<{
+    field: SortField
+    pointerId: number
+    startY: number
+    grab: number
+    listTop: number
+  } | null>(null)
   const liveOrder = useRef<SortRule[] | null>(null)
   // Where the held rule is, in pixels from the top of the list (so it follows the pointer).
   const heldTop = useRef(0)
@@ -78,12 +103,16 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
     return v
   }
   const fields = rules.map((r) => r.field)
-  domOrder.current = [...domOrder.current.filter((f) => fields.includes(f)), ...fields.filter((f) => !domOrder.current.includes(f))]
+  domOrder.current = [
+    ...domOrder.current.filter((f) => fields.includes(f)),
+    ...fields.filter((f) => !domOrder.current.includes(f))
+  ]
 
   const shown = dragOrder ?? rules
   const setRules = (next: SortRule[]): void => updateSettings({ sortRules: next })
   const free = availableFields(rules)
-  const slotOf = (field: SortField, order: readonly SortRule[]): number => order.findIndex((r) => r.field === field) * SLOT
+  const slotOf = (field: SortField, order: readonly SortRule[]): number =>
+    order.findIndex((r) => r.field === field) * SLOT
 
   useLayoutEffect(() => {
     const place = (): void => {
@@ -102,7 +131,8 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
   useEffect(() => {
     const down = (e: MouseEvent): void => {
       const t = e.target as Element
-      if (ref.current?.contains(t) || anchorEl.contains(t) || t.closest?.('[data-keep-open]')) return
+      if (ref.current?.contains(t) || anchorEl.contains(t) || t.closest?.('[data-keep-open]'))
+        return
       onClose()
     }
     const key = (e: KeyboardEvent): void => {
@@ -179,7 +209,8 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
     const p = press.current
     press.current = null
     if (!p) return
-    if (e.currentTarget.hasPointerCapture(p.pointerId)) e.currentTarget.releasePointerCapture(p.pointerId)
+    if (e.currentTarget.hasPointerCapture(p.pointerId))
+      e.currentTarget.releasePointerCapture(p.pointerId)
     const next = liveOrder.current
     liveOrder.current = null
     setDragOrder(null)
@@ -205,7 +236,10 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
   }
 
   const hasRandom = rules.some((r) => r.field === 'random')
-  const isDefault = rules.length === 1 && rules[0].field === DEFAULT_SORT[0].field && rules[0].dir === DEFAULT_SORT[0].dir
+  const isDefault =
+    rules.length === 1 &&
+    rules[0].field === DEFAULT_SORT[0].field &&
+    rules[0].dir === DEFAULT_SORT[0].dir
 
   return createPortal(
     <div
@@ -213,13 +247,24 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
       className="sortmenu"
       role="dialog"
       aria-label="Sort clips"
-      style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, width: WIDTH, visibility: pos ? 'visible' : 'hidden' }}
+      style={{
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? 0,
+        width: WIDTH,
+        visibility: pos ? 'visible' : 'hidden'
+      }}
     >
       <div className="sortmenu-head">
         <strong>Sort clips</strong>
-        <span className="muted">The top rule counts most. The next ones decide when clips are equal.</span>
+        <span className="muted">
+          The top rule counts most. The next ones decide when clips are equal.
+        </span>
       </div>
-      <div className="sortmenu-rules" ref={listRef} style={{ height: rules.length * SLOT - ROW_GAP }}>
+      <div
+        className="sortmenu-rules"
+        ref={listRef}
+        style={{ height: rules.length * SLOT - ROW_GAP }}
+      >
         {domOrder.current.map((field) => {
           const index = rules.findIndex((r) => r.field === field)
           const rule = rules[index]
@@ -227,7 +272,9 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
           const isRandom = field === 'random'
           const shownIndex = shown.findIndex((r) => r.field === field)
           // A field can be swapped for any field that is not used by another rule.
-          const options = SORT_FIELD_LIST.filter((f) => f === field || !fields.includes(f)).map((f) => ({ value: f, label: FIELD_INFO[f].label }))
+          const options = SORT_FIELD_LIST.filter((f) => f === field || !fields.includes(f)).map(
+            (f) => ({ value: f, label: FIELD_INFO[f].label })
+          )
           return (
             <div
               key={idOf(field)}
@@ -243,7 +290,11 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
                 className="sortrule-grip"
                 disabled={isRandom || rules.length < 2}
                 aria-label={`Move ${info.label} rule. Drag, or press Alt and the arrow keys.`}
-                title={isRandom ? 'Random always stays last' : 'Drag to change the priority (or Alt + Up / Down)'}
+                title={
+                  isRandom
+                    ? 'Random always stays last'
+                    : 'Drag to change the priority (or Alt + Up / Down)'
+                }
                 onPointerDown={(e) => startDrag(e, field)}
                 onPointerMove={moveDrag}
                 onPointerUp={endDrag}
@@ -270,13 +321,20 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
                   type="button"
                   className="btn small sortrule-dir"
                   title="Shuffle the clips again"
-                  onClick={() => updateSettings({ randomSeed: (settings.randomSeed + 1) % 1_000_000_007 })}
+                  onClick={() =>
+                    updateSettings({ randomSeed: (settings.randomSeed + 1) % 1_000_000_007 })
+                  }
                 >
                   <Shuffle size={14} />
                   Shuffle again
                 </button>
               ) : (
-                <button type="button" className="btn small sortrule-dir" title="Switch direction" onClick={() => setRules(flipRule(rules, index))}>
+                <button
+                  type="button"
+                  className="btn small sortrule-dir"
+                  title="Switch direction"
+                  onClick={() => setRules(flipRule(rules, index))}
+                >
                   {rule.dir === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
                   {info[rule.dir]}
                 </button>
@@ -295,7 +353,11 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
           )
         })}
       </div>
-      {hasRandom && rules.length > 1 && <p className="muted sortmenu-note">Random is always last, so it only shuffles clips the rules above cannot tell apart.</p>}
+      {hasRandom && rules.length > 1 && (
+        <p className="muted sortmenu-note">
+          Random is always last, so it only shuffles clips the rules above cannot tell apart.
+        </p>
+      )}
       <div className="sortmenu-foot">
         <Dropdown
           className="btn small"
@@ -308,7 +370,12 @@ function SortPopup({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () =
           <Plus size={14} />
           {free.length === 0 ? 'All fields used' : 'Add rule'}
         </Dropdown>
-        <button type="button" className="btn small ghost" disabled={isDefault} onClick={() => setRules(DEFAULT_SORT.map((r) => ({ ...r })))}>
+        <button
+          type="button"
+          className="btn small ghost"
+          disabled={isDefault}
+          onClick={() => setRules(DEFAULT_SORT.map((r) => ({ ...r })))}
+        >
           <RotateCcw size={14} />
           Reset
         </button>

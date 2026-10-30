@@ -22,14 +22,19 @@ export function PresetPicker(): React.JSX.Element {
   const ignorePreset = useApp((s) => s.ignorePreset)
   const setNewPresetOpen = useApp((s) => s.setNewPresetOpen)
   const [open, setOpen] = useState(false)
-  const btn = useRef<HTMLButtonElement>(null)
+  const [btn, setBtn] = useState<HTMLButtonElement | null>(null)
 
-  const label = state.kind === 'all' ? 'All clips' : state.kind === 'custom' ? 'Custom' : (state.active?.name ?? '')
+  const label =
+    state.kind === 'all'
+      ? 'All clips'
+      : state.kind === 'custom'
+        ? 'Custom'
+        : (state.active?.name ?? '')
 
   return (
     <div className="preset-picker">
       <button
-        ref={btn}
+        ref={setBtn}
         type="button"
         className={'preset-trigger' + (open ? ' open' : '')}
         aria-haspopup="listbox"
@@ -38,7 +43,12 @@ export function PresetPicker(): React.JSX.Element {
         onClick={() => setOpen((o) => !o)}
       >
         <span className="preset-trigger-name">{label}</span>
-        {state.modified && <span className="preset-dot" title="You changed the filters since this preset was saved" />}
+        {state.modified && (
+          <span
+            className="preset-dot"
+            title="You changed the filters since this preset was saved"
+          />
+        )}
         <ChevronDown size={16} className="dd-chevron" />
       </button>
 
@@ -46,13 +56,28 @@ export function PresetPicker(): React.JSX.Element {
         <div className="preset-bar" role="group" aria-label="Preset changes">
           <span>Changed since saved</span>
           <div className="preset-bar-actions">
-            <button type="button" className="btn small primary" title="Keep these changes in the preset" onClick={savePresetChanges}>
+            <button
+              type="button"
+              className="btn small primary"
+              title="Keep these changes in the preset"
+              onClick={savePresetChanges}
+            >
               Save
             </button>
-            <button type="button" className="btn small" title="Go back to the preset as it was saved" onClick={() => applyPreset(state.active!.id)}>
+            <button
+              type="button"
+              className="btn small"
+              title="Go back to the preset as it was saved"
+              onClick={() => applyPreset(state.active!.id)}
+            >
               Revert
             </button>
-            <button type="button" className="btn small ghost" title="Keep the filters as they are, but stop following this preset" onClick={ignorePreset}>
+            <button
+              type="button"
+              className="btn small ghost"
+              title="Keep the filters as they are, but stop following this preset"
+              onClick={ignorePreset}
+            >
               Ignore
             </button>
           </div>
@@ -72,7 +97,7 @@ export function PresetPicker(): React.JSX.Element {
         </div>
       )}
 
-      {open && btn.current && <PresetList anchorEl={btn.current} state={state} onClose={() => setOpen(false)} />}
+      {open && btn && <PresetList anchorEl={btn} state={state} onClose={() => setOpen(false)} />}
     </div>
   )
 }
@@ -96,16 +121,24 @@ function PresetList({
   const filters = useApp((s) => s.filters)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
-  const [pos, setPos] = useState<{ left: number; top: number; width: number; maxH: number } | null>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; width: number; maxH: number } | null>(
+    null
+  )
   const ref = useRef<HTMLDivElement>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const search = useRef<HTMLInputElement>(null)
+  // The list is only mounted while it is open, so "now" is taken once when it opens.
+  const [now] = useState(() => Date.now())
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
     return q ? state.presets.filter((p) => p.name.toLowerCase().includes(q)) : state.presets
   }, [state.presets, query])
-  const items: Item[] = [{ kind: 'all' }, { kind: 'new' }, ...shown.map((preset) => ({ kind: 'preset' as const, preset }))]
+  const items: Item[] = [
+    { kind: 'all' },
+    { kind: 'new' },
+    ...shown.map((preset) => ({ kind: 'preset' as const, preset }))
+  ]
 
   // The number of clips each preset would show right now (without the search text).
   const counts = useMemo(() => {
@@ -115,30 +148,47 @@ function PresetList({
     const current = toSavedFilters(filters)
     const out = new Map<string, number>()
     for (const p of state.presets) {
-      const saved = sanitizeSavedFilters(filtersWithPreset(resolvePreset(p, tagIds, folderIds), current), tagIds, folderIds, Date.now())
-      out.set(p.id, filterClips(clips.values(), ctx, { ...DEFAULT_FILTERS, ...saved, query: '' }).length)
+      const saved = sanitizeSavedFilters(
+        filtersWithPreset(resolvePreset(p, tagIds, folderIds), current),
+        tagIds,
+        folderIds,
+        now
+      )
+      out.set(
+        p.id,
+        filterClips(clips.values(), ctx, { ...DEFAULT_FILTERS, ...saved, query: '' }).length
+      )
     }
     return out
-  }, [state.presets, clips, user, folders, filters])
+  }, [state.presets, clips, user, folders, filters, now])
 
   const tagName = (id: string): string | undefined => user.tags.find((t) => t.id === id)?.name
   const folderName = (id: string): string | undefined => folders.find((f) => f.id === id)?.name
 
   useLayoutEffect(() => {
-    const r = anchorEl.getBoundingClientRect()
-    const width = Math.max(r.width, MIN_WIDTH)
-    const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
-    const top = r.bottom + 6
-    setPos({ left, top, width, maxH: window.innerHeight - top - 12 })
+    const place = (): void => {
+      const r = anchorEl.getBoundingClientRect()
+      const width = Math.max(r.width, MIN_WIDTH)
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
+      const top = r.bottom + 6
+      setPos({ left, top, width, maxH: window.innerHeight - top - 12 })
+    }
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
   }, [anchorEl])
 
+  // The search field gets the focus as soon as the list is placed.
+  const placed = pos !== null
   useEffect(() => {
-    search.current?.focus()
-  }, [pos !== null])
+    if (placed) search.current?.focus()
+  }, [placed])
 
   // Keep the active row in view while moving with the keys.
   useEffect(() => {
-    ref.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: 'nearest' })
+    ref.current
+      ?.querySelector<HTMLElement>('[data-active="true"]')
+      ?.scrollIntoView({ block: 'nearest' })
   }, [active])
 
   const choose = (item: Item): void => {
@@ -191,7 +241,16 @@ function PresetList({
     if (item.kind === 'all') {
       const chosen = state.kind === 'all'
       return (
-        <div key="all" role="option" aria-selected={chosen} data-active={isActive} className={'pp-row' + (isActive ? ' active' : '') + (chosen ? ' chosen' : '')} onMouseEnter={() => setActive(index)} onMouseDown={(e) => e.preventDefault()} onClick={() => choose(item)}>
+        <div
+          key="all"
+          role="option"
+          aria-selected={chosen}
+          data-active={isActive}
+          className={'pp-row' + (isActive ? ' active' : '') + (chosen ? ' chosen' : '')}
+          onMouseEnter={() => setActive(index)}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => choose(item)}
+        >
           <div className="pp-top">
             <span className="pp-name">All clips</span>
             {chosen && <Check size={14} />}
@@ -203,7 +262,16 @@ function PresetList({
     }
     if (item.kind === 'new') {
       return (
-        <div key="new" role="option" aria-selected={false} data-active={isActive} className={'pp-row pp-new' + (isActive ? ' active' : '')} onMouseEnter={() => setActive(index)} onMouseDown={(e) => e.preventDefault()} onClick={() => choose(item)}>
+        <div
+          key="new"
+          role="option"
+          aria-selected={false}
+          data-active={isActive}
+          className={'pp-row pp-new' + (isActive ? ' active' : '')}
+          onMouseEnter={() => setActive(index)}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => choose(item)}
+        >
           <div className="pp-top">
             <Plus size={14} />
             <span className="pp-name">New preset…</span>
@@ -213,12 +281,29 @@ function PresetList({
       )
     }
     const p = item.preset
-    const resolved = resolvePreset(p, user.tags.map((t) => t.id), folders.map((f) => f.id))
+    const resolved = resolvePreset(
+      p,
+      user.tags.map((t) => t.id),
+      folders.map((f) => f.id)
+    )
     const summary = presetSummary(resolved, tagName, folderName)
-    const text = summary.length === 0 ? 'No filters' : summary.slice(0, SHOWN).join(' · ') + (summary.length > SHOWN ? ` (+${summary.length - SHOWN})` : '')
+    const text =
+      summary.length === 0
+        ? 'No filters'
+        : summary.slice(0, SHOWN).join(' · ') +
+          (summary.length > SHOWN ? ` (+${summary.length - SHOWN})` : '')
     const chosen = state.kind === 'preset' && state.active?.id === p.id
     return (
-      <div key={p.id} role="option" aria-selected={chosen} data-active={isActive} className={'pp-row' + (isActive ? ' active' : '') + (chosen ? ' chosen' : '')} onMouseEnter={() => setActive(index)} onMouseDown={(e) => e.preventDefault()} onClick={() => choose(item)}>
+      <div
+        key={p.id}
+        role="option"
+        aria-selected={chosen}
+        data-active={isActive}
+        className={'pp-row' + (isActive ? ' active' : '') + (chosen ? ' chosen' : '')}
+        onMouseEnter={() => setActive(index)}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => choose(item)}
+      >
         <div className="pp-top">
           <span className="pp-name">{p.name}</span>
           {chosen && <Check size={14} />}
@@ -238,7 +323,13 @@ function PresetList({
       className="pp-list"
       role="listbox"
       aria-label="Presets"
-      style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, width: pos?.width, maxHeight: pos?.maxH, visibility: pos ? 'visible' : 'hidden' }}
+      style={{
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? 0,
+        width: pos?.width,
+        maxHeight: pos?.maxH,
+        visibility: pos ? 'visible' : 'hidden'
+      }}
     >
       <div className="pp-pinned">
         {row(items[0], 0)}
@@ -259,7 +350,13 @@ function PresetList({
       </label>
       <div className="pp-scroll" ref={scroller}>
         {items.slice(2).map((it, i) => row(it, i + 2))}
-        {shown.length === 0 && <div className="pp-empty muted">{state.presets.length === 0 ? 'No presets yet. Make one from the filters you have now.' : 'No preset with that name.'}</div>}
+        {shown.length === 0 && (
+          <div className="pp-empty muted">
+            {state.presets.length === 0
+              ? 'No presets yet. Make one from the filters you have now.'
+              : 'No preset with that name.'}
+          </div>
+        )}
       </div>
     </div>,
     document.body

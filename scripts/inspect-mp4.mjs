@@ -12,7 +12,19 @@ const fd = openSync(file, 'r')
 const size = fstatSync(fd).size
 
 // Boxes that only contain other boxes.
-const CONTAINERS = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'udta', 'edts', 'dinf', 'moof', 'traf', 'mvex'])
+const CONTAINERS = new Set([
+  'moov',
+  'trak',
+  'mdia',
+  'minf',
+  'stbl',
+  'udta',
+  'edts',
+  'dinf',
+  'moof',
+  'traf',
+  'mvex'
+])
 // 'meta' is a container too, but a full box (4 extra bytes) in mp4 and a plain box in QuickTime.
 
 function read(pos, len) {
@@ -22,7 +34,7 @@ function read(pos, len) {
 }
 
 function printable(buf) {
-  const text = buf.toString('utf8').replace(/[^\x20-\x7E -￿]/g, '·')
+  const text = buf.toString('utf8').replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '·')
   return text.replace(/·{2,}/g, ' ').trim()
 }
 
@@ -60,11 +72,16 @@ function walk(start, end, depth, path) {
       const body = read(bodyStart, Math.min(bodyLen, 256))
       const handler = body.toString('latin1', 8, 12)
       console.log(`${indent}hdlr  type=${handler}  name="${printable(body.subarray(24))}"`)
-    } else if (bodyLen <= 512 && ['name', 'titl', 'ilst', 'data', '©nam', 'desc', 'cprt', 'tkhd'].includes(type) === false) {
+    } else if (
+      bodyLen <= 512 &&
+      ['name', 'titl', 'ilst', 'data', '©nam', 'desc', 'cprt', 'tkhd'].includes(type) === false
+    ) {
       // Unknown small boxes: show the text in them if there is any.
       const body = read(bodyStart, bodyLen)
       const text = printable(body)
-      console.log(`${indent}${type}  ${bodyLen} bytes${text.length >= 3 ? `  text="${text.slice(0, 120)}"` : ''}`)
+      console.log(
+        `${indent}${type}  ${bodyLen} bytes${text.length >= 3 ? `  text="${text.slice(0, 120)}"` : ''}`
+      )
     } else if (type === 'ilst' || type === 'tkhd') {
       console.log(`${indent}${type}  ${bodyLen} bytes`)
     } else {

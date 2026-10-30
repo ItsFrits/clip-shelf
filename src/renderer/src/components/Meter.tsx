@@ -53,7 +53,13 @@ export function Meter({ mixer, index, muted }: Props): React.JSX.Element {
         ref={textRef}
         className="mono"
         title="Peak level"
-        style={{ flex: 'none', width: 62, textAlign: 'right', fontSize: 12, color: 'var(--s-tagged)' }}
+        style={{
+          flex: 'none',
+          width: 62,
+          textAlign: 'right',
+          fontSize: 12,
+          color: 'var(--s-tagged)'
+        }}
       >
         -∞ dB
       </span>

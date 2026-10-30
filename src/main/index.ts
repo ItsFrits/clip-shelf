@@ -111,7 +111,9 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow.on('closed', () => {
       mainWindow = null
     })
-    mainWindow.webContents.on('render-process-gone', (_e, details) => logLine('error', `The window crashed: ${details.reason} (code ${details.exitCode})`))
+    mainWindow.webContents.on('render-process-gone', (_e, details) =>
+      logLine('error', `The window crashed: ${details.reason} (code ${details.exitCode})`)
+    )
     mainWindow.on('unresponsive', () => logLine('warn', 'The window stopped responding.'))
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {

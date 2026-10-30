@@ -1,5 +1,5 @@
 import { Check, ChevronDown } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 export interface DropdownOption<T extends string> {
@@ -46,13 +46,20 @@ export function Dropdown<T extends string>({
 }: Props<T>): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
-  const [pos, setPos] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
+  const [pos, setPos] = useState<{
+    left: number
+    top: number
+    width: number
+    height: number
+  } | null>(null)
   const btn = useRef<HTMLButtonElement>(null)
   const list = useRef<HTMLDivElement>(null)
-  const id = useRef(`dd-${Math.random().toString(36).slice(2, 8)}`)
+  const id = useId()
   const typed = useRef({ text: '', timer: 0 })
   const onPickRef = useRef(onPick)
-  onPickRef.current = onPick
+  useEffect(() => {
+    onPickRef.current = onPick
+  })
 
   const close = (): void => {
     setOpen(false)
@@ -85,8 +92,9 @@ export function Dropdown<T extends string>({
 
   // Keep the highlighted item in view in a long list.
   useEffect(() => {
-    if (open && pos) document.getElementById(`${id.current}-${active}`)?.scrollIntoView({ block: 'nearest' })
-  }, [open, active, pos])
+    if (open && pos)
+      document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' })
+  }, [open, active, pos, id])
 
   // While the list is open: keys go to the list, a click outside closes it. These listeners are on the
   // window, so they run before the ones of the window the list sits in (which must stay open on Esc).
@@ -147,7 +155,7 @@ export function Dropdown<T extends string>({
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-activedescendant={open ? `${id.current}-${active}` : undefined}
+        aria-activedescendant={open ? `${id}-${active}` : undefined}
         title={title}
         disabled={disabled}
         onClick={() => (open ? close() : openList())}
@@ -170,15 +178,23 @@ export function Dropdown<T extends string>({
             aria-label={ariaLabel}
             // Clicks in here must not close the window the list sits in.
             data-keep-open
-            style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, width: pos?.width, maxHeight: pos?.height, visibility: pos ? 'visible' : 'hidden' }}
+            style={{
+              left: pos?.left ?? -9999,
+              top: pos?.top ?? 0,
+              width: pos?.width,
+              maxHeight: pos?.height,
+              visibility: pos ? 'visible' : 'hidden'
+            }}
           >
             {options.map((o, i) => (
               <div
                 key={o.value}
-                id={`${id.current}-${i}`}
+                id={`${id}-${i}`}
                 role="option"
                 aria-selected={o.value === value}
-                className={'dd-item' + (i === active ? ' active' : '') + (o.value === value ? ' chosen' : '')}
+                className={
+                  'dd-item' + (i === active ? ' active' : '') + (o.value === value ? ' chosen' : '')
+                }
                 onMouseEnter={() => setActive(i)}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(o)}

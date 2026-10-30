@@ -21,11 +21,19 @@ export function NewPresetDialog(): React.JSX.Element | null {
   const [parts, setParts] = useState<PresetParts>({ date: false, folders: false, sort: false })
   const input = useRef<HTMLInputElement>(null)
 
-  // Start empty every time it opens, and keep the hotkeys of the library out of the way while typing.
+  // Start empty every time it opens.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setName('')
+      setParts({ date: false, folders: false, sort: false })
+    }
+  }
+
+  // Keep the hotkeys of the library out of the way while typing.
   useEffect(() => {
     if (!open) return
-    setName('')
-    setParts({ date: false, folders: false, sort: false })
     setCapturing(true)
     const t = setTimeout(() => input.current?.focus(), 0)
     return () => {
@@ -49,7 +57,10 @@ export function NewPresetDialog(): React.JSX.Element | null {
 
   const saved = toSavedFilters(filters)
   const dateText = dateLabel(filters)
-  const folderText = filters.folderIds.length === 0 ? 'all folders' : filters.folderIds.map((id) => folders.find((f) => f.id === id)?.name ?? '?').join(', ')
+  const folderText =
+    filters.folderIds.length === 0
+      ? 'all folders'
+      : filters.folderIds.map((id) => folders.find((f) => f.id === id)?.name ?? '?').join(', ')
   const preview = presetSummary(
     capturePreset({ id: 'preview', name: '', hotkey: null }, saved, parts, settings.sortRules),
     (id) => tags.find((t) => t.id === id)?.name,
@@ -62,12 +73,20 @@ export function NewPresetDialog(): React.JSX.Element | null {
     const id = createPreset(name, parts)
     const made = (useApp.getState().user.settings.presets ?? []).find((p) => p.id === id)
     setOpen(false)
-    useApp.getState().toast(`Made the preset “${made?.name ?? name.trim()}”${made?.hotkey ? ` (${made.hotkey})` : ''}.`)
+    useApp
+      .getState()
+      .toast(
+        `Made the preset “${made?.name ?? name.trim()}”${made?.hotkey ? ` (${made.hotkey})` : ''}.`
+      )
   }
 
   const part = (key: keyof PresetParts, label: string, value: string): React.JSX.Element => (
     <label className="check-row">
-      <input type="checkbox" checked={parts[key]} onChange={(e) => setParts({ ...parts, [key]: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={parts[key]}
+        onChange={(e) => setParts({ ...parts, [key]: e.target.checked })}
+      />
       <span className="label">
         {label} <span className="muted">({value})</span>
       </span>
@@ -76,9 +95,18 @@ export function NewPresetDialog(): React.JSX.Element | null {
 
   return (
     <div className="overlay" onMouseDown={() => setOpen(false)}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-label="New preset" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="New preset"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <h2>New preset</h2>
-        <p>A preset remembers the status, tags and rating you have set now, so you can come back to them with one click.</p>
+        <p>
+          A preset remembers the status, tags and rating you have set now, so you can come back to
+          them with one click.
+        </p>
         <input
           ref={input}
           className="field"
@@ -103,7 +131,9 @@ export function NewPresetDialog(): React.JSX.Element | null {
           {part('sort', 'The sort order', sortButtonLabel(settings.sortRules))}
         </div>
         <p className="np-preview" style={{ fontSize: 13 }}>
-          {preview.length > 0 ? `Shows: ${preview.join(' · ')}` : 'No filters yet. This preset will show every clip.'}
+          {preview.length > 0
+            ? `Shows: ${preview.join(' · ')}`
+            : 'No filters yet. This preset will show every clip.'}
         </p>
         <div className="buttons">
           <button className="btn" onClick={() => setOpen(false)}>

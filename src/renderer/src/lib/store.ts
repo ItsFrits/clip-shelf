@@ -23,13 +23,20 @@ import {
   scopedFilters,
   uniqueName
 } from '@shared/presets'
-import { EMPTY_CLIP_USER, applyPatch, isDefaultClipUser, markTagsUsed, whatsNewNotice } from '@shared/userLogic'
+import {
+  EMPTY_CLIP_USER,
+  applyPatch,
+  isDefaultClipUser,
+  markTagsUsed,
+  whatsNewNotice
+} from '@shared/userLogic'
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { settingsTabOnOpen } from '@shared/uiPrefs'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
 
 export type View = 'library' | 'player' | 'settings'
-export type SettingsTab = 'general' | 'folders' | 'playback' | 'tags' | 'presets' | 'hotkeys' | 'backup' | 'about'
+export type SettingsTab =
+  'general' | 'folders' | 'playback' | 'tags' | 'presets' | 'hotkeys' | 'backup' | 'about'
 
 export interface Toast {
   id: number
@@ -260,16 +267,33 @@ export const useApp = create<AppState>((set, get) => ({
     if (id && !target) return
     const tagIds = s.user.tags.map((t) => t.id)
     const folderIds = s.user.folders.map((f) => f.id)
-    const resolve = (p: (typeof presets)[number]): typeof p => ({ ...p, filters: scopedFilters(sanitizeSavedFilters(p.filters, tagIds, folderIds, 0), p.parts) })
+    const resolve = (p: (typeof presets)[number]): typeof p => ({
+      ...p,
+      filters: scopedFilters(sanitizeSavedFilters(p.filters, tagIds, folderIds, 0), p.parts)
+    })
     const current = toSavedFilters(s.filters)
     const active = presets.find((p) => p.id === settings.activePresetId)
-    const unsaved = active ? isPresetModified(resolve(active), current, settings.sortRules) : !isDefaultFilters(current)
-    const before = { filters: s.filters, activePresetId: settings.activePresetId, sortRules: settings.sortRules }
+    const unsaved = active
+      ? isPresetModified(resolve(active), current, settings.sortRules)
+      : !isDefaultFilters(current)
+    const before = {
+      filters: s.filters,
+      activePresetId: settings.activePresetId,
+      sortRules: settings.sortRules
+    }
 
     if (target) {
-      const next = sanitizeSavedFilters(filtersWithPreset(resolve(target), current), tagIds, folderIds, Date.now())
+      const next = sanitizeSavedFilters(
+        filtersWithPreset(resolve(target), current),
+        tagIds,
+        folderIds,
+        Date.now()
+      )
       set({ filters: { ...s.filters, ...next } })
-      get().updateSettings({ activePresetId: target.id, ...(target.parts.sort ? { sortRules: target.sortRules } : {}) })
+      get().updateSettings({
+        activePresetId: target.id,
+        ...(target.parts.sort ? { sortRules: target.sortRules } : {})
+      })
     } else {
       set({ filters: { ...DEFAULT_FILTERS, anchor: Date.now(), query: s.filters.query } })
       get().updateSettings({ activePresetId: null })
@@ -284,7 +308,10 @@ export const useApp = create<AppState>((set, get) => ({
         actionLabel: 'Undo',
         action: () => {
           set({ filters: before.filters })
-          get().updateSettings({ activePresetId: before.activePresetId, sortRules: before.sortRules })
+          get().updateSettings({
+            activePresetId: before.activePresetId,
+            sortRules: before.sortRules
+          })
         }
       })
     }
@@ -320,7 +347,12 @@ export const useApp = create<AppState>((set, get) => ({
   openSettings: (tab) =>
     set((s) => ({
       view: 'settings',
-      settingsTab: settingsTabOnOpen(tab, s.settingsTab, s.user.settings.rememberSettingsTab, 'general')
+      settingsTab: settingsTabOnOpen(
+        tab,
+        s.settingsTab,
+        s.user.settings.rememberSettingsTab,
+        'general'
+      )
     })),
 
   select: (key, mode) =>
@@ -368,7 +400,10 @@ export const useApp = create<AppState>((set, get) => ({
       return
     }
     const pick = pool[Math.floor(Math.random() * pool.length)]
-    get().openPlayer(pick.key, visible.map((c) => c.key))
+    get().openPlayer(
+      pick.key,
+      visible.map((c) => c.key)
+    )
   },
 
   patch: (keys, patch, undoLabel) => {
@@ -495,11 +530,17 @@ export const useApp = create<AppState>((set, get) => ({
         ? 'This clip will be moved to your recycle bin.'
         : `${list.length} clips will be moved to your recycle bin.`
     ]
-    if (copies > list.length) parts.push(`Duplicates are included, so ${copies} files are affected.`)
+    if (copies > list.length)
+      parts.push(`Duplicates are included, so ${copies} files are affected.`)
     if (withAudio > 0) parts.push('Separate audio files that belong to them go along.')
-    parts.push('Your tags and notes are kept, so restoring a file from the recycle bin brings them back.')
+    parts.push(
+      'Your tags and notes are kept, so restoring a file from the recycle bin brings them back.'
+    )
     const ok = await ask({
-      title: list.length === 1 ? 'Move clip to recycle bin?' : `Move ${list.length} clips to recycle bin?`,
+      title:
+        list.length === 1
+          ? 'Move clip to recycle bin?'
+          : `Move ${list.length} clips to recycle bin?`,
       body: parts.join(' '),
       confirmLabel: 'Move to recycle bin',
       danger: true
@@ -507,9 +548,12 @@ export const useApp = create<AppState>((set, get) => ({
     if (!ok) return false
     const res = await window.api.trashClips(keys)
     if (res.failed.length > 0) {
-      toast(`${res.failed.length} file${res.failed.length === 1 ? '' : 's'} could not be moved (is the drive offline?).`, {
-        kind: 'error'
-      })
+      toast(
+        `${res.failed.length} file${res.failed.length === 1 ? '' : 's'} could not be moved (is the drive offline?).`,
+        {
+          kind: 'error'
+        }
+      )
     } else {
       toast(`Moved ${res.trashed} clip${res.trashed === 1 ? '' : 's'} to the recycle bin.`)
     }

@@ -21,8 +21,34 @@ import { fmtDay } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
-const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS_LONG = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+]
+const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+]
 const WIDTH = 288
 
 type View = 'days' | 'months' | 'years'
@@ -31,7 +57,13 @@ type View = 'days' | 'months' | 'years'
  * The calendar that opens from the date filter. The dots under a day show the status of the clips on
  * that day, for the clips that pass all the other filters.
  */
-export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClose: () => void }): React.JSX.Element {
+export function DatePicker({
+  anchorEl,
+  onClose
+}: {
+  anchorEl: HTMLElement
+  onClose: () => void
+}): React.JSX.Element {
   const clips = useApp((s) => s.clips)
   const user = useApp((s) => s.user)
   const folders = useApp((s) => s.folders)
@@ -40,7 +72,9 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
   const settings = useSettings()
   const mode = filters.dateMode
 
-  const [view, setView] = useState<View>(mode === 'month' ? 'months' : mode === 'year' ? 'years' : 'days')
+  const [view, setView] = useState<View>(
+    mode === 'month' ? 'months' : mode === 'year' ? 'years' : 'days'
+  )
   // A range that is still empty starts at the month of your newest clip, not at an old anchor.
   const startTs = ((): number => {
     if (mode !== 'range') return filters.anchor
@@ -57,7 +91,8 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
   const ref = useRef<HTMLDivElement>(null)
   const refocus = useRef(false)
 
-  const todayTs = startOfDay(Date.now())
+  // The picker is only mounted while it is open, so "today" is taken once when it opens.
+  const [todayTs] = useState(() => startOfDay(Date.now()))
   const todayKey = dayKey(todayTs)
 
   // Clips that pass every filter except the date: these decide which days get dots.
@@ -68,9 +103,27 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
       { ...filters, dateMode: 'all' },
       settings
     )
-    return dayStatusMap(visible.map((c) => ({ date: c.date, status: clipStatus(user.clips[c.key] ?? EMPTY_CLIP_USER) })))
+    return dayStatusMap(
+      visible.map((c) => ({
+        date: c.date,
+        status: clipStatus(user.clips[c.key] ?? EMPTY_CLIP_USER)
+      }))
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips, user, folders, filters.query, filters.statuses, filters.tagIds, filters.excludeTagIds, filters.tagMode, filters.minRating, filters.maxRating, filters.showUnrated, filters.folderIds])
+  }, [
+    clips,
+    user,
+    folders,
+    filters.query,
+    filters.statuses,
+    filters.tagIds,
+    filters.excludeTagIds,
+    filters.tagMode,
+    filters.minRating,
+    filters.maxRating,
+    filters.showUnrated,
+    filters.folderIds
+  ])
 
   const years = useMemo(() => {
     const list = yearsWithClips([...clips.values()].map((c) => c.date))
@@ -135,7 +188,9 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
   useEffect(() => {
     if (!pos || focused.current) return
     focused.current = true
-    ref.current?.querySelector<HTMLElement>(`[data-key="${dayKey(cursor)}"]`)?.focus({ preventScroll: true })
+    ref.current
+      ?.querySelector<HTMLElement>(`[data-key="${dayKey(cursor)}"]`)
+      ?.focus({ preventScroll: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pos])
 
@@ -147,7 +202,11 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
   // The days that are selected, as a [from, to] pair of day keys.
   const selection = ((): { from: string; to: string } | null => {
     if (mode === 'day') return { from: dayKey(filters.anchor), to: dayKey(filters.anchor) }
-    if (mode === 'week') return { from: dayKey(weekStart(filters.anchor)), to: dayKey(addDays(weekStart(filters.anchor), 6)) }
+    if (mode === 'week')
+      return {
+        from: dayKey(weekStart(filters.anchor)),
+        to: dayKey(addDays(weekStart(filters.anchor), 6))
+      }
     if (mode === 'range') {
       if (pending) return orderRange(pending, hover ?? pending)
       const from = filters.rangeFrom || filters.rangeTo
@@ -199,7 +258,12 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
   const clear = (): void => apply({ dateMode: 'all', rangeFrom: '', rangeTo: '' })
 
   const onGridKey = (e: React.KeyboardEvent): void => {
-    const steps: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
+    const steps: Record<string, number> = {
+      ArrowLeft: -1,
+      ArrowRight: 1,
+      ArrowUp: -7,
+      ArrowDown: 7
+    }
     let next: number | null = null
     if (e.key in steps) next = addDays(cursor, steps[e.key])
     else if (e.key === 'PageUp') next = shiftMonth(cursor, e.shiftKey ? -12 : -1)
@@ -215,25 +279,45 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
   const head =
     view === 'days' ? (
       <div className="cal-head">
-        <button type="button" className="cal-nav" aria-label="Previous month" onClick={() => setCursor(shiftMonth(cursor, -1))}>
+        <button
+          type="button"
+          className="cal-nav"
+          aria-label="Previous month"
+          onClick={() => setCursor(shiftMonth(cursor, -1))}
+        >
           <ChevronLeft size={16} />
         </button>
         <button type="button" className="cal-title" onClick={() => setView('months')}>
           {MONTHS_LONG[month]} {year}
         </button>
-        <button type="button" className="cal-nav" aria-label="Next month" onClick={() => setCursor(shiftMonth(cursor, 1))}>
+        <button
+          type="button"
+          className="cal-nav"
+          aria-label="Next month"
+          onClick={() => setCursor(shiftMonth(cursor, 1))}
+        >
           <ChevronRight size={16} />
         </button>
       </div>
     ) : view === 'months' ? (
       <div className="cal-head">
-        <button type="button" className="cal-nav" aria-label="Previous year" onClick={() => setCursor(new Date(year - 1, month, 1).getTime())}>
+        <button
+          type="button"
+          className="cal-nav"
+          aria-label="Previous year"
+          onClick={() => setCursor(new Date(year - 1, month, 1).getTime())}
+        >
           <ChevronLeft size={16} />
         </button>
         <button type="button" className="cal-title" onClick={() => setView('years')}>
           {year}
         </button>
-        <button type="button" className="cal-nav" aria-label="Next year" onClick={() => setCursor(new Date(year + 1, month, 1).getTime())}>
+        <button
+          type="button"
+          className="cal-nav"
+          aria-label="Next year"
+          onClick={() => setCursor(new Date(year + 1, month, 1).getTime())}
+        >
           <ChevronRight size={16} />
         </button>
       </div>
@@ -252,12 +336,22 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
       className="cal"
       role="dialog"
       aria-label="Choose a date"
-      style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, width: WIDTH, visibility: pos ? 'visible' : 'hidden' }}
+      style={{
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? 0,
+        width: WIDTH,
+        visibility: pos ? 'visible' : 'hidden'
+      }}
     >
       {head}
 
       {view === 'days' && (
-        <div className="cal-grid" role="grid" onKeyDown={onGridKey} onMouseLeave={() => setHover(null)}>
+        <div
+          className="cal-grid"
+          role="grid"
+          onKeyDown={onGridKey}
+          onMouseLeave={() => setHover(null)}
+        >
           <div className="cal-row cal-weekdays" role="row">
             {WEEKDAYS.map((w) => (
               <span key={w} role="columnheader">
@@ -268,7 +362,16 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
           {[0, 1, 2, 3, 4, 5].map((r) => {
             const row = grid.slice(r * 7, r * 7 + 7)
             return (
-              <div key={r} className={'cal-row' + (mode === 'week' && hover && hover >= row[0].key && hover <= row[6].key ? ' hover-week' : '')} role="row">
+              <div
+                key={r}
+                className={
+                  'cal-row' +
+                  (mode === 'week' && hover && hover >= row[0].key && hover <= row[6].key
+                    ? ' hover-week'
+                    : '')
+                }
+                role="row"
+              >
                 {row.map((g) => {
                   const c = counts.get(g.key)
                   const isEdge = selection && (g.key === selection.from || g.key === selection.to)
@@ -319,7 +422,12 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
             <button
               key={m}
               type="button"
-              className={'cal-cell' + (selMonth && selMonth.getMonth() === i && selMonth.getFullYear() === year ? ' cal-sel' : '')}
+              className={
+                'cal-cell' +
+                (selMonth && selMonth.getMonth() === i && selMonth.getFullYear() === year
+                  ? ' cal-sel'
+                  : '')
+              }
               onClick={() => pickMonth(i)}
             >
               {m}
@@ -331,7 +439,12 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
       {view === 'years' && (
         <div className="cal-cells">
           {years.map((y) => (
-            <button key={y} type="button" className={'cal-cell' + (selYear === y ? ' cal-sel' : '')} onClick={() => pickYear(y)}>
+            <button
+              key={y}
+              type="button"
+              className={'cal-cell' + (selYear === y ? ' cal-sel' : '')}
+              onClick={() => pickYear(y)}
+            >
               {y}
             </button>
           ))}
@@ -346,10 +459,21 @@ export function DatePicker({ anchorEl, onClose }: { anchorEl: HTMLElement; onClo
             <button type="button" className="btn small" onClick={() => jump(Date.now())}>
               Today
             </button>
-            <button type="button" className="btn small" disabled={!newest} title="The day of your newest clip" onClick={() => jump(newest)}>
+            <button
+              type="button"
+              className="btn small"
+              disabled={!newest}
+              title="The day of your newest clip"
+              onClick={() => jump(newest)}
+            >
               Latest
             </button>
-            <button type="button" className="btn ghost small" style={{ marginLeft: 'auto' }} onClick={clear}>
+            <button
+              type="button"
+              className="btn ghost small"
+              style={{ marginLeft: 'auto' }}
+              onClick={clear}
+            >
               Clear
             </button>
           </>

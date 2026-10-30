@@ -28,7 +28,13 @@ export function Tooltips(): React.JSX.Element | null {
     let lastShown = 0
     let watch = 0
 
-    const textOf = (el: HTMLElement): string => (el.getAttribute('data-tip') ?? el.getAttribute('data-tip-title') ?? el.getAttribute('title') ?? '').trim()
+    const textOf = (el: HTMLElement): string =>
+      (
+        el.getAttribute('data-tip') ??
+        el.getAttribute('data-tip-title') ??
+        el.getAttribute('title') ??
+        ''
+      ).trim()
 
     // Take the title away while the tooltip belongs to this element, put it back afterwards.
     const stash = (el: HTMLElement): void => {
@@ -60,7 +66,11 @@ export function Tooltips(): React.JSX.Element | null {
       // Close it when the element goes away or the pointer has left without us noticing.
       window.clearInterval(watch)
       watch = window.setInterval(() => {
-        if (!target || !target.isConnected || (!target.matches(':hover') && !target.matches(':focus-visible'))) {
+        if (
+          !target ||
+          !target.isConnected ||
+          (!target.matches(':hover') && !target.matches(':focus-visible'))
+        ) {
           restore(target)
           target = null
           hide()
@@ -144,7 +154,10 @@ export function Tooltips(): React.JSX.Element | null {
     const r = tip.rect
     const below = r.bottom + GAP + h <= window.innerHeight - MARGIN || r.top - GAP - h < MARGIN
     const top = below ? r.bottom + GAP : r.top - GAP - h
-    const left = Math.min(Math.max(r.left + r.width / 2 - w / 2, MARGIN), window.innerWidth - w - MARGIN)
+    const left = Math.min(
+      Math.max(r.left + r.width / 2 - w / 2, MARGIN),
+      window.innerWidth - w - MARGIN
+    )
     setPos({ left, top, below })
   }, [tip])
 
@@ -154,7 +167,11 @@ export function Tooltips(): React.JSX.Element | null {
       ref={boxRef}
       className={'tip' + (pos ? (pos.below ? ' below' : ' above') : '')}
       role="tooltip"
-      style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}
+      style={{
+        left: pos?.left ?? -9999,
+        top: pos?.top ?? 0,
+        visibility: pos ? 'visible' : 'hidden'
+      }}
     >
       {tip.text}
     </div>

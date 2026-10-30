@@ -1200,8 +1200,11 @@ textarea.field {
   padding: 10px 12px 10px 16px;
   border-radius: 10px;
   color: var(--text-2);
-  transition: background var(--anim-fast) ease, color var(--anim-fast) ease,
-    transform var(--anim-fast) var(--ease), scale var(--press-out) var(--press-spring);
+  transition:
+    background var(--anim-fast) ease,
+    color var(--anim-fast) ease,
+    transform var(--anim-fast) var(--ease),
+    scale var(--press-out) var(--press-spring);
   --press: 0.98;
 }
 /* The accent bar on the left grows in when a tab is hovered, and stays for the open tab. */
@@ -1216,7 +1219,9 @@ textarea.field {
   background: var(--accent);
   opacity: 0;
   transform: translateY(-50%) scaleY(0.2);
-  transition: opacity var(--anim-fast) ease, transform var(--anim-fast) var(--ease);
+  transition:
+    opacity var(--anim-fast) ease,
+    transform var(--anim-fast) var(--ease);
 }
 .settings-nav button:hover:not(.on) {
   background: color-mix(in srgb, var(--input) 60%, transparent);
@@ -1590,7 +1595,10 @@ textarea.field {
   backdrop-filter: blur(6px);
   color: #fff;
   cursor: pointer;
-  transition: background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease;
+  transition:
+    background var(--anim-fast) ease,
+    color var(--anim-fast) ease,
+    border-color var(--anim-fast) ease;
   --press: 1;
 }
 .video-indicator.pause:hover {
@@ -1642,7 +1650,11 @@ textarea.field {
   color: #fff;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--anim-fast) ease, background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease,
+  transition:
+    opacity var(--anim-fast) ease,
+    background var(--anim-fast) ease,
+    color var(--anim-fast) ease,
+    border-color var(--anim-fast) ease,
     scale var(--press-out) var(--press-spring);
 }
 .video-nav.prev {
@@ -2183,11 +2195,16 @@ html[data-anim='off'] button:active {
   border-radius: 10px;
   background: var(--card);
   border: 1px solid var(--border);
-  transition: transform var(--anim-med) var(--ease), border-color var(--anim-fast) var(--ease), box-shadow var(--anim-fast) var(--ease);
+  transition:
+    transform var(--anim-med) var(--ease),
+    border-color var(--anim-fast) var(--ease),
+    box-shadow var(--anim-fast) var(--ease);
 }
 .sortrule.dragging {
   /* The held rule follows the pointer at once, so it has no transition on its position. */
-  transition: border-color var(--anim-fast) var(--ease), box-shadow var(--anim-fast) var(--ease);
+  transition:
+    border-color var(--anim-fast) var(--ease),
+    box-shadow var(--anim-fast) var(--ease);
   will-change: transform;
   z-index: 2;
   border-color: var(--accent);
@@ -2597,7 +2614,10 @@ select option {
   background: transparent;
   color: var(--text-3);
   font-size: 12px;
-  transition: background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease,
+  transition:
+    background var(--anim-fast) ease,
+    color var(--anim-fast) ease,
+    border-color var(--anim-fast) ease,
     scale var(--press-out) var(--press-spring);
 }
 .preset-part:hover {

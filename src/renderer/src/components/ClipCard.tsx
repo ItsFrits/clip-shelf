@@ -17,7 +17,9 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
   const selected = useApp((s) => s.selected.has(clip.key))
   const anySelected = useApp((s) => s.selected.size > 0)
   const tagById = useApp((s) => s.tagById)
-  const folderName = useApp((s) => s.folders.find((f) => f.id === clip.files[0]?.folderId)?.name ?? '')
+  const folderName = useApp(
+    (s) => s.folders.find((f) => f.id === clip.files[0]?.folderId)?.name ?? ''
+  )
   const offline = useApp((s) => {
     const online = new Set(s.folders.filter((f) => f.online).map((f) => f.id))
     return !clip.files.some((f) => online.has(f.folderId))
@@ -30,7 +32,9 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
   const status = clipStatus(user)
   const tags = user.tags.map((id) => tagById.get(id)?.name).filter((n): n is string => !!n)
   const tagNamesLower = tags.map((t) => t.toLowerCase())
-  const suggestion = clip.hints.find((h) => !user.ignoredHints.includes(h) && !tagNamesLower.includes(h.toLowerCase()))
+  const suggestion = clip.hints.find(
+    (h) => !user.ignoredHints.includes(h) && !tagNamesLower.includes(h.toLowerCase())
+  )
   const hasAux = clip.files.some((f) => f.audioPath)
   const trackCount = clip.audioTracks ? clip.audioTracks.length + (hasAux ? 1 : 0) : 0
 
@@ -43,7 +47,12 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
 
   return (
     <div
-      className={'card' + (selected ? ' selected' : '') + (offline ? ' offline' : '') + (anySelected ? ' has-selection' : '')}
+      className={
+        'card' +
+        (selected ? ' selected' : '') +
+        (offline ? ' offline' : '') +
+        (anySelected ? ' has-selection' : '')
+      }
       draggable
       onClick={onClick}
       onDragStart={(e) => {
@@ -65,7 +74,9 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
           {clip.files.length > 1 ? ` +${clip.files.length - 1}` : ''}
         </span>
         <span className="badge tr mono">{fmtDuration(clip.durationMs)}</span>
-        {trackCount > 0 && <span className="badge br">{trackCount === 1 ? '1 track' : `${trackCount} tracks`}</span>}
+        {trackCount > 0 && (
+          <span className="badge br">{trackCount === 1 ? '1 track' : `${trackCount} tracks`}</span>
+        )}
         {offline && <span className="badge center">Drive offline</span>}
         <button
           type="button"
@@ -81,7 +92,10 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
       </div>
       <div className="card-meta">
         <div className="left">
-          <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{showDate ? `${fmtDay(clip.date)}, ` : ''}{fmtTime(clip.date)}</span>
+          <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+            {showDate ? `${fmtDay(clip.date)}, ` : ''}
+            {fmtTime(clip.date)}
+          </span>
           <span className="status" style={{ color: STATUS_COLOR[status] }}>
             <span className="dot" style={{ background: STATUS_COLOR[status] }} />
             {STATUS_LABEL[status]}
@@ -112,7 +126,9 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
             onContextMenu={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              useApp.getState().patch([clip.key], { set: { ignoredHints: [...user.ignoredHints, suggestion] } })
+              useApp
+                .getState()
+                .patch([clip.key], { set: { ignoredHints: [...user.ignoredHints, suggestion] } })
             }}
           >
             + {suggestion}

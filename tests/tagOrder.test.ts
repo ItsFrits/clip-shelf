@@ -59,12 +59,23 @@ describe('adding tags at a position', () => {
     expect(applyPatch(base, { addTags: ['x'], addTagsAt: 0 }).tags).toEqual(['x', 'a', 'b', 'c'])
   })
   it('keeps several new tags in order and clamps the position', () => {
-    expect(applyPatch(base, { addTags: ['x', 'y'], addTagsAt: 1 }).tags).toEqual(['a', 'x', 'y', 'b', 'c'])
+    expect(applyPatch(base, { addTags: ['x', 'y'], addTagsAt: 1 }).tags).toEqual([
+      'a',
+      'x',
+      'y',
+      'b',
+      'c'
+    ])
     expect(applyPatch(base, { addTags: ['x'], addTagsAt: 99 }).tags).toEqual(['a', 'b', 'c', 'x'])
     expect(applyPatch(base, { addTags: ['x'], addTagsAt: -3 }).tags).toEqual(['x', 'a', 'b', 'c'])
   })
   it('skips a tag the clip already has', () => {
-    expect(applyPatch(base, { addTags: ['b', 'x'], addTagsAt: 0 }).tags).toEqual(['x', 'a', 'b', 'c'])
+    expect(applyPatch(base, { addTags: ['b', 'x'], addTagsAt: 0 }).tags).toEqual([
+      'x',
+      'a',
+      'b',
+      'c'
+    ])
   })
   it('counts as watching only when a tag is really added', () => {
     expect(applyPatch(base, { addTags: ['x'], addTagsAt: 1 }).watched).toBe(true)

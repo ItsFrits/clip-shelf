@@ -8,7 +8,11 @@ const min = { width: 1100, height: 700 }
 
 describe('sanitizeWindowState', () => {
   it('uses the defaults when nothing was saved', () => {
-    expect(sanitizeWindowState(null, [screen1], fallback, min)).toEqual({ width: 1600, height: 900, maximized: false })
+    expect(sanitizeWindowState(null, [screen1], fallback, min)).toEqual({
+      width: 1600,
+      height: 900,
+      maximized: false
+    })
     expect(sanitizeWindowState('junk', [screen1], fallback, min).width).toBe(1600)
   })
 
@@ -26,12 +30,21 @@ describe('sanitizeWindowState', () => {
   })
 
   it('does not accept a window whose title bar is off screen', () => {
-    expect(sanitizeWindowState({ x: 100, y: -500, width: 1300, height: 800 }, [screen1], fallback, min).x).toBeUndefined()
-    expect(sanitizeWindowState({ x: 1900, y: 10, width: 1300, height: 800 }, [screen1], fallback, min).x).toBeUndefined()
+    expect(
+      sanitizeWindowState({ x: 100, y: -500, width: 1300, height: 800 }, [screen1], fallback, min).x
+    ).toBeUndefined()
+    expect(
+      sanitizeWindowState({ x: 1900, y: 10, width: 1300, height: 800 }, [screen1], fallback, min).x
+    ).toBeUndefined()
   })
 
   it('keeps the size within the minimum and the biggest screen, and ignores bad numbers', () => {
-    const s = sanitizeWindowState({ width: 300, height: 99999, x: 'a', y: NaN }, [screen1], fallback, min)
+    const s = sanitizeWindowState(
+      { width: 300, height: 99999, x: 'a', y: NaN },
+      [screen1],
+      fallback,
+      min
+    )
     expect(s).toEqual({ width: 1100, height: 1040, maximized: false })
   })
 })

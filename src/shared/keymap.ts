@@ -17,7 +17,12 @@ export const ACTIONS: ActionDef[] = [
 
   { id: 'presetAll', label: 'Show all clips (no filters)', scope: 'library', defaults: [] },
   { id: 'selectAll', label: 'Select all visible clips', scope: 'library', defaults: ['Ctrl+A'] },
-  { id: 'deleteClips', label: 'Move selected clips to recycle bin', scope: 'library', defaults: ['Delete'] },
+  {
+    id: 'deleteClips',
+    label: 'Move selected clips to recycle bin',
+    scope: 'library',
+    defaults: ['Delete']
+  },
 
   { id: 'playPause', label: 'Play / pause', scope: 'player', defaults: ['Space'] },
   { id: 'frameBack', label: 'Previous frame', scope: 'player', defaults: ['ArrowLeft'] },
@@ -73,11 +78,7 @@ export function chordFromEvent(e: {
 }
 
 /** Find which action (if any) already uses this chord within a scope that can clash. */
-export function findConflict(
-  keymap: Keymap,
-  chord: string,
-  actionId: string
-): string | null {
+export function findConflict(keymap: Keymap, chord: string, actionId: string): string | null {
   const me = ACTIONS.find((a) => a.id === actionId)
   if (!me) return null
   for (const a of ACTIONS) {

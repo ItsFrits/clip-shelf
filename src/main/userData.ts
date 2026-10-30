@@ -1,7 +1,14 @@
 import { randomUUID } from 'crypto'
 import { existsSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import type { ClipBulkPatch, ClipUser, FolderConfig, Settings, Tag, UserData } from '../shared/types'
+import type {
+  ClipBulkPatch,
+  ClipUser,
+  FolderConfig,
+  Settings,
+  Tag,
+  UserData
+} from '../shared/types'
 import {
   DEFAULT_SETTINGS,
   EMPTY_CLIP_USER,
@@ -27,17 +34,27 @@ function emptyUserData(): UserData {
 }
 
 /** Fill in new settings, and turn old ones into the new form. */
-function normalizeSettings(raw: unknown, tagIds: string[], folderIds: string[]): UserData['settings'] {
+function normalizeSettings(
+  raw: unknown,
+  tagIds: string[],
+  folderIds: string[]
+): UserData['settings'] {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const settings = { ...DEFAULT_SETTINGS, ...r, ...migrateSortSettings(r) } as UserData['settings'] & { sort?: unknown; hideSorted?: unknown }
+  const settings = {
+    ...DEFAULT_SETTINGS,
+    ...r,
+    ...migrateSortSettings(r)
+  } as UserData['settings'] & { sort?: unknown; hideSorted?: unknown }
   delete settings.sort
   delete settings.hideSorted
   // The first time there are no presets yet: start with the default ones. After that the list is yours.
   settings.presets = Array.isArray(r.presets)
     ? sanitizePresets(r.presets, tagIds, folderIds, Date.now())
     : defaultPresets(() => randomUUID())
-  if (!['ask', 'always', 'never'].includes(settings.mergeTagsInPresets)) settings.mergeTagsInPresets = DEFAULT_SETTINGS.mergeTagsInPresets
-  if (settings.activePresetId && !settings.presets.some((p) => p.id === settings.activePresetId)) settings.activePresetId = null
+  if (!['ask', 'always', 'never'].includes(settings.mergeTagsInPresets))
+    settings.mergeTagsInPresets = DEFAULT_SETTINGS.mergeTagsInPresets
+  if (settings.activePresetId && !settings.presets.some((p) => p.id === settings.activePresetId))
+    settings.activePresetId = null
   return settings
 }
 
@@ -51,7 +68,11 @@ function normalize(raw: unknown, defaults: UserData): UserData {
     tags,
     clips: r.clips && typeof r.clips === 'object' ? r.clips : {},
     projects: Array.isArray(r.projects) ? r.projects : [],
-    settings: normalizeSettings(r.settings, tags.map((t) => t.id), folders.map((f) => f.id)),
+    settings: normalizeSettings(
+      r.settings,
+      tags.map((t) => t.id),
+      folders.map((f) => f.id)
+    ),
     lastBackupAt: typeof r.lastBackupAt === 'number' ? r.lastBackupAt : null
   }
 }
@@ -164,7 +185,10 @@ export class UserDataStore {
         if (isDefaultClipUser(u)) delete d.clips[key]
       }
       // The target counts as used as recently as the most recent of the tags merged into it.
-      const latest = Math.max(0, ...d.tags.filter((t) => sources.has(t.id)).map((t) => t.usedAt ?? 0))
+      const latest = Math.max(
+        0,
+        ...d.tags.filter((t) => sources.has(t.id)).map((t) => t.usedAt ?? 0)
+      )
       const kept = d.tags
         .filter((t) => !sources.has(t.id))
         .map((t) => (t.id === targetId && latest > (t.usedAt ?? 0) ? { ...t, usedAt: latest } : t))

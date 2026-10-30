@@ -13,7 +13,10 @@ export function StatusBar(): React.JSX.Element {
   return (
     <footer className="statusbar">
       <span className="item">
-        <span className="dot" style={{ background: offline.length ? '#e0b052' : 'var(--s-tagged)' }} />
+        <span
+          className="dot"
+          style={{ background: offline.length ? '#e0b052' : 'var(--s-tagged)' }}
+        />
         {folders.length === 0
           ? 'No folders yet'
           : `Watching ${online} of ${folders.length} folder${folders.length === 1 ? '' : 's'}` +
@@ -31,7 +34,8 @@ export function StatusBar(): React.JSX.Element {
         </span>
       )}
       <span className="item" style={{ marginLeft: 'auto' }}>
-        {update.state === 'downloading' && `Downloading update ${update.version ?? ''} ${update.percent ?? 0}%`}
+        {update.state === 'downloading' &&
+          `Downloading update ${update.version ?? ''} ${update.percent ?? 0}%`}
         {update.state === 'ready' && (
           <>
             Update {update.version} is ready.

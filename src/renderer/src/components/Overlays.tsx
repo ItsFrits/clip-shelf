@@ -8,7 +8,9 @@ export function ConfirmDialog(): React.JSX.Element | null {
 }
 
 function ConfirmBody({ confirm }: { confirm: ConfirmState }): React.JSX.Element {
-  const [values, setValues] = useState<Record<string, boolean>>(() => Object.fromEntries((confirm.checks ?? []).map((c) => [c.id, c.checked])))
+  const [values, setValues] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries((confirm.checks ?? []).map((c) => [c.id, c.checked]))
+  )
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
@@ -24,14 +26,23 @@ function ConfirmBody({ confirm }: { confirm: ConfirmState }): React.JSX.Element 
   }, [confirm, values])
   return (
     <div className="overlay" onMouseDown={() => confirm.resolve(false)}>
-      <div className="dialog" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <h2>{confirm.title}</h2>
         <p>{confirm.body}</p>
         {confirm.checks && (
           <div className="dlg-checks">
             {confirm.checks.map((c) => (
               <label key={c.id}>
-                <input type="checkbox" checked={values[c.id] ?? c.checked} onChange={(e) => setValues((v) => ({ ...v, [c.id]: e.target.checked }))} />
+                <input
+                  type="checkbox"
+                  checked={values[c.id] ?? c.checked}
+                  onChange={(e) => setValues((v) => ({ ...v, [c.id]: e.target.checked }))}
+                />
                 <span>{c.label}</span>
               </label>
             ))}
@@ -41,7 +52,11 @@ function ConfirmBody({ confirm }: { confirm: ConfirmState }): React.JSX.Element 
           <button className="btn" onClick={() => confirm.resolve(false)}>
             Cancel
           </button>
-          <button className={'btn ' + (confirm.danger ? 'danger' : 'primary')} autoFocus onClick={() => confirm.resolve(true, values)}>
+          <button
+            className={'btn ' + (confirm.danger ? 'danger' : 'primary')}
+            autoFocus
+            onClick={() => confirm.resolve(true, values)}
+          >
             {confirm.confirmLabel}
           </button>
         </div>

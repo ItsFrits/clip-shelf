@@ -10,7 +10,8 @@ let logFile: string | null = null
 export function appendLog(file: string, line: string, maxBytes = MAX_BYTES): void {
   try {
     mkdirSync(join(file, '..'), { recursive: true })
-    if (existsSync(file) && statSync(file).size > maxBytes) renameSync(file, file.replace(/\.log$/, '.old.log'))
+    if (existsSync(file) && statSync(file).size > maxBytes)
+      renameSync(file, file.replace(/\.log$/, '.old.log'))
     appendFileSync(file, line + '\n')
   } catch {
     // Logging must never crash the app.
@@ -33,8 +34,14 @@ export function initLogging(dir: string, header: string): void {
       logLine(level, format(...args))
     }
   }
-  process.on('uncaughtExceptionMonitor', (err) => logLine('error', 'Uncaught exception: ' + (err.stack ?? err.message)))
+  process.on('uncaughtExceptionMonitor', (err) =>
+    logLine('error', 'Uncaught exception: ' + (err.stack ?? err.message))
+  )
   process.on('unhandledRejection', (reason) =>
-    logLine('error', 'Unhandled rejection: ' + (reason instanceof Error ? (reason.stack ?? reason.message) : String(reason)))
+    logLine(
+      'error',
+      'Unhandled rejection: ' +
+        (reason instanceof Error ? (reason.stack ?? reason.message) : String(reason))
+    )
   )
 }

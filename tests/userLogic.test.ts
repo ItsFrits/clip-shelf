@@ -77,7 +77,10 @@ describe('tag suggestions', () => {
 
   it('skips tags that are already on the clip and does not repeat tags', () => {
     expect(suggestedTags(['air', 'g2a'], tags).map((t) => t.id)).toEqual(['wall'])
-    const twice: Tag[] = [...tags.slice(0, 3), { id: 'flick', name: 'Flip reset', suggests: ['wall', 'air'] }]
+    const twice: Tag[] = [
+      ...tags.slice(0, 3),
+      { id: 'flick', name: 'Flip reset', suggests: ['wall', 'air'] }
+    ]
     expect(suggestedTags(['air', 'flick'], twice).map((t) => t.id)).toEqual(['wall', 'g2a'])
   })
 
@@ -88,13 +91,25 @@ describe('tag suggestions', () => {
   })
 
   it('removes and remaps ids after a delete or merge', () => {
-    const deleted = cleanSuggestions(tags.filter((t) => t.id !== 'g2a'), new Set(['g2a']), null)
+    const deleted = cleanSuggestions(
+      tags.filter((t) => t.id !== 'g2a'),
+      new Set(['g2a']),
+      null
+    )
     expect(deleted.find((t) => t.id === 'air')?.suggests).toEqual(['wall'])
 
-    const merged = cleanSuggestions(tags.filter((t) => t.id !== 'g2a'), new Set(['g2a']), 'wall')
+    const merged = cleanSuggestions(
+      tags.filter((t) => t.id !== 'g2a'),
+      new Set(['g2a']),
+      'wall'
+    )
     expect(merged.find((t) => t.id === 'air')?.suggests).toEqual(['wall'])
 
-    const self = cleanSuggestions(tags.filter((t) => t.id !== 'air'), new Set(['air']), 'flick')
+    const self = cleanSuggestions(
+      tags.filter((t) => t.id !== 'air'),
+      new Set(['air']),
+      'flick'
+    )
     expect('suggests' in self.find((t) => t.id === 'flick')!).toBe(false)
   })
 })
@@ -129,7 +144,8 @@ describe('tag sorting', () => {
     ['b', 5],
     ['d', 9]
   ])
-  const names = (mode: 'name' | 'count' | 'recent'): string[] => sortTags(tags, counts, mode).map((t) => t.name)
+  const names = (mode: 'name' | 'count' | 'recent'): string[] =>
+    sortTags(tags, counts, mode).map((t) => t.name)
 
   it('sorts A-Z', () => {
     expect(names('name')).toEqual(['Air dribble', 'Ceiling shot', 'Flip reset', 'Sidewall'])

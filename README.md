@@ -20,11 +20,11 @@ npm run dev
 
 Other scripts:
 
-| Command | What it does |
-| --- | --- |
-| `npm run typecheck` | Type check main process and interface |
-| `npm test` | Unit and integration tests (they make small test videos with the bundled ffmpeg) |
-| `npm run build:win` | Build the Windows installer into `dist/` |
+| Command             | What it does                                                                     |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `npm run typecheck` | Type check main process and interface                                            |
+| `npm test`          | Unit and integration tests (they make small test videos with the bundled ffmpeg) |
+| `npm run build:win` | Build the Windows installer into `dist/`                                         |
 
 If `npm run dev` says the Electron binary is missing, run `node node_modules/electron/install.js` once.
 
@@ -34,7 +34,7 @@ If `npm run dev` says the Electron binary is missing, run `node node_modules/ele
 2. Push the commit and the tag: `git push --follow-tags`.
 3. GitHub Actions builds the installer and publishes it as a release. Installed copies of the app download it by themselves.
 
-The installer is not code signed yet, so Windows SmartScreen shows "unknown publisher" the first time. Click *More info*, then *Run anyway*.
+The installer is not code signed yet, so Windows SmartScreen shows "unknown publisher" the first time. Click _More info_, then _Run anyway_.
 
 ## Where the data lives
 

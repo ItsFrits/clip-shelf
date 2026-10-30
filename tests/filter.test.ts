@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_FILTERS, computeVisible, dateLabel, dateWindow, groupClips, isFiltered, shiftAnchor } from '../src/renderer/src/lib/filter'
+import {
+  DEFAULT_FILTERS,
+  computeVisible,
+  dateLabel,
+  dateWindow,
+  groupClips,
+  isFiltered,
+  shiftAnchor
+} from '../src/renderer/src/lib/filter'
 import type { Clip, UserData } from '../src/shared/types'
 import { DEFAULT_SETTINGS, EMPTY_CLIP_USER } from '../src/shared/userLogic'
 
@@ -31,17 +39,30 @@ const user: UserData = {
   lastBackupAt: null
 }
 const ctx = { user, tags: user.tags, folders: [] }
-const run = (f: Partial<typeof DEFAULT_FILTERS>, s: Partial<typeof DEFAULT_SETTINGS> = {}): string[] =>
-  computeVisible(clips, ctx, { ...DEFAULT_FILTERS, ...f }, { ...DEFAULT_SETTINGS, sortRules: [{ field: 'date', dir: 'asc' }], ...s }).map((c) => c.key)
+const run = (
+  f: Partial<typeof DEFAULT_FILTERS>,
+  s: Partial<typeof DEFAULT_SETTINGS> = {}
+): string[] =>
+  computeVisible(
+    clips,
+    ctx,
+    { ...DEFAULT_FILTERS, ...f },
+    { ...DEFAULT_SETTINGS, sortRules: [{ field: 'date', dir: 'asc' }], ...s }
+  ).map((c) => c.key)
 
 describe('computeVisible', () => {
   it('shows everything, oldest first or newest first', () => {
     expect(run({})).toEqual(['a', 'b', 'c', 'd'])
     expect(run({}, { sortRules: [{ field: 'date', dir: 'desc' }] })).toEqual(['d', 'c', 'b', 'a'])
-    expect(computeVisible(clips, ctx, DEFAULT_FILTERS, DEFAULT_SETTINGS).map((c) => c.key)).toEqual(['d', 'c', 'b', 'a'])
+    expect(computeVisible(clips, ctx, DEFAULT_FILTERS, DEFAULT_SETTINGS).map((c) => c.key)).toEqual(
+      ['d', 'c', 'b', 'a']
+    )
   })
   it('sorts by rating, with the next rule breaking ties and unrated last', () => {
-    const rules = [{ field: 'rating' as const, dir: 'desc' as const }, { field: 'date' as const, dir: 'desc' as const }]
+    const rules = [
+      { field: 'rating' as const, dir: 'desc' as const },
+      { field: 'date' as const, dir: 'desc' as const }
+    ]
     expect(run({}, { sortRules: rules })).toEqual(['a', 'd', 'c', 'b'])
   })
   it('filters by status, and "watched" means watched without a tag', () => {
@@ -72,20 +93,33 @@ describe('computeVisible', () => {
   })
   it('filters by a single day and steps through days', () => {
     expect(run({ dateMode: 'day', anchor: new Date(2025, 7, 2, 20).getTime() })).toEqual(['a', 'b'])
-    expect(dateWindow({ ...DEFAULT_FILTERS, dateMode: 'day', anchor: new Date(2025, 7, 2, 20).getTime() })).toEqual([
-      new Date(2025, 7, 2).getTime(),
-      new Date(2025, 7, 3).getTime()
-    ])
-    expect(shiftAnchor('day', new Date(2025, 7, 2, 20).getTime(), 1)).toBe(new Date(2025, 7, 3, 20).getTime())
+    expect(
+      dateWindow({
+        ...DEFAULT_FILTERS,
+        dateMode: 'day',
+        anchor: new Date(2025, 7, 2, 20).getTime()
+      })
+    ).toEqual([new Date(2025, 7, 2).getTime(), new Date(2025, 7, 3).getTime()])
+    expect(shiftAnchor('day', new Date(2025, 7, 2, 20).getTime(), 1)).toBe(
+      new Date(2025, 7, 3, 20).getTime()
+    )
   })
   it('filters by month and by range', () => {
-    expect(run({ dateMode: 'month', anchor: new Date(2025, 7, 15).getTime() })).toEqual(['a', 'b', 'c'])
-    expect(run({ dateMode: 'range', rangeFrom: '2025-08-03', rangeTo: '2025-08-03' })).toEqual(['c'])
+    expect(run({ dateMode: 'month', anchor: new Date(2025, 7, 15).getTime() })).toEqual([
+      'a',
+      'b',
+      'c'
+    ])
+    expect(run({ dateMode: 'range', rangeFrom: '2025-08-03', rangeTo: '2025-08-03' })).toEqual([
+      'c'
+    ])
     expect(dateWindow({ ...DEFAULT_FILTERS, dateMode: 'all' })).toBeNull()
     expect(run({ dateMode: 'range' })).toEqual(['a', 'b', 'c', 'd'])
     expect(dateLabel({ ...DEFAULT_FILTERS, dateMode: 'range' })).toBe('All clips')
     expect(isFiltered({ ...DEFAULT_FILTERS, dateMode: 'range' }, false)).toBe(false)
-    expect(isFiltered({ ...DEFAULT_FILTERS, dateMode: 'range', rangeFrom: '2025-08-03' }, false)).toBe(true)
+    expect(
+      isFiltered({ ...DEFAULT_FILTERS, dateMode: 'range', rangeFrom: '2025-08-03' }, false)
+    ).toBe(true)
   })
 })
 

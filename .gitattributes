@@ -1,0 +1,7 @@
+# Every file is checked out with LF line endings, on Windows too (Prettier and .editorconfig expect LF).
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary
+*.woff2 binary
+*.mp4 binary

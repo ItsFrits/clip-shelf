@@ -34,7 +34,10 @@ describe('parseChangelog', () => {
 
   it('reads groups and items', () => {
     expect(entries[0].groups.map((g) => g.heading)).toEqual(['Added', 'Fixed'])
-    expect(entries[0].groups[0].items).toEqual(['Hover arrows', 'A longer item that continues here'])
+    expect(entries[0].groups[0].items).toEqual([
+      'Hover arrows',
+      'A longer item that continues here'
+    ])
     expect(entries[1].groups).toEqual([{ heading: null, items: ['Update check starts sooner.'] }])
   })
 

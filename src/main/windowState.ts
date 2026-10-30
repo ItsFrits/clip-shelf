@@ -24,7 +24,13 @@ export function trackWindowState(win: BrowserWindow, file: string): void {
   const save = (): void => {
     if (win.isDestroyed() || win.isMinimized() || win.isFullScreen()) return
     const b = win.getNormalBounds()
-    const state: WindowState = { x: b.x, y: b.y, width: b.width, height: b.height, maximized: win.isMaximized() }
+    const state: WindowState = {
+      x: b.x,
+      y: b.y,
+      width: b.width,
+      height: b.height,
+      maximized: win.isMaximized()
+    }
     try {
       writeFileSync(file, JSON.stringify(state))
     } catch (err) {

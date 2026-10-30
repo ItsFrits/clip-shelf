@@ -27,12 +27,20 @@ export class Updater {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
     autoUpdater.on('checking-for-update', () => this.set({ state: 'checking' }))
-    autoUpdater.on('update-available', (info) => this.set({ state: 'downloading', version: info.version, percent: 0 }))
+    autoUpdater.on('update-available', (info) =>
+      this.set({ state: 'downloading', version: info.version, percent: 0 })
+    )
     autoUpdater.on('update-not-available', () => this.set({ state: 'none' }))
     autoUpdater.on('download-progress', (p) =>
-      this.set({ state: 'downloading', version: this.status.version, percent: Math.round(p.percent) })
+      this.set({
+        state: 'downloading',
+        version: this.status.version,
+        percent: Math.round(p.percent)
+      })
     )
-    autoUpdater.on('update-downloaded', (info) => this.set({ state: 'ready', version: info.version }))
+    autoUpdater.on('update-downloaded', (info) =>
+      this.set({ state: 'ready', version: info.version })
+    )
     autoUpdater.on('error', (err) => {
       logLine('warn', 'Update problem: ' + (err?.message ?? String(err)))
       this.set({ state: 'error', message: err?.message ?? String(err) })

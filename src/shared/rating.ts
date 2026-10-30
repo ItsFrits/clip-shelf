@@ -34,13 +34,22 @@ export function pickMaxRating(r: RatingRange, n: number): RatingRange {
 /** The text for the active filter chip, or null when nothing is filtered. */
 export function ratingChipLabel(r: RatingRange): string | null {
   if (!isRatingFiltered(r)) return null
-  const range = r.minRating === 1 && r.maxRating === 5 ? '' : r.minRating === r.maxRating ? `${r.minRating} stars` : `${r.minRating} to ${r.maxRating} stars`
+  const range =
+    r.minRating === 1 && r.maxRating === 5
+      ? ''
+      : r.minRating === r.maxRating
+        ? `${r.minRating} stars`
+        : `${r.minRating} to ${r.maxRating} stars`
   if (!range) return 'Unrated hidden'
   return r.showUnrated ? `${range} + unrated` : range
 }
 
 /** Safe rating values from anything that was saved. Old saves only had a minimum, where 0 meant no filter. */
-export function sanitizeRatingRange(raw: { minRating?: unknown; maxRating?: unknown; showUnrated?: unknown }): RatingRange {
+export function sanitizeRatingRange(raw: {
+  minRating?: unknown
+  maxRating?: unknown
+  showUnrated?: unknown
+}): RatingRange {
   const num = (v: unknown, fallback: number): number =>
     typeof v === 'number' && Number.isFinite(v) ? Math.min(5, Math.max(1, Math.round(v))) : fallback
   const oldMinimum = typeof raw.minRating === 'number' && raw.minRating >= 1

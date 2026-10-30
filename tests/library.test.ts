@@ -35,8 +35,20 @@ beforeAll(async () => {
   makeM4a(join(relive, RELIVE_NAME.replace('.mp4', '.m4a')))
 
   user = new UserDataStore(join(data, 'userdata.json'))
-  user.addFolder({ path: obs, name: 'OBS', includeSubfolders: true, pairAudio: true, suggestTags: true })
-  user.addFolder({ path: relive, name: 'ReLive', includeSubfolders: false, pairAudio: true, suggestTags: true })
+  user.addFolder({
+    path: obs,
+    name: 'OBS',
+    includeSubfolders: true,
+    pairAudio: true,
+    suggestTags: true
+  })
+  user.addFolder({
+    path: relive,
+    name: 'ReLive',
+    includeSubfolders: false,
+    pairAudio: true,
+    suggestTags: true
+  })
   lib = new Library({
     user,
     indexFile: join(data, 'index.json'),
@@ -80,7 +92,11 @@ describe('Library', () => {
   })
 
   it('probes and makes thumbnails', async () => {
-    await waitFor(() => lib.allClips().every((c) => c.hasThumb && c.durationMs), 20000, 'thumbnails')
+    await waitFor(
+      () => lib.allClips().every((c) => c.hasThumb && c.durationMs),
+      20000,
+      'thumbnails'
+    )
     const c = clipByName(OBS_NAME)!
     expect(c.width).toBe(320)
     expect(c.height).toBe(180)
@@ -124,11 +140,19 @@ describe('Library', () => {
   // Windows does not allow renaming a folder that is being watched, so this is checked on other systems only.
   it.skipIf(process.platform === 'win32')('keeps clips of a folder that goes offline', async () => {
     renameSync(relive, relive + '-gone')
-    await waitFor(() => lib.folderInfos().find((f) => f.name === 'ReLive')?.online === false, 10000, 'offline')
+    await waitFor(
+      () => lib.folderInfos().find((f) => f.name === 'ReLive')?.online === false,
+      10000,
+      'offline'
+    )
     expect(lib.allClips()).toHaveLength(2)
     expect(lib.primaryPath(clipByName(RELIVE_NAME)!.key)).toBeNull()
     renameSync(relive + '-gone', relive)
-    await waitFor(() => lib.folderInfos().find((f) => f.name === 'ReLive')?.online === true, 10000, 'online again')
+    await waitFor(
+      () => lib.folderInfos().find((f) => f.name === 'ReLive')?.online === true,
+      10000,
+      'online again'
+    )
     await lib.idle()
     expect(lib.allClips()).toHaveLength(2)
   })

@@ -68,5 +68,8 @@ export function mixHex(a: string, b: string, t: number): string {
 
 /** The colours of the title bar buttons with a dark layer of this opacity on top of the page. */
 export function titleBarColors(dim: number): { color: string; symbolColor: string } {
-  return { color: mixHex(TITLE_BAR_COLOR, DIM_COLOR, dim), symbolColor: mixHex(TITLE_BAR_SYMBOLS, DIM_COLOR, dim) }
+  return {
+    color: mixHex(TITLE_BAR_COLOR, DIM_COLOR, dim),
+    symbolColor: mixHex(TITLE_BAR_SYMBOLS, DIM_COLOR, dim)
+  }
 }

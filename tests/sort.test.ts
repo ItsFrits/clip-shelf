@@ -16,7 +16,19 @@ import {
 } from '../src/shared/sort'
 
 const clip = (key: string, o: Partial<Clip> = {}): Clip =>
-  ({ key, name: key, date: 100, size: 10, durationMs: 1000, width: 1, height: 1, fps: 60, files: [], hints: [], ...o }) as unknown as Clip
+  ({
+    key,
+    name: key,
+    date: 100,
+    size: 10,
+    durationMs: 1000,
+    width: 1,
+    height: 1,
+    fps: 60,
+    files: [],
+    hints: [],
+    ...o
+  }) as unknown as Clip
 const keys = (cs: Clip[]): string[] => cs.map((c) => c.key)
 const asc = (field: SortRule['field']): SortRule => ({ field, dir: 'asc' })
 const desc = (field: SortRule['field']): SortRule => ({ field, dir: 'desc' })
@@ -37,8 +49,16 @@ describe('sortClips', () => {
   })
   it('falls through to the next rule when values are equal', () => {
     const r = { a: 5, b: 3, c: 5 } as Record<string, number>
-    expect(keys(sortClips(clips, (k) => r[k], [desc('rating'), asc('date')], 1))).toEqual(['c', 'a', 'b'])
-    expect(keys(sortClips(clips, (k) => r[k], [desc('rating'), desc('date')], 1))).toEqual(['a', 'c', 'b'])
+    expect(keys(sortClips(clips, (k) => r[k], [desc('rating'), asc('date')], 1))).toEqual([
+      'c',
+      'a',
+      'b'
+    ])
+    expect(keys(sortClips(clips, (k) => r[k], [desc('rating'), desc('date')], 1))).toEqual([
+      'a',
+      'c',
+      'b'
+    ])
   })
   it('counts unrated as the lowest rating', () => {
     const r = { a: 1 } as Record<string, number>
@@ -69,7 +89,10 @@ describe('sanitizeSortRules', () => {
     expect(sanitizeSortRules([{ field: 'nope', dir: 'asc' }])).toEqual([desc('date')])
   })
   it('drops duplicates and rules after random', () => {
-    expect(sanitizeSortRules([asc('name'), asc('name'), desc('size')])).toEqual([asc('name'), desc('size')])
+    expect(sanitizeSortRules([asc('name'), asc('name'), desc('size')])).toEqual([
+      asc('name'),
+      desc('size')
+    ])
     expect(sanitizeSortRules([asc('random'), asc('name')])).toEqual([asc('random')])
     const all = [asc('date'), asc('rating'), asc('length'), asc('size'), asc('name'), asc('random')]
     expect(sanitizeSortRules(all)).toEqual(all)
@@ -99,13 +122,24 @@ describe('editing rules', () => {
   })
   it('adds rules with a sensible direction, keeping random last', () => {
     expect(addRule([asc('date')], 'rating')).toEqual([asc('date'), desc('rating')])
-    expect(addRule([asc('date'), asc('random')], 'name')).toEqual([asc('date'), asc('name'), asc('random')])
+    expect(addRule([asc('date'), asc('random')], 'name')).toEqual([
+      asc('date'),
+      asc('name'),
+      asc('random')
+    ])
     expect(addRule([asc('date')], 'date')).toEqual([asc('date')])
   })
   it('offers the fields that are not used yet', () => {
     expect(availableFields([asc('date')])).toContain('rating')
     expect(availableFields([asc('date')])).not.toContain('date')
-    const all = [asc('date'), desc('rating'), desc('length'), desc('size'), asc('name'), asc('random')]
+    const all = [
+      asc('date'),
+      desc('rating'),
+      desc('length'),
+      desc('size'),
+      asc('name'),
+      asc('random')
+    ]
     expect(availableFields(all)).toEqual([])
     expect(addRule(all, 'random')).toEqual(all)
   })
@@ -126,7 +160,10 @@ describe('editing rules', () => {
   it('changes the field of a rule', () => {
     expect(setRuleField([asc('date'), asc('name')], 1, 'size')).toEqual([asc('date'), desc('size')])
     expect(setRuleField([asc('date'), asc('name')], 1, 'date')).toEqual([asc('date'), asc('name')])
-    expect(setRuleField([asc('date'), asc('name'), asc('size')], 1, 'random')).toEqual([asc('date'), asc('random')])
+    expect(setRuleField([asc('date'), asc('name'), asc('size')], 1, 'random')).toEqual([
+      asc('date'),
+      asc('random')
+    ])
     expect(setRuleField([asc('date'), asc('name')], 0, 'date')).toEqual([asc('date'), asc('name')])
   })
 })

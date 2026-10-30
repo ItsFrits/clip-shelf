@@ -29,15 +29,24 @@ export function sanitizeSavedFilters(
   folderIds: Iterable<string>,
   now: number
 ): SavedFilters {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<Record<keyof SavedFilters, unknown>>
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<
+    Record<keyof SavedFilters, unknown>
+  >
   const tags = new Set(tagIds)
   const folders = new Set(folderIds)
   const list = (v: unknown, ok: (s: string) => boolean): string[] =>
-    Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && ok(x)))] : []
+    Array.isArray(v)
+      ? [...new Set(v.filter((x): x is string => typeof x === 'string' && ok(x)))]
+      : []
 
-  const statuses = list(r.statuses, (s) => (STATUSES as string[]).includes(s)) as SavedFilters['statuses']
-  const dateMode = DATE_MODES.includes(r.dateMode as SavedFilters['dateMode']) ? (r.dateMode as SavedFilters['dateMode']) : 'all'
-  const anchor = typeof r.anchor === 'number' && Number.isFinite(r.anchor) && r.anchor > 0 ? r.anchor : now
+  const statuses = list(r.statuses, (s) =>
+    (STATUSES as string[]).includes(s)
+  ) as SavedFilters['statuses']
+  const dateMode = DATE_MODES.includes(r.dateMode as SavedFilters['dateMode'])
+    ? (r.dateMode as SavedFilters['dateMode'])
+    : 'all'
+  const anchor =
+    typeof r.anchor === 'number' && Number.isFinite(r.anchor) && r.anchor > 0 ? r.anchor : now
 
   // A tag that is both shown and hidden is hidden: hiding always wins.
   const excluded = list(r.excludeTagIds, (id) => tags.has(id))
@@ -49,7 +58,10 @@ export function sanitizeSavedFilters(
     tagMode: r.tagMode === 'all' ? 'all' : 'any',
     ...sanitizeRatingRange(r),
     dateMode,
-    anchor: dateMode === 'day' || dateMode === 'week' || dateMode === 'month' || dateMode === 'year' ? anchor : now,
+    anchor:
+      dateMode === 'day' || dateMode === 'week' || dateMode === 'month' || dateMode === 'year'
+        ? anchor
+        : now,
     rangeFrom: typeof r.rangeFrom === 'string' && DAY.test(r.rangeFrom) ? r.rangeFrom : '',
     rangeTo: typeof r.rangeTo === 'string' && DAY.test(r.rangeTo) ? r.rangeTo : '',
     folderIds: list(r.folderIds, (id) => folders.has(id))
@@ -58,7 +70,8 @@ export function sanitizeSavedFilters(
 
 /** The part of the current filters that is saved. The anchor only matters for week, month and year. */
 export function toSavedFilters(f: SavedFilters): SavedFilters {
-  const keepsAnchor = f.dateMode === 'day' || f.dateMode === 'week' || f.dateMode === 'month' || f.dateMode === 'year'
+  const keepsAnchor =
+    f.dateMode === 'day' || f.dateMode === 'week' || f.dateMode === 'month' || f.dateMode === 'year'
   return {
     statuses: [...f.statuses],
     tagIds: [...f.tagIds],

@@ -53,7 +53,9 @@ describe('ratingChipLabel', () => {
   })
   it('describes the range and the unrated switch', () => {
     expect(ratingChipLabel({ minRating: 4, maxRating: 5, showUnrated: false })).toBe('4 to 5 stars')
-    expect(ratingChipLabel({ minRating: 4, maxRating: 5, showUnrated: true })).toBe('4 to 5 stars + unrated')
+    expect(ratingChipLabel({ minRating: 4, maxRating: 5, showUnrated: true })).toBe(
+      '4 to 5 stars + unrated'
+    )
     expect(ratingChipLabel({ minRating: 3, maxRating: 3, showUnrated: false })).toBe('3 stars')
     expect(ratingChipLabel({ ...FULL_RATING_RANGE, showUnrated: false })).toBe('Unrated hidden')
   })
@@ -62,10 +64,19 @@ describe('ratingChipLabel', () => {
 describe('sanitizeRatingRange', () => {
   it('falls back to the full range', () => {
     expect(sanitizeRatingRange({})).toEqual(FULL_RATING_RANGE)
-    expect(sanitizeRatingRange({ minRating: 'x', maxRating: null, showUnrated: 'yes' })).toEqual(FULL_RATING_RANGE)
+    expect(sanitizeRatingRange({ minRating: 'x', maxRating: null, showUnrated: 'yes' })).toEqual(
+      FULL_RATING_RANGE
+    )
   })
   it('keeps values in 1 to 5 with the bottom not above the top', () => {
-    expect(sanitizeRatingRange({ minRating: 9, maxRating: 2, showUnrated: true })).toEqual({ minRating: 5, maxRating: 5, showUnrated: true })
-    expect(sanitizeRatingRange({ minRating: 3, maxRating: 2, showUnrated: true })).toMatchObject({ minRating: 3, maxRating: 3 })
+    expect(sanitizeRatingRange({ minRating: 9, maxRating: 2, showUnrated: true })).toEqual({
+      minRating: 5,
+      maxRating: 5,
+      showUnrated: true
+    })
+    expect(sanitizeRatingRange({ minRating: 3, maxRating: 2, showUnrated: true })).toMatchObject({
+      minRating: 3,
+      maxRating: 3
+    })
   })
 })

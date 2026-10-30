@@ -37,7 +37,8 @@ export function SelectionBar(): React.JSX.Element | null {
       </span>
       {withAudio > 0 && settings.dragIncludeAudio && (
         <span className="muted" style={{ fontSize: 13 }}>
-          {withAudio} of them {withAudio === 1 ? 'has' : 'have'} a separate mic file that comes along
+          {withAudio} of them {withAudio === 1 ? 'has' : 'have'} a separate mic file that comes
+          along
         </span>
       )}
       <div className="actions">

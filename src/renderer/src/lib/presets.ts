@@ -10,11 +10,18 @@ import { useApp, useSettings } from './store'
 
 /** A preset with the tags and folders that no longer exist taken out, so it can be compared and applied. */
 export function resolvePreset(p: Preset, tagIds: string[], folderIds: string[]): Preset {
-  return { ...p, filters: scopedFilters(sanitizeSavedFilters(p.filters, tagIds, folderIds, 0), p.parts) }
+  return {
+    ...p,
+    filters: scopedFilters(sanitizeSavedFilters(p.filters, tagIds, folderIds, 0), p.parts)
+  }
 }
 
 /** The filters of a preset as short labels for a list, for example ["New", "Flip reset", "3 to 5 stars"]. */
-export function presetSummary(p: Preset, tagName: (id: string) => string | undefined, folderName: (id: string) => string | undefined): string[] {
+export function presetSummary(
+  p: Preset,
+  tagName: (id: string) => string | undefined,
+  folderName: (id: string) => string | undefined
+): string[] {
   const f = p.filters
   const out: string[] = []
   if (f.statuses.length !== 4) out.push(...f.statuses.map((s) => STATUS_LABEL[s]))
@@ -22,7 +29,8 @@ export function presetSummary(p: Preset, tagName: (id: string) => string | undef
   for (const id of f.excludeTagIds) out.push('not ' + (tagName(id) ?? '?'))
   const rating = ratingChipLabel(f)
   if (rating && isRatingFiltered(f)) out.push(rating)
-  if (p.parts.date && f.dateMode !== 'all') out.push(dateLabel({ ...DEFAULT_FILTERS, ...f } as Filters))
+  if (p.parts.date && f.dateMode !== 'all')
+    out.push(dateLabel({ ...DEFAULT_FILTERS, ...f } as Filters))
   if (p.parts.folders) out.push(...f.folderIds.map((id) => folderName(id) ?? '?'))
   if (p.parts.sort) out.push(sortButtonLabel(p.sortRules))
   return out
@@ -49,9 +57,28 @@ export function usePresetState(): PresetState {
   return useMemo(() => {
     const presets = settings.presets ?? []
     const activeSaved = presets.find((p) => p.id === settings.activePresetId) ?? null
-    const active = activeSaved ? resolvePreset(activeSaved, tags.map((t) => t.id), folders.map((f) => f.id)) : null
+    const active = activeSaved
+      ? resolvePreset(
+          activeSaved,
+          tags.map((t) => t.id),
+          folders.map((f) => f.id)
+        )
+      : null
     const current = toSavedFilters(filters)
-    if (!active) return { presets, active, activeSaved, modified: false, kind: isDefaultFilters(current) ? 'all' : 'custom' }
-    return { presets, active, activeSaved, modified: isPresetModified(active, current, settings.sortRules), kind: 'preset' }
+    if (!active)
+      return {
+        presets,
+        active,
+        activeSaved,
+        modified: false,
+        kind: isDefaultFilters(current) ? 'all' : 'custom'
+      }
+    return {
+      presets,
+      active,
+      activeSaved,
+      modified: isPresetModified(active, current, settings.sortRules),
+      kind: 'preset'
+    }
   }, [settings.presets, settings.activePresetId, settings.sortRules, filters, tags, folders])
 }

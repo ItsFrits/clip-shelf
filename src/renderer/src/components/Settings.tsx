@@ -1,4 +1,13 @@
-import { ChevronDown, ChevronLeft, ChevronUp, FolderPlus, RefreshCw, RotateCcw, Trash2, X } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
+  FolderPlus,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+  X
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ACTIONS,
@@ -8,8 +17,23 @@ import {
   findConflict,
   formatChord
 } from '@shared/keymap'
-import { defaultPresets, presetForKey, presetsUsingTags, replaceTagsInPresets, setPresetPart, uniqueName } from '@shared/presets'
-import type { AnimationMode, AnimationSpeed, FolderInfo, MergeTagsInPresets, Preset, PresetParts, SettingsView } from '@shared/types'
+import {
+  defaultPresets,
+  presetForKey,
+  presetsUsingTags,
+  replaceTagsInPresets,
+  setPresetPart,
+  uniqueName
+} from '@shared/presets'
+import type {
+  AnimationMode,
+  AnimationSpeed,
+  FolderInfo,
+  MergeTagsInPresets,
+  Preset,
+  PresetParts,
+  SettingsView
+} from '@shared/types'
 import { resolveMotion } from '@shared/uiPrefs'
 import { sortTags } from '@shared/userLogic'
 import { fmtBytes, fmtCount } from '../lib/format'
@@ -40,7 +64,11 @@ function SettingsBody(): React.JSX.Element {
     <div className="settings-body">
       <nav className="settings-nav">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => openSettings(t.id)}>
+          <button
+            key={t.id}
+            className={tab === t.id ? 'on' : ''}
+            onClick={() => openSettings(t.id)}
+          >
             {t.label}
           </button>
         ))}
@@ -61,7 +89,8 @@ function SettingsBody(): React.JSX.Element {
   )
 }
 
-const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+const FOCUSABLE =
+  'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 export function Settings({ modal = false }: { modal?: boolean }): React.JSX.Element {
   const setView = useApp((s) => s.setView)
@@ -98,7 +127,9 @@ export function Settings({ modal = false }: { modal?: boolean }): React.JSX.Elem
   // Keep Tab inside the window.
   const onKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key !== 'Tab' || !dialogRef.current) return
-    const items = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null)
+    const items = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+      (el) => el.offsetParent !== null
+    )
     if (items.length === 0) return
     const first = items[0]
     const last = items[items.length - 1]
@@ -123,10 +154,23 @@ export function Settings({ modal = false }: { modal?: boolean }): React.JSX.Elem
         pressedBackdrop.current = false
       }}
     >
-      <div ref={dialogRef} className="settings-modal" role="dialog" aria-modal="true" aria-label="Settings" tabIndex={-1} onKeyDown={onKeyDown}>
+      <div
+        ref={dialogRef}
+        className="settings-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Settings"
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+      >
         <header className="modal-head">
           <span className="modal-title">Settings</span>
-          <button className="btn icon" aria-label="Close settings" title="Close (Esc)" onClick={close}>
+          <button
+            className="btn icon"
+            aria-label="Close settings"
+            title="Close (Esc)"
+            onClick={close}
+          >
             <X size={18} strokeWidth={2} />
           </button>
         </header>
@@ -136,7 +180,11 @@ export function Settings({ modal = false }: { modal?: boolean }): React.JSX.Elem
   )
 }
 
-function Row(props: { title: string; desc?: string; children?: React.ReactNode }): React.JSX.Element {
+function Row(props: {
+  title: string
+  desc?: string
+  children?: React.ReactNode
+}): React.JSX.Element {
   return (
     <div className="setting-row">
       <div style={{ minWidth: 0 }}>
@@ -148,7 +196,11 @@ function Row(props: { title: string; desc?: string; children?: React.ReactNode }
   )
 }
 
-function Switch(props: { on: boolean; onChange: (on: boolean) => void; label: string }): React.JSX.Element {
+function Switch(props: {
+  on: boolean
+  onChange: (on: boolean) => void
+  label: string
+}): React.JSX.Element {
   return (
     <button
       type="button"
@@ -172,7 +224,11 @@ function Choice<T extends string>(props: {
   return (
     <div className="seg" role="group" aria-label={props.label}>
       {props.options.map((o) => (
-        <button key={o.id} className={props.value === o.id ? 'on' : ''} onClick={() => props.onChange(o.id)}>
+        <button
+          key={o.id}
+          className={props.value === o.id ? 'on' : ''}
+          onClick={() => props.onChange(o.id)}
+        >
           {o.label}
         </button>
       ))}
@@ -189,7 +245,10 @@ function GeneralTab(): React.JSX.Element {
     <>
       <h1>General</h1>
       <div className="sec-card">
-        <Row title="Open settings as" desc="A window over the library, or a full page that replaces it.">
+        <Row
+          title="Open settings as"
+          desc="A window over the library, or a full page that replaces it."
+        >
           <Choice<SettingsView>
             label="Open settings as"
             value={settings.settingsView}
@@ -200,12 +259,22 @@ function GeneralTab(): React.JSX.Element {
             onChange={(v) => update({ settingsView: v })}
           />
         </Row>
-        <Row title="Remember the last tab" desc="Settings opens on the tab you used last. When this is off it always starts on General.">
-          <Switch label="Remember the last tab" on={settings.rememberSettingsTab} onChange={(v) => update({ rememberSettingsTab: v })} />
+        <Row
+          title="Remember the last tab"
+          desc="Settings opens on the tab you used last. When this is off it always starts on General."
+        >
+          <Switch
+            label="Remember the last tab"
+            on={settings.rememberSettingsTab}
+            onChange={(v) => update({ rememberSettingsTab: v })}
+          />
         </Row>
       </div>
       <div className="sec-card">
-        <Row title="Animations" desc="Follow system uses the reduced motion setting of your operating system.">
+        <Row
+          title="Animations"
+          desc="Follow system uses the reduced motion setting of your operating system."
+        >
           <Choice<AnimationMode>
             label="Animations"
             value={settings.animations}
@@ -217,7 +286,14 @@ function GeneralTab(): React.JSX.Element {
             onChange={(v) => update({ animations: v })}
           />
         </Row>
-        <Row title="Animation speed" desc={off ? 'Animations are off right now, so this has no effect.' : 'How quickly things fade and slide.'}>
+        <Row
+          title="Animation speed"
+          desc={
+            off
+              ? 'Animations are off right now, so this has no effect.'
+              : 'How quickly things fade and slide.'
+          }
+        >
           <Choice<AnimationSpeed>
             label="Animation speed"
             value={settings.animationSpeed}
@@ -239,13 +315,21 @@ function GeneralTab(): React.JSX.Element {
 function FolderCard({ f }: { f: FolderInfo }): React.JSX.Element {
   const ask = useApp((s) => s.ask)
   const [name, setName] = useState(f.name)
-  useEffect(() => setName(f.name), [f.name])
+  // Show the new name when the folder is renamed somewhere else.
+  const [seenName, setSeenName] = useState(f.name)
+  if (seenName !== f.name) {
+    setSeenName(f.name)
+    setName(f.name)
+  }
   const update = (patch: Partial<FolderInfo>): void => void window.api.updateFolder(f.id, patch)
 
   return (
     <div className="folder-card">
       <div className="top">
-        <span className="dot" style={{ background: f.online ? 'var(--s-tagged)' : '#e0b052', width: 10, height: 10 }} />
+        <span
+          className="dot"
+          style={{ background: f.online ? 'var(--s-tagged)' : '#e0b052', width: 10, height: 10 }}
+        />
         <input
           className="field"
           style={{ width: 200 }}
@@ -255,15 +339,32 @@ function FolderCard({ f }: { f: FolderInfo }): React.JSX.Element {
           onBlur={() => name.trim() && name !== f.name && update({ name: name.trim() })}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="mono" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.path}>
+          <div
+            className="mono"
+            style={{
+              fontSize: 12,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+            title={f.path}
+          >
             {f.path}
           </div>
           <div className="muted" style={{ fontSize: 12 }}>
-            {!f.online ? 'Offline. Its clips stay in your library and are greyed out.' : f.scanning ? 'Scanning…' : 'Live'} ·{' '}
-            {fmtCount(f.clipCount)} files · {fmtBytes(f.totalBytes)}
+            {!f.online
+              ? 'Offline. Its clips stay in your library and are greyed out.'
+              : f.scanning
+                ? 'Scanning…'
+                : 'Live'}{' '}
+            · {fmtCount(f.clipCount)} files · {fmtBytes(f.totalBytes)}
           </div>
         </div>
-        <button className="btn small" disabled={!f.online} onClick={() => void window.api.rescan(f.id)}>
+        <button
+          className="btn small"
+          disabled={!f.online}
+          onClick={() => void window.api.rescan(f.id)}
+        >
           <RefreshCw size={14} />
           Rescan
         </button>
@@ -285,15 +386,27 @@ function FolderCard({ f }: { f: FolderInfo }): React.JSX.Element {
       </div>
       <div className="folder-opts">
         <label>
-          <input type="checkbox" checked={f.includeSubfolders} onChange={(e) => update({ includeSubfolders: e.target.checked })} />
+          <input
+            type="checkbox"
+            checked={f.includeSubfolders}
+            onChange={(e) => update({ includeSubfolders: e.target.checked })}
+          />
           Include subfolders
         </label>
         <label title="Link a separate audio file with the same name (for example a mic .m4a) to its video">
-          <input type="checkbox" checked={f.pairAudio} onChange={(e) => update({ pairAudio: e.target.checked })} />
+          <input
+            type="checkbox"
+            checked={f.pairAudio}
+            onChange={(e) => update({ pairAudio: e.target.checked })}
+          />
           Pair separate audio files
         </label>
         <label title="Offer subfolder names as tag suggestions. Nothing is tagged automatically.">
-          <input type="checkbox" checked={f.suggestTags} onChange={(e) => update({ suggestTags: e.target.checked })} />
+          <input
+            type="checkbox"
+            checked={f.suggestTags}
+            onChange={(e) => update({ suggestTags: e.target.checked })}
+          />
           Suggest tags from subfolder names
         </label>
       </div>
@@ -316,7 +429,13 @@ function FoldersTab(): React.JSX.Element {
       return
     }
     const name = path.split(/[\\/]/).filter(Boolean).pop() ?? path
-    await window.api.addFolder({ path, name, includeSubfolders: true, pairAudio: true, suggestTags: true })
+    await window.api.addFolder({
+      path,
+      name,
+      includeSubfolders: true,
+      pairAudio: true,
+      suggestTags: true
+    })
   }
 
   return (
@@ -324,7 +443,8 @@ function FoldersTab(): React.JSX.Element {
       <h1>Folders</h1>
       <div className="sec-card">
         <span className="muted">
-          Clip Shelf only reads these folders. It never changes, renames or moves your files. New clips show up on their own.
+          Clip Shelf only reads these folders. It never changes, renames or moves your files. New
+          clips show up on their own.
         </span>
         {folders.map((f) => (
           <FolderCard key={f.id} f={f} />
@@ -337,15 +457,22 @@ function FoldersTab(): React.JSX.Element {
         </div>
       </div>
       <div className="sec-card">
-        <Row title="Ignored names" desc="One per line. Files and folders with these names are skipped. Use * as a wildcard." />
+        <Row
+          title="Ignored names"
+          desc="One per line. Files and folders with these names are skipped. Use * as a wildcard."
+        />
         <textarea
           className="field mono"
           rows={5}
           value={ignore}
           onChange={(e) => setIgnore(e.target.value)}
           onBlur={() => {
-            const list = ignore.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
-            if (list.join('\n') !== settings.ignorePatterns.join('\n')) updateSettings({ ignorePatterns: list })
+            const list = ignore
+              .split(/\r?\n/)
+              .map((s) => s.trim())
+              .filter(Boolean)
+            if (list.join('\n') !== settings.ignorePatterns.join('\n'))
+              updateSettings({ ignorePatterns: list })
           }}
         />
       </div>
@@ -362,25 +489,56 @@ function PlaybackTab(): React.JSX.Element {
     <>
       <h1>Playback &amp; editor</h1>
       <div className="sec-card">
-        <Row title="Video editor name" desc="Only used for the label on the drag button. Any editor that accepts dropped files works.">
-          <input className="field" style={{ width: 240 }} value={settings.editorName} onChange={(e) => update({ editorName: e.target.value })} />
+        <Row
+          title="Video editor name"
+          desc="Only used for the label on the drag button. Any editor that accepts dropped files works."
+        >
+          <input
+            className="field"
+            style={{ width: 240 }}
+            value={settings.editorName}
+            onChange={(e) => update({ editorName: e.target.value })}
+          />
         </Row>
-        <Row title="Bring the separate mic file along" desc="When you drag a clip that has its own audio file (like a Radeon ReLive mic track), drop both in the editor.">
-          <Switch label="Include audio files when dragging" on={settings.dragIncludeAudio} onChange={(v) => update({ dragIncludeAudio: v })} />
+        <Row
+          title="Bring the separate mic file along"
+          desc="When you drag a clip that has its own audio file (like a Radeon ReLive mic track), drop both in the editor."
+        >
+          <Switch
+            label="Include audio files when dragging"
+            on={settings.dragIncludeAudio}
+            onChange={(v) => update({ dragIncludeAudio: v })}
+          />
         </Row>
       </div>
       <div className="sec-card">
-        <Row title="Keyboard hints" desc="Show the shortcut next to buttons and fields, like the key for Random clip.">
-          <Switch label="Keyboard hints" on={settings.showKeyHints} onChange={(v) => update({ showKeyHints: v })} />
+        <Row
+          title="Keyboard hints"
+          desc="Show the shortcut next to buttons and fields, like the key for Random clip."
+        >
+          <Switch
+            label="Keyboard hints"
+            on={settings.showKeyHints}
+            onChange={(v) => update({ showKeyHints: v })}
+          />
         </Row>
       </div>
       <div className="sec-card">
-        <Row title="Audio track labels" desc="Show the track names stored in the video file (like “Game” or “Mic”), or just Track 1, Track 2. Clips without names always show numbers.">
+        <Row
+          title="Audio track labels"
+          desc="Show the track names stored in the video file (like “Game” or “Mic”), or just Track 1, Track 2. Clips without names always show numbers."
+        >
           <div className="seg" role="group" aria-label="Audio track labels">
-            <button className={settings.trackNames === 'names' ? 'on' : ''} onClick={() => update({ trackNames: 'names' })}>
+            <button
+              className={settings.trackNames === 'names' ? 'on' : ''}
+              onClick={() => update({ trackNames: 'names' })}
+            >
               Names
             </button>
-            <button className={settings.trackNames === 'numbers' ? 'on' : ''} onClick={() => update({ trackNames: 'numbers' })}>
+            <button
+              className={settings.trackNames === 'numbers' ? 'on' : ''}
+              onClick={() => update({ trackNames: 'numbers' })}
+            >
               Numbers
             </button>
           </div>
@@ -390,8 +548,15 @@ function PlaybackTab(): React.JSX.Element {
         <Row title="Loop the clip" desc="Start again when the end is reached.">
           <Switch label="Loop" on={settings.loop} onChange={(v) => update({ loop: v })} />
         </Row>
-        <Row title="Play the next clip automatically" desc="When a clip ends, go to the next one in the list.">
-          <Switch label="Play next clip automatically" on={settings.autoplayNext} onChange={(v) => update({ autoplayNext: v })} />
+        <Row
+          title="Play the next clip automatically"
+          desc="When a clip ends, go to the next one in the list."
+        >
+          <Switch
+            label="Play next clip automatically"
+            on={settings.autoplayNext}
+            onChange={(v) => update({ autoplayNext: v })}
+          />
         </Row>
       </div>
     </>
@@ -426,12 +591,18 @@ function HotkeysTab(): React.JSX.Element {
       const clash = findConflict(map, chord, capturing)
       if (clash) {
         const other = ACTIONS.find((a) => a.id === clash)
-        setError({ id: capturing, text: `${formatChord(chord)} is already used for “${other?.label}”. Pick another key.` })
+        setError({
+          id: capturing,
+          text: `${formatChord(chord)} is already used for “${other?.label}”. Pick another key.`
+        })
         return
       }
       const usedBy = presetForKey(settings.presets ?? [], chord)
       if (usedBy) {
-        setError({ id: capturing, text: `${formatChord(chord)} is already used for the preset “${usedBy.name}”. Pick another key.` })
+        setError({
+          id: capturing,
+          text: `${formatChord(chord)} is already used for the preset “${usedBy.name}”. Pick another key.`
+        })
         return
       }
       update({ keymap: { ...settings.keymap, [capturing]: [chord] } })
@@ -463,7 +634,9 @@ function HotkeysTab(): React.JSX.Element {
           {error?.id === a.id && <div className="err">{error.text}</div>}
         </div>
         <span className={'chord' + (isCapturing ? ' capturing' : '')}>
-          {isCapturing ? 'Press a key…' : (map[a.id] ?? []).map(formatChord).join(' / ') || 'Not set'}
+          {isCapturing
+            ? 'Press a key…'
+            : (map[a.id] ?? []).map(formatChord).join(' / ') || 'Not set'}
         </span>
         <button
           className="btn small"
@@ -474,7 +647,12 @@ function HotkeysTab(): React.JSX.Element {
         >
           {isCapturing ? 'Cancel' : 'Change'}
         </button>
-        <button className="btn small ghost" disabled={!custom} onClick={() => reset(a.id)} aria-label={`Reset ${a.label}`}>
+        <button
+          className="btn small ghost"
+          disabled={!custom}
+          onClick={() => reset(a.id)}
+          aria-label={`Reset ${a.label}`}
+        >
           <RotateCcw size={14} />
         </button>
       </div>
@@ -485,7 +663,10 @@ function HotkeysTab(): React.JSX.Element {
     <>
       <h1>Hotkeys</h1>
       <div className="sec-card">
-        <Row title="Choose your own keys" desc="Click Change, then press the key or combination you want. Escape cancels.">
+        <Row
+          title="Choose your own keys"
+          desc="Click Change, then press the key or combination you want. Escape cancels."
+        >
           <button className="btn small" disabled={!changed} onClick={() => update({ keymap: {} })}>
             Reset all to default
           </button>
@@ -515,8 +696,10 @@ function PresetsTab(): React.JSX.Element {
   const [capturing, setCapture] = useState<string | null>(null)
   const [error, setError] = useState<{ id: string; text: string } | null>(null)
 
-  const save = (next: Preset[], extra: Partial<typeof settings> = {}): void => update({ presets: next, ...extra })
-  const patch = (id: string, change: Partial<Preset>): void => save(presets.map((p) => (p.id === id ? { ...p, ...change } : p)))
+  const save = (next: Preset[], extra: Partial<typeof settings> = {}): void =>
+    update({ presets: next, ...extra })
+  const patch = (id: string, change: Partial<Preset>): void =>
+    save(presets.map((p) => (p.id === id ? { ...p, ...change } : p)))
 
   // Press the key you want for a preset. Escape cancels.
   useEffect(() => {
@@ -536,11 +719,17 @@ function PresetsTab(): React.JSX.Element {
       const map = effectiveKeymap(settings.keymap)
       const action = ACTIONS.find((a) => a.scope !== 'player' && (map[a.id] ?? []).includes(chord))
       if (other && other.id !== capturing) {
-        setError({ id: capturing, text: `${formatChord(chord)} is already used for the preset “${other.name}”. Pick another key.` })
+        setError({
+          id: capturing,
+          text: `${formatChord(chord)} is already used for the preset “${other.name}”. Pick another key.`
+        })
         return
       }
       if (action) {
-        setError({ id: capturing, text: `${formatChord(chord)} is already used for “${action.label}”. Pick another key.` })
+        setError({
+          id: capturing,
+          text: `${formatChord(chord)} is already used for “${action.label}”. Pick another key.`
+        })
         return
       }
       patch(capturing, { hotkey: chord })
@@ -561,8 +750,10 @@ function PresetsTab(): React.JSX.Element {
     const on = !p.parts[part]
     patch(p.id, setPresetPart(p, part, on, filters, settings.sortRules))
     if (!on) return
-    if (part === 'date' && filters.dateMode === 'all') toast(`The library shows all dates right now, so “${p.name}” will show all dates.`)
-    if (part === 'folders' && filters.folderIds.length === 0) toast(`The library shows all folders right now, so “${p.name}” will show all folders.`)
+    if (part === 'date' && filters.dateMode === 'all')
+      toast(`The library shows all dates right now, so “${p.name}” will show all dates.`)
+    if (part === 'folders' && filters.folderIds.length === 0)
+      toast(`The library shows all folders right now, so “${p.name}” will show all folders.`)
   }
   const move = (index: number, dir: -1 | 1): void => {
     const next = [...presets]
@@ -571,37 +762,67 @@ function PresetsTab(): React.JSX.Element {
     save(next)
   }
   const remove = async (p: Preset): Promise<void> => {
-    const ok = await ask({ title: `Delete “${p.name}”?`, body: 'The preset is removed. Your clips and tags are not touched.', confirmLabel: 'Delete', danger: true })
+    const ok = await ask({
+      title: `Delete “${p.name}”?`,
+      body: 'The preset is removed. Your clips and tags are not touched.',
+      confirmLabel: 'Delete',
+      danger: true
+    })
     if (!ok) return
-    save(presets.filter((x) => x.id !== p.id), settings.activePresetId === p.id ? { activePresetId: null } : {})
+    save(
+      presets.filter((x) => x.id !== p.id),
+      settings.activePresetId === p.id ? { activePresetId: null } : {}
+    )
   }
   const addDefaults = (): void => {
-    const missing = defaultPresets(() => crypto.randomUUID()).filter((d) => !presets.some((p) => p.name.toLowerCase() === d.name.toLowerCase()))
+    const missing = defaultPresets(() => crypto.randomUUID()).filter(
+      (d) => !presets.some((p) => p.name.toLowerCase() === d.name.toLowerCase())
+    )
     const taken = new Set(presets.map((p) => p.hotkey).filter(Boolean))
     // A key that is already taken is left empty, you can pick another one.
-    save([...presets, ...missing.map((d) => (d.hotkey && taken.has(d.hotkey) ? { ...d, hotkey: null } : d))])
+    save([
+      ...presets,
+      ...missing.map((d) => (d.hotkey && taken.has(d.hotkey) ? { ...d, hotkey: null } : d))
+    ])
   }
   const tagName = (id: string): string | undefined => tags.find((t) => t.id === id)?.name
   const folderName = (id: string): string | undefined => folders.find((f) => f.id === id)?.name
-  const hasAllDefaults = defaultPresets(() => '').every((d) => presets.some((p) => p.name.toLowerCase() === d.name.toLowerCase()))
+  const hasAllDefaults = defaultPresets(() => '').every((d) =>
+    presets.some((p) => p.name.toLowerCase() === d.name.toLowerCase())
+  )
 
   return (
     <>
       <h1>Presets</h1>
       <div className="sec-card">
-        <Row title="Your presets" desc="A preset is a set of filters you can switch to in the sidebar, or with its key. To make one, set the filters you want in the library and choose “New preset…” in the preset list. Date, folders and sort order are kept only when you switch them on for a preset. Switching one on keeps it as the library shows it right now.">
+        <Row
+          title="Your presets"
+          desc="A preset is a set of filters you can switch to in the sidebar, or with its key. To make one, set the filters you want in the library and choose “New preset…” in the preset list. Date, folders and sort order are kept only when you switch them on for a preset. Switching one on keeps it as the library shows it right now."
+        >
           <button className="btn small" disabled={hasAllDefaults} onClick={addDefaults}>
             Add the default presets again
           </button>
         </Row>
       </div>
       <div className="sec-card">
-        {presets.length === 0 && <div className="muted" style={{ fontSize: 13 }}>You have no presets yet.</div>}
+        {presets.length === 0 && (
+          <div className="muted" style={{ fontSize: 13 }}>
+            You have no presets yet.
+          </div>
+        )}
         {presets.map((p, i) => (
           <PresetRow
             key={p.id}
             preset={p}
-            summary={presetSummary(resolvePreset(p, tags.map((t) => t.id), folders.map((f) => f.id)), tagName, folderName)}
+            summary={presetSummary(
+              resolvePreset(
+                p,
+                tags.map((t) => t.id),
+                folders.map((f) => f.id)
+              ),
+              tagName,
+              folderName
+            )}
             isFirst={i === 0}
             isLast={i === presets.length - 1}
             capturing={capturing === p.id}
@@ -619,7 +840,10 @@ function PresetsTab(): React.JSX.Element {
         ))}
       </div>
       <div className="sec-card">
-        <Row title="When tags are merged" desc="If a tag is merged into another one, the presets that used the old tag can get the new tag instead.">
+        <Row
+          title="When tags are merged"
+          desc="If a tag is merged into another one, the presets that used the old tag can get the new tag instead."
+        >
           <Dropdown<MergeTagsInPresets>
             className="btn"
             ariaLabel="When tags are merged"
@@ -633,11 +857,23 @@ function PresetsTab(): React.JSX.Element {
             ]}
             onPick={(v) => update({ mergeTagsInPresets: v })}
           >
-            {{ ask: 'Ask me each time', always: 'Add the new tag', never: 'Only remove the old tag' }[settings.mergeTagsInPresets]}
+            {
+              {
+                ask: 'Ask me each time',
+                always: 'Add the new tag',
+                never: 'Only remove the old tag'
+              }[settings.mergeTagsInPresets]
+            }
           </Dropdown>
         </Row>
-        <Row title="Show all clips" desc="The key for “All clips” (no filters) is set under Hotkeys, in the Library list.">
-          <span className="chord">{(effectiveKeymap(settings.keymap).presetAll ?? []).map(formatChord).join(' / ') || 'Not set'}</span>
+        <Row
+          title="Show all clips"
+          desc="The key for “All clips” (no filters) is set under Hotkeys, in the Library list."
+        >
+          <span className="chord">
+            {(effectiveKeymap(settings.keymap).presetAll ?? []).map(formatChord).join(' / ') ||
+              'Not set'}
+          </span>
         </Row>
       </div>
     </>
@@ -672,7 +908,12 @@ function PresetRow({
   onDelete: () => void
 }): React.JSX.Element {
   const [name, setName] = useState(preset.name)
-  useEffect(() => setName(preset.name), [preset.name])
+  // Show the new name when the preset is renamed somewhere else.
+  const [seenName, setSeenName] = useState(preset.name)
+  if (seenName !== preset.name) {
+    setSeenName(preset.name)
+    setName(preset.name)
+  }
   const commit = (): void => {
     const clean = name.trim()
     if (!clean) setName(preset.name)
@@ -697,8 +938,14 @@ function PresetRow({
             }
           }}
         />
-        <div className="preset-row-sub muted">{summary.length > 0 ? summary.join(' · ') : 'No filters'}</div>
-        <div className="preset-parts" role="group" aria-label={`What ${preset.name} keeps besides its filters`}>
+        <div className="preset-row-sub muted">
+          {summary.length > 0 ? summary.join(' · ') : 'No filters'}
+        </div>
+        <div
+          className="preset-parts"
+          role="group"
+          aria-label={`What ${preset.name} keeps besides its filters`}
+        >
           {(
             [
               ['date', 'Date', 'Keep the date as the library shows it now'],
@@ -720,20 +967,45 @@ function PresetRow({
         </div>
         {error && <div className="err">{error}</div>}
       </div>
-      <span className={'chord' + (capturing ? ' capturing' : '')}>{capturing ? 'Press a key…' : preset.hotkey ? formatChord(preset.hotkey) : 'No key'}</span>
+      <span className={'chord' + (capturing ? ' capturing' : '')}>
+        {capturing ? 'Press a key…' : preset.hotkey ? formatChord(preset.hotkey) : 'No key'}
+      </span>
       <button className="btn small" onClick={onChange}>
         {capturing ? 'Cancel' : 'Change'}
       </button>
-      <button className="btn small ghost" disabled={!preset.hotkey} onClick={onClear} aria-label={`Remove the key of ${preset.name}`} title="Remove the key">
+      <button
+        className="btn small ghost"
+        disabled={!preset.hotkey}
+        onClick={onClear}
+        aria-label={`Remove the key of ${preset.name}`}
+        title="Remove the key"
+      >
         <X size={14} />
       </button>
-      <button className="btn small ghost" disabled={isFirst} onClick={() => onMove(-1)} aria-label={`Move ${preset.name} up`} title="Move up">
+      <button
+        className="btn small ghost"
+        disabled={isFirst}
+        onClick={() => onMove(-1)}
+        aria-label={`Move ${preset.name} up`}
+        title="Move up"
+      >
         <ChevronUp size={14} />
       </button>
-      <button className="btn small ghost" disabled={isLast} onClick={() => onMove(1)} aria-label={`Move ${preset.name} down`} title="Move down">
+      <button
+        className="btn small ghost"
+        disabled={isLast}
+        onClick={() => onMove(1)}
+        aria-label={`Move ${preset.name} down`}
+        title="Move down"
+      >
         <ChevronDown size={14} />
       </button>
-      <button className="btn small ghost" onClick={onDelete} aria-label={`Delete ${preset.name}`} title="Delete">
+      <button
+        className="btn small ghost"
+        onClick={onDelete}
+        aria-label={`Delete ${preset.name}`}
+        title="Delete"
+      >
         <Trash2 size={14} />
       </button>
     </div>
@@ -772,7 +1044,10 @@ function BackupTab(): React.JSX.Element {
     <>
       <h1>Backup &amp; updates</h1>
       <div className="sec-card">
-        <Row title="Your tags, notes and ratings" desc="Everything you typed lives in one small file. Save a copy now and then, especially before reinstalling Windows.">
+        <Row
+          title="Your tags, notes and ratings"
+          desc="Everything you typed lives in one small file. Save a copy now and then, especially before reinstalling Windows."
+        >
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               className="btn"
@@ -804,7 +1079,11 @@ function BackupTab(): React.JSX.Element {
           title="Automatic daily backup"
           desc={`A copy is kept in the app data folder, the last 14 days. ${lastBackupAt ? 'Last one: ' + new Date(lastBackupAt).toLocaleString() : ''}`}
         >
-          <Switch label="Automatic daily backup" on={settings.autoBackup} onChange={(v) => update({ autoBackup: v })} />
+          <Switch
+            label="Automatic daily backup"
+            on={settings.autoBackup}
+            onChange={(v) => update({ autoBackup: v })}
+          />
         </Row>
       </div>
       <div className="sec-card">
@@ -814,7 +1093,11 @@ function BackupTab(): React.JSX.Element {
               Restart and install
             </button>
           ) : (
-            <button className="btn" disabled={!appInfo.packaged || updateStatus.state === 'checking'} onClick={() => void window.api.checkForUpdates()}>
+            <button
+              className="btn"
+              disabled={!appInfo.packaged || updateStatus.state === 'checking'}
+              onClick={() => void window.api.checkForUpdates()}
+            >
               <RefreshCw size={14} />
               Check for updates
             </button>
@@ -858,12 +1141,17 @@ function TagsTab(): React.JSX.Element {
 
   const everyTag = useMemo(() => sortTags(tags, counts, tagSort), [tags, counts, tagSort])
   const selected = selectedId ? byId.get(selectedId) : undefined
-  useEffect(() => {
+  // When another tag is picked, or the tag is renamed, start the fields again.
+  const [seenTag, setSeenTag] = useState(`${selected?.id}|${selected?.name}`)
+  if (seenTag !== `${selected?.id}|${selected?.name}`) {
+    setSeenTag(`${selected?.id}|${selected?.name}`)
     setName(selected?.name ?? '')
     setMergeInto('')
-  }, [selected?.id, selected?.name])
+  }
 
-  const suggestsList = (selected?.suggests ?? []).map((id) => byId.get(id)).filter((t): t is NonNullable<typeof t> => !!t)
+  const suggestsList = (selected?.suggests ?? [])
+    .map((id) => byId.get(id))
+    .filter((t): t is NonNullable<typeof t> => !!t)
   const suggestedBy = selected ? tags.filter((t) => t.suggests?.includes(selected.id)) : []
   const used = selected ? (counts.get(selected.id) ?? 0) : 0
 
@@ -875,7 +1163,9 @@ function TagsTab(): React.JSX.Element {
       return
     }
     if (tags.some((t) => t.id !== selected.id && t.name.toLowerCase() === clean.toLowerCase())) {
-      toast(`There is already a tag called "${clean}". Use "Merge into" to combine them.`, { kind: 'error' })
+      toast(`There is already a tag called "${clean}". Use "Merge into" to combine them.`, {
+        kind: 'error'
+      })
       setName(selected.name)
       return
     }
@@ -893,14 +1183,25 @@ function TagsTab(): React.JSX.Element {
     const base = `${used} clip${used === 1 ? '' : 's'} with "${selected.name}" get "${target.name}" instead. The tag "${selected.name}" is removed.`
     let addToPresets = mode === 'always'
     if (affected.length === 0) {
-      if (!(await ask({ title: `Merge "${selected.name}" into "${target.name}"?`, body: base, confirmLabel: 'Merge' }))) return
+      if (
+        !(await ask({
+          title: `Merge "${selected.name}" into "${target.name}"?`,
+          body: base,
+          confirmLabel: 'Merge'
+        }))
+      )
+        return
     } else if (mode === 'ask') {
       const res = await askChecks({
         title: `Merge "${selected.name}" into "${target.name}"?`,
         body: `${base} ${affected.length === 1 ? 'The preset' : 'The presets'} ${names} use${affected.length === 1 ? 's' : ''} "${selected.name}".`,
         confirmLabel: 'Merge',
         checks: [
-          { id: 'add', label: `Add "${target.name}" to ${affected.length === 1 ? 'that preset' : 'those presets'}`, checked: true },
+          {
+            id: 'add',
+            label: `Add "${target.name}" to ${affected.length === 1 ? 'that preset' : 'those presets'}`,
+            checked: true
+          },
           { id: 'remember', label: 'Do this every time, and do not ask again', checked: false }
         ]
       })
@@ -908,11 +1209,27 @@ function TagsTab(): React.JSX.Element {
       addToPresets = res.add === true
       if (res.remember) updateSettings({ mergeTagsInPresets: addToPresets ? 'always' : 'never' })
     } else {
-      const note = addToPresets ? `"${target.name}" is added to the presets that use it (${names}).` : `It is also taken out of the presets that use it (${names}).`
-      if (!(await ask({ title: `Merge "${selected.name}" into "${target.name}"?`, body: `${base} ${note}`, confirmLabel: 'Merge' }))) return
+      const note = addToPresets
+        ? `"${target.name}" is added to the presets that use it (${names}).`
+        : `It is also taken out of the presets that use it (${names}).`
+      if (
+        !(await ask({
+          title: `Merge "${selected.name}" into "${target.name}"?`,
+          body: `${base} ${note}`,
+          confirmLabel: 'Merge'
+        }))
+      )
+        return
     }
     await window.api.mergeTags([selected.id], target.id)
-    if (affected.length > 0) updateSettings({ presets: replaceTagsInPresets(presets, new Set([selected.id]), addToPresets ? target.id : null) })
+    if (affected.length > 0)
+      updateSettings({
+        presets: replaceTagsInPresets(
+          presets,
+          new Set([selected.id]),
+          addToPresets ? target.id : null
+        )
+      })
     setSelectedId(target.id)
   }
 
@@ -920,7 +1237,10 @@ function TagsTab(): React.JSX.Element {
     if (!selected) return
     const ok = await ask({
       title: `Delete the tag "${selected.name}"?`,
-      body: used > 0 ? `It is removed from ${used} clip${used === 1 ? '' : 's'}. The clips themselves stay.` : 'No clip uses this tag.',
+      body:
+        used > 0
+          ? `It is removed from ${used} clip${used === 1 ? '' : 's'}. The clips themselves stay.`
+          : 'No clip uses this tag.',
       confirmLabel: 'Delete tag',
       danger: true
     })
@@ -938,8 +1258,9 @@ function TagsTab(): React.JSX.Element {
       <h1>Tags</h1>
       <div className="sec-card">
         <span className="muted">
-          Choose which tags are suggested after a tag is added to a clip. It works one way: if "Air dribble" suggests
-          "Sidewall", adding "Sidewall" does not suggest "Air dribble" unless you set that up too.
+          Choose which tags are suggested after a tag is added to a clip. It works one way: if
+          &quot;Air dribble&quot; suggests &quot;Sidewall&quot;, adding &quot;Sidewall&quot; does
+          not suggest &quot;Air dribble&quot; unless you set that up too.
         </span>
         <div className="tag-manager">
           <div className="tag-list">
@@ -953,17 +1274,25 @@ function TagsTab(): React.JSX.Element {
             <TagSortControl />
             <div className="items">
               {sorted.map((t) => (
-                <button key={t.id} className={'item' + (t.id === selectedId ? ' on' : '')} onClick={() => setSelectedId(t.id)}>
+                <button
+                  key={t.id}
+                  className={'item' + (t.id === selectedId ? ' on' : '')}
+                  onClick={() => setSelectedId(t.id)}
+                >
                   <span className="name">{t.name}</span>
                   <span className="meta">
-                    {t.suggests?.length ? <span title="Suggests other tags">→ {t.suggests.length}</span> : null}
+                    {t.suggests?.length ? (
+                      <span title="Suggests other tags">→ {t.suggests.length}</span>
+                    ) : null}
                     <span title="Clips with this tag">{fmtCount(counts.get(t.id) ?? 0)}</span>
                   </span>
                 </button>
               ))}
               {sorted.length === 0 && (
                 <span className="muted" style={{ padding: 10 }}>
-                  {tags.length === 0 ? 'No tags yet. Add one to a clip in the player.' : 'No tag matches.'}
+                  {tags.length === 0
+                    ? 'No tags yet. Add one to a clip in the player.'
+                    : 'No tag matches.'}
                 </span>
               )}
             </div>
@@ -1000,11 +1329,19 @@ function TagsTab(): React.JSX.Element {
                   <div className="chips">
                     {suggestsList.length === 0 && <span className="muted">Nothing yet.</span>}
                     {suggestsList.map((t) => (
-                      <span key={t.id} className="pill" style={{ fontSize: 13, padding: '3px 6px 3px 10px' }}>
+                      <span
+                        key={t.id}
+                        className="pill"
+                        style={{ fontSize: 13, padding: '3px 6px 3px 10px' }}
+                      >
                         {t.name}
                         <button
                           aria-label={`Stop suggesting ${t.name}`}
-                          onClick={() => updateTag(selected.id, { suggests: (selected.suggests ?? []).filter((id) => id !== t.id) })}
+                          onClick={() =>
+                            updateTag(selected.id, {
+                              suggests: (selected.suggests ?? []).filter((id) => id !== t.id)
+                            })
+                          }
                         >
                           ×
                         </button>
@@ -1024,7 +1361,12 @@ function TagsTab(): React.JSX.Element {
                     <span className="h-label">Suggested after</span>
                     <div className="chips">
                       {suggestedBy.map((t) => (
-                        <button key={t.id} className="pill" style={{ border: 0, color: 'inherit' }} onClick={() => setSelectedId(t.id)}>
+                        <button
+                          key={t.id}
+                          className="pill"
+                          style={{ border: 0, color: 'inherit' }}
+                          onClick={() => setSelectedId(t.id)}
+                        >
                           {t.name}
                         </button>
                       ))}
@@ -1041,7 +1383,9 @@ function TagsTab(): React.JSX.Element {
                       chevron
                       minWidth={200}
                       value={mergeInto}
-                      options={everyTag.filter((t) => t.id !== selected.id).map((t) => ({ value: t.id, label: t.name }))}
+                      options={everyTag
+                        .filter((t) => t.id !== selected.id)
+                        .map((t) => ({ value: t.id, label: t.name }))}
                       onPick={setMergeInto}
                     >
                       {byId.get(mergeInto)?.name ?? 'Merge into…'}
@@ -1049,7 +1393,11 @@ function TagsTab(): React.JSX.Element {
                     <button className="btn" disabled={!mergeInto} onClick={() => void merge()}>
                       Merge
                     </button>
-                    <button className="btn danger" style={{ marginLeft: 'auto' }} onClick={() => void remove()}>
+                    <button
+                      className="btn danger"
+                      style={{ marginLeft: 'auto' }}
+                      onClick={() => void remove()}
+                    >
                       <Trash2 size={16} />
                       Delete tag
                     </button>
