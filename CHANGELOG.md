@@ -4,6 +4,8 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+## 0.5.0
+
 ### Added
 - Presets. A preset is a set of filters (status, tags and rating, and if you want also the date, the folders and the sort order) that you can switch to with one click. The new Preset list in the sidebar has All clips on top, then New preset… and a search field, and then your presets, each with the number of clips it shows and its first filters.
 - "New preset…" (also "Save as preset…" while your filters are Custom) makes a preset from the filters as they are now, including changes you have not saved. The preset you came from stays as it was saved, like a new branch in git.
