@@ -9,9 +9,11 @@ import {
   isDefaultFilters,
   isPresetModified,
   presetForKey,
+  presetsUsingTags,
   replaceTagsInPresets,
   sanitizePresets,
   scopedFilters,
+  setPresetPart,
   uniqueName
 } from '../src/shared/presets'
 import { DEFAULT_SAVED_FILTERS } from '../src/shared/savedFilters'
@@ -157,6 +159,55 @@ describe('replaceTagsInPresets', () => {
   it('swaps merged tags for the target, once', () => {
     const out = replaceTagsInPresets([p], new Set(['a', 'b']), 't')[0]
     expect(out.filters.tagIds).toEqual(['t'])
+  })
+})
+
+describe('presetsUsingTags', () => {
+  it('finds presets that include or exclude the tag', () => {
+    const a = preset(f({ tagIds: ['a'] }), NO_PARTS, { id: 'a' })
+    const b = preset(f({ excludeTagIds: ['a'] }), NO_PARTS, { id: 'b' })
+    const c = preset(f({ tagIds: ['z'] }), NO_PARTS, { id: 'c' })
+    expect(presetsUsingTags([a, b, c], new Set(['a'])).map((p) => p.id)).toEqual(['a', 'b'])
+    expect(presetsUsingTags([a, b, c], new Set(['q']))).toEqual([])
+  })
+})
+
+describe('setPresetPart', () => {
+  const view = f({ statuses: ['used'], dateMode: 'week', anchor: WEEK, folderIds: ['x', 'y'] })
+  const rules = [{ field: 'rating' as const, dir: 'desc' as const }]
+  const base = preset(f({ statuses: ['new'] }))
+
+  it('takes the date from the view and leaves the other filters alone', () => {
+    const out = setPresetPart(base, 'date', true, view, rules)
+    expect(out.parts).toEqual({ date: true, folders: false, sort: false })
+    expect(out.filters.dateMode).toBe('week')
+    expect(out.filters.anchor).toBe(WEEK)
+    expect(out.filters.statuses).toEqual(['new'])
+    expect(out.filters.folderIds).toEqual([])
+    expect(out.sortRules).toEqual(base.sortRules)
+  })
+  it('takes the folders from the view', () => {
+    const out = setPresetPart(base, 'folders', true, view, rules)
+    expect(out.filters.folderIds).toEqual(['x', 'y'])
+    expect(out.filters.dateMode).toBe('all')
+  })
+  it('takes the sort order from the view', () => {
+    const out = setPresetPart(base, 'sort', true, view, rules)
+    expect(out.parts.sort).toBe(true)
+    expect(out.sortRules).toEqual(rules)
+    expect(out.filters).toEqual(base.filters)
+  })
+  it('forgets a part when it is switched off', () => {
+    const on = setPresetPart(setPresetPart(base, 'date', true, view, rules), 'folders', true, view, rules)
+    const off = setPresetPart(on, 'date', false, view, rules)
+    expect(off.parts).toEqual({ date: false, folders: true, sort: false })
+    expect(off.filters.dateMode).toBe('all')
+    expect(off.filters.folderIds).toEqual(['x', 'y'])
+  })
+  it('does not change a preset that is not modified by the view afterwards', () => {
+    const on = setPresetPart(base, 'date', true, view, rules)
+    expect(isPresetModified(on, view, rules)).toBe(true)
+    expect(isPresetModified(on, { ...f({ statuses: ['new'] }), dateMode: 'week', anchor: WEEK }, rules)).toBe(false)
   })
 })
 

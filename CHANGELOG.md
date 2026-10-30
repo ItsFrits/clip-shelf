@@ -16,6 +16,9 @@ All notable changes to Clip Shelf. Newest first.
 - Tooltips in the whole app now have their own look, instead of the plain system ones. They show up after a short moment, also when you reach a button with the keyboard, and they stay out of the way of the window edges.
 - Every clip card now shows its file size next to its name. When you sort on name or size, that part lights up so you can see what the order is based on.
 
+- On a preset in Settings, Presets you can now switch on Date, Folders and Sort order after the preset has been made. Switching one on keeps it as the library shows it right now, switching it off forgets it.
+- When you merge a tag into another one, a question asks whether the presets that used the old tag get the new tag. Tick "Do this every time" to stop being asked, or choose it under Settings, Presets, "When tags are merged".
+
 ### Changed
 - The default order is now newest first. Press Reset in the sort menu to switch back to it if you had set something else.
 - The Group by buttons are as tall as the buttons next to them.
@@ -23,6 +26,8 @@ All notable changes to Clip Shelf. Newest first.
 - Group by (Day, Week, Month) only works when Date is the first sort rule. Otherwise it is greyed out, with a hint saying why. Your choice is kept for when you sort by date again.
 - Unrated clips count as the lowest rating when sorting.
 - Your old Newest/Oldest choice is carried over to the new sort menu.
+- "Merge into" in Settings, Tags is a dropdown in the style of the app. Long lists scroll, and typing a few letters jumps to a tag. This goes for every dropdown of the app.
+- Deleting a tag now also takes it out of the presets that used it.
 
 ### Removed
 - The switch "Hide watched & tagged clips" in the sidebar. The To tag preset does the same.

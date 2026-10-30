@@ -41,12 +41,20 @@ export interface Toast {
   sticky?: boolean
 }
 
+export interface ConfirmCheck {
+  id: string
+  label: string
+  checked: boolean
+}
+
 export interface ConfirmState {
   title: string
   body: string
   confirmLabel: string
   danger?: boolean
-  resolve: (ok: boolean) => void
+  /** Check boxes under the text. Their values come back when the user confirms. */
+  checks?: ConfirmCheck[]
+  resolve: (ok: boolean, values?: Record<string, boolean>) => void
 }
 
 interface UndoEntry {
@@ -118,6 +126,8 @@ interface AppState {
   toast: (message: string, opts?: Partial<Omit<Toast, 'id' | 'message'>>) => void
   dismissToast: (id: number) => void
   ask: (opts: Omit<ConfirmState, 'resolve'>) => Promise<boolean>
+  /** Like ask, with check boxes. Gives the checked state of each box, or null when cancelled. */
+  askChecks: (opts: Omit<ConfirmState, 'resolve'>) => Promise<Record<string, boolean> | null>
   setCapturing: (on: boolean) => void
   /** The dialog for making a new preset from the current filters. */
   newPresetOpen: boolean
@@ -525,6 +535,18 @@ export const useApp = create<AppState>((set, get) => ({
           resolve: (ok) => {
             set({ confirm: null })
             resolve(ok)
+          }
+        }
+      })
+    }),
+  askChecks: (opts) =>
+    new Promise<Record<string, boolean> | null>((resolve) => {
+      set({
+        confirm: {
+          ...opts,
+          resolve: (ok, values) => {
+            set({ confirm: null })
+            resolve(ok ? (values ?? {}) : null)
           }
         }
       })

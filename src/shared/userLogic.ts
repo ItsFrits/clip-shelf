@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   savedFilters: null,
   presets: null,
   activePresetId: null,
+  mergeTagsInPresets: 'ask',
   lastSeenVersion: '',
   masterVolume: 1,
   masterMuted: false,

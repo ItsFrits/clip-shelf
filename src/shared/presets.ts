@@ -62,6 +62,29 @@ export function capturePreset(
   }
 }
 
+/**
+ * Start or stop keeping the date, the folders or the sort order in a preset. Switching a part on takes
+ * it from the current view, switching it off forgets it. The other parts stay as they are.
+ */
+export function setPresetPart(
+  preset: Preset,
+  part: keyof PresetParts,
+  on: boolean,
+  filters: SavedFilters,
+  sortRules: readonly SortRule[]
+): Preset {
+  const parts: PresetParts = { ...preset.parts, [part]: on }
+  const f = { ...preset.filters }
+  if (on && part === 'date') Object.assign(f, { dateMode: filters.dateMode, anchor: filters.anchor, rangeFrom: filters.rangeFrom, rangeTo: filters.rangeTo })
+  if (on && part === 'folders') f.folderIds = [...filters.folderIds]
+  return {
+    ...preset,
+    parts,
+    filters: scopedFilters(f, parts),
+    sortRules: on && part === 'sort' ? sanitizeSortRules(sortRules) : preset.sortRules
+  }
+}
+
 /** The filters you get when switching to a preset: the preset's own, and the rest as it was. */
 export function filtersWithPreset(preset: Preset, current: SavedFilters): SavedFilters {
   const p = preset.filters
@@ -137,6 +160,11 @@ export function sanitizePresets(
     })
   }
   return out
+}
+
+/** The presets that use one of these tags, to include it or to leave it out. */
+export function presetsUsingTags(presets: readonly Preset[], ids: ReadonlySet<string>): Preset[] {
+  return presets.filter((p) => [...p.filters.tagIds, ...p.filters.excludeTagIds].some((id) => ids.has(id)))
 }
 
 /** Remove tags from the presets, or swap them for another tag (when tags are merged). */

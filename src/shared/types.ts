@@ -147,6 +147,8 @@ export interface SortRule {
 export type AnimationMode = 'system' | 'on' | 'off'
 export type AnimationSpeed = 'slow' | 'normal' | 'fast'
 /** Settings open as a window over the library, or as a page that replaces it. */
+export type MergeTagsInPresets = 'ask' | 'always' | 'never'
+
 export type SettingsView = 'window' | 'page'
 
 export interface Settings {
@@ -171,6 +173,8 @@ export interface Settings {
   presets: Preset[] | null
   /** The preset the filters were taken from. The filters can have been changed since. */
   activePresetId: string | null
+  /** When a tag is merged into another: ask whether presets that used the old tag get the new one. */
+  mergeTagsInPresets: MergeTagsInPresets
   /** The app version the user last saw, to show a "what's new" notice after an update. */
   lastSeenVersion: string
   /** Volume (0 to 1) that stays the same when switching clips. */

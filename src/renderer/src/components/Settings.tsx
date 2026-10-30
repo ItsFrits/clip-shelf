@@ -8,14 +8,16 @@ import {
   findConflict,
   formatChord
 } from '@shared/keymap'
-import { defaultPresets, presetForKey, uniqueName } from '@shared/presets'
-import type { AnimationMode, AnimationSpeed, FolderInfo, Preset, SettingsView } from '@shared/types'
+import { defaultPresets, presetForKey, presetsUsingTags, replaceTagsInPresets, setPresetPart, uniqueName } from '@shared/presets'
+import type { AnimationMode, AnimationSpeed, FolderInfo, MergeTagsInPresets, Preset, PresetParts, SettingsView } from '@shared/types'
 import { resolveMotion } from '@shared/uiPrefs'
 import { sortTags } from '@shared/userLogic'
 import { fmtBytes, fmtCount } from '../lib/format'
+import { toSavedFilters } from '@shared/savedFilters'
 import { presetSummary, resolvePreset } from '../lib/presets'
 import { type SettingsTab, useApp, useSettings } from '../lib/store'
 import { AboutTab } from './AboutTab'
+import { Dropdown } from './Dropdown'
 import { TagInput } from './TagInput'
 import { TagSortControl } from './TagSortControl'
 
@@ -508,6 +510,7 @@ function PresetsTab(): React.JSX.Element {
   const setCapturing = useApp((s) => s.setCapturing)
   const tags = useApp((s) => s.user.tags)
   const folders = useApp((s) => s.user.folders)
+  const toast = useApp((s) => s.toast)
   const presets = settings.presets ?? []
   const [capturing, setCapture] = useState<string | null>(null)
   const [error, setError] = useState<{ id: string; text: string } | null>(null)
@@ -552,6 +555,15 @@ function PresetsTab(): React.JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capturing, presets, settings.keymap])
 
+  // Keep (or stop keeping) the date, the folders or the sort order, as the library shows them now.
+  const togglePart = (p: Preset, part: keyof PresetParts): void => {
+    const filters = toSavedFilters(useApp.getState().filters)
+    const on = !p.parts[part]
+    patch(p.id, setPresetPart(p, part, on, filters, settings.sortRules))
+    if (!on) return
+    if (part === 'date' && filters.dateMode === 'all') toast(`The library shows all dates right now, so “${p.name}” will show all dates.`)
+    if (part === 'folders' && filters.folderIds.length === 0) toast(`The library shows all folders right now, so “${p.name}” will show all folders.`)
+  }
   const move = (index: number, dir: -1 | 1): void => {
     const next = [...presets]
     const [item] = next.splice(index, 1)
@@ -577,7 +589,7 @@ function PresetsTab(): React.JSX.Element {
     <>
       <h1>Presets</h1>
       <div className="sec-card">
-        <Row title="Your presets" desc="A preset is a set of filters you can switch to in the sidebar, or with its key. To make one, set the filters you want in the library and choose “New preset…” in the preset list.">
+        <Row title="Your presets" desc="A preset is a set of filters you can switch to in the sidebar, or with its key. To make one, set the filters you want in the library and choose “New preset…” in the preset list. Date, folders and sort order are kept only when you switch them on for a preset. Switching one on keeps it as the library shows it right now.">
           <button className="btn small" disabled={hasAllDefaults} onClick={addDefaults}>
             Add the default presets again
           </button>
@@ -600,12 +612,30 @@ function PresetsTab(): React.JSX.Element {
               setCapture(capturing === p.id ? null : p.id)
             }}
             onClear={() => patch(p.id, { hotkey: null })}
+            onTogglePart={(part) => togglePart(p, part)}
             onMove={(dir) => move(i, dir)}
             onDelete={() => void remove(p)}
           />
         ))}
       </div>
       <div className="sec-card">
+        <Row title="When tags are merged" desc="If a tag is merged into another one, the presets that used the old tag can get the new tag instead.">
+          <Dropdown<MergeTagsInPresets>
+            className="btn"
+            ariaLabel="When tags are merged"
+            chevron
+            minWidth={220}
+            value={settings.mergeTagsInPresets}
+            options={[
+              { value: 'ask', label: 'Ask me each time' },
+              { value: 'always', label: 'Add the new tag' },
+              { value: 'never', label: 'Only remove the old tag' }
+            ]}
+            onPick={(v) => update({ mergeTagsInPresets: v })}
+          >
+            {{ ask: 'Ask me each time', always: 'Add the new tag', never: 'Only remove the old tag' }[settings.mergeTagsInPresets]}
+          </Dropdown>
+        </Row>
         <Row title="Show all clips" desc="The key for “All clips” (no filters) is set under Hotkeys, in the Library list.">
           <span className="chord">{(effectiveKeymap(settings.keymap).presetAll ?? []).map(formatChord).join(' / ') || 'Not set'}</span>
         </Row>
@@ -624,6 +654,7 @@ function PresetRow({
   onRename,
   onChange,
   onClear,
+  onTogglePart,
   onMove,
   onDelete
 }: {
@@ -636,6 +667,7 @@ function PresetRow({
   onRename: (name: string) => void
   onChange: () => void
   onClear: () => void
+  onTogglePart: (part: keyof PresetParts) => void
   onMove: (dir: -1 | 1) => void
   onDelete: () => void
 }): React.JSX.Element {
@@ -666,6 +698,26 @@ function PresetRow({
           }}
         />
         <div className="preset-row-sub muted">{summary.length > 0 ? summary.join(' · ') : 'No filters'}</div>
+        <div className="preset-parts" role="group" aria-label={`What ${preset.name} keeps besides its filters`}>
+          {(
+            [
+              ['date', 'Date', 'Keep the date as the library shows it now'],
+              ['folders', 'Folders', 'Keep the folders as the library shows them now'],
+              ['sort', 'Sort order', 'Keep the sort order as the library shows it now']
+            ] as const
+          ).map(([part, label, tip]) => (
+            <button
+              key={part}
+              type="button"
+              className={'preset-part' + (preset.parts[part] ? ' on' : '')}
+              aria-pressed={preset.parts[part]}
+              data-tip={preset.parts[part] ? `${label} is kept. Click to stop keeping it` : tip}
+              onClick={() => onTogglePart(part)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {error && <div className="err">{error}</div>}
       </div>
       <span className={'chord' + (capturing ? ' capturing' : '')}>{capturing ? 'Press a key…' : preset.hotkey ? formatChord(preset.hotkey) : 'No key'}</span>
@@ -779,8 +831,11 @@ function TagsTab(): React.JSX.Element {
   const updateTag = useApp((s) => s.updateTag)
   const addSuggestion = useApp((s) => s.addSuggestion)
   const ask = useApp((s) => s.ask)
+  const askChecks = useApp((s) => s.askChecks)
   const toast = useApp((s) => s.toast)
-  const tagSort = useSettings().tagSort
+  const settings = useSettings()
+  const updateSettings = useApp((s) => s.updateSettings)
+  const tagSort = settings.tagSort
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [name, setName] = useState('')
@@ -801,6 +856,7 @@ function TagsTab(): React.JSX.Element {
     )
   }, [tags, filter, counts, tagSort])
 
+  const everyTag = useMemo(() => sortTags(tags, counts, tagSort), [tags, counts, tagSort])
   const selected = selectedId ? byId.get(selectedId) : undefined
   useEffect(() => {
     setName(selected?.name ?? '')
@@ -830,13 +886,33 @@ function TagsTab(): React.JSX.Element {
     if (!selected || !mergeInto) return
     const target = byId.get(mergeInto)
     if (!target) return
-    const ok = await ask({
-      title: `Merge "${selected.name}" into "${target.name}"?`,
-      body: `${used} clip${used === 1 ? '' : 's'} with "${selected.name}" get "${target.name}" instead. The tag "${selected.name}" is removed.`,
-      confirmLabel: 'Merge'
-    })
-    if (!ok) return
+    const presets = settings.presets ?? []
+    const affected = presetsUsingTags(presets, new Set([selected.id]))
+    const mode = settings.mergeTagsInPresets
+    const names = affected.map((p) => `“${p.name}”`).join(', ')
+    const base = `${used} clip${used === 1 ? '' : 's'} with "${selected.name}" get "${target.name}" instead. The tag "${selected.name}" is removed.`
+    let addToPresets = mode === 'always'
+    if (affected.length === 0) {
+      if (!(await ask({ title: `Merge "${selected.name}" into "${target.name}"?`, body: base, confirmLabel: 'Merge' }))) return
+    } else if (mode === 'ask') {
+      const res = await askChecks({
+        title: `Merge "${selected.name}" into "${target.name}"?`,
+        body: `${base} ${affected.length === 1 ? 'The preset' : 'The presets'} ${names} use${affected.length === 1 ? 's' : ''} "${selected.name}".`,
+        confirmLabel: 'Merge',
+        checks: [
+          { id: 'add', label: `Add "${target.name}" to ${affected.length === 1 ? 'that preset' : 'those presets'}`, checked: true },
+          { id: 'remember', label: 'Do this every time, and do not ask again', checked: false }
+        ]
+      })
+      if (!res) return
+      addToPresets = res.add === true
+      if (res.remember) updateSettings({ mergeTagsInPresets: addToPresets ? 'always' : 'never' })
+    } else {
+      const note = addToPresets ? `"${target.name}" is added to the presets that use it (${names}).` : `It is also taken out of the presets that use it (${names}).`
+      if (!(await ask({ title: `Merge "${selected.name}" into "${target.name}"?`, body: `${base} ${note}`, confirmLabel: 'Merge' }))) return
+    }
     await window.api.mergeTags([selected.id], target.id)
+    if (affected.length > 0) updateSettings({ presets: replaceTagsInPresets(presets, new Set([selected.id]), addToPresets ? target.id : null) })
     setSelectedId(target.id)
   }
 
@@ -850,6 +926,10 @@ function TagsTab(): React.JSX.Element {
     })
     if (!ok) return
     await window.api.deleteTag(selected.id)
+    const presets = settings.presets ?? []
+    if (presetsUsingTags(presets, new Set([selected.id])).length > 0) {
+      updateSettings({ presets: replaceTagsInPresets(presets, new Set([selected.id]), null) })
+    }
     setSelectedId(null)
   }
 
@@ -955,16 +1035,17 @@ function TagsTab(): React.JSX.Element {
                 <div className="block">
                   <span className="h-label">Merge or delete</span>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <select className="field" style={{ minWidth: 180 }} value={mergeInto} aria-label="Merge into" onChange={(e) => setMergeInto(e.target.value)}>
-                      <option value="">Merge into…</option>
-                      {sorted
-                        .filter((t) => t.id !== selected.id)
-                        .map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                    </select>
+                    <Dropdown
+                      className="btn tag-merge-dd"
+                      ariaLabel="Merge into"
+                      chevron
+                      minWidth={200}
+                      value={mergeInto}
+                      options={everyTag.filter((t) => t.id !== selected.id).map((t) => ({ value: t.id, label: t.name }))}
+                      onPick={setMergeInto}
+                    >
+                      {byId.get(mergeInto)?.name ?? 'Merge into…'}
+                    </Dropdown>
                     <button className="btn" disabled={!mergeInto} onClick={() => void merge()}>
                       Merge
                     </button>

@@ -36,6 +36,7 @@ function normalizeSettings(raw: unknown, tagIds: string[], folderIds: string[]):
   settings.presets = Array.isArray(r.presets)
     ? sanitizePresets(r.presets, tagIds, folderIds, Date.now())
     : defaultPresets(() => randomUUID())
+  if (!['ask', 'always', 'never'].includes(settings.mergeTagsInPresets)) settings.mergeTagsInPresets = DEFAULT_SETTINGS.mergeTagsInPresets
   if (settings.activePresetId && !settings.presets.some((p) => p.id === settings.activePresetId)) settings.activePresetId = null
   return settings
 }

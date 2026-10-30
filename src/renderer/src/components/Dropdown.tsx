@@ -46,10 +46,11 @@ export function Dropdown<T extends string>({
 }: Props<T>): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
-  const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
   const btn = useRef<HTMLButtonElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const id = useRef(`dd-${Math.random().toString(36).slice(2, 8)}`)
+  const typed = useRef({ text: '', timer: 0 })
   const onPickRef = useRef(onPick)
   onPickRef.current = onPick
 
@@ -72,11 +73,20 @@ export function Dropdown<T extends string>({
     if (!open || !btn.current) return
     const r = btn.current.getBoundingClientRect()
     const width = Math.max(r.width, minWidth)
-    const h = options.length * ITEM_H + PAD * 2 + 2
+    const natural = options.length * ITEM_H + PAD * 2 + 2
+    const spaceBelow = window.innerHeight - r.bottom - 12
+    const spaceAbove = r.top - 12
+    // Open where there is room. A long list gets as tall as the room allows and scrolls.
+    const below = natural <= spaceBelow || spaceBelow >= spaceAbove
+    const h = Math.max(ITEM_H + PAD * 2, Math.min(natural, below ? spaceBelow : spaceAbove, 360))
     const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
-    const below = r.bottom + 4 + h <= window.innerHeight - 8 || r.top - 4 - h < 8
-    setPos({ left, top: below ? r.bottom + 4 : r.top - 4 - h, width })
+    setPos({ left, top: below ? r.bottom + 4 : r.top - 4 - h, width, height: h })
   }, [open, options.length, minWidth])
+
+  // Keep the highlighted item in view in a long list.
+  useEffect(() => {
+    if (open && pos) document.getElementById(`${id.current}-${active}`)?.scrollIntoView({ block: 'nearest' })
+  }, [open, active, pos])
 
   // While the list is open: keys go to the list, a click outside closes it. These listeners are on the
   // window, so they run before the ones of the window the list sits in (which must stay open on Esc).
@@ -95,7 +105,7 @@ export function Dropdown<T extends string>({
         e.preventDefault()
         e.stopPropagation()
         setActive(e.key === 'Home' ? 0 : options.length - 1)
-      } else if (e.key === 'Enter' || e.key === ' ') {
+      } else if (e.key === 'Enter' || (e.key === ' ' && !typed.current.text)) {
         e.preventDefault()
         e.stopPropagation()
         const o = options[active]
@@ -103,6 +113,15 @@ export function Dropdown<T extends string>({
         btn.current?.focus()
       } else if (e.key === 'Tab') {
         close()
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Typing jumps to the first option that starts with what you typed.
+        e.preventDefault()
+        e.stopPropagation()
+        typed.current.text += e.key.toLowerCase()
+        window.clearTimeout(typed.current.timer)
+        typed.current.timer = window.setTimeout(() => (typed.current.text = ''), 800)
+        const at = options.findIndex((o) => o.label.toLowerCase().startsWith(typed.current.text))
+        if (at >= 0) setActive(at)
       }
     }
     const down = (e: MouseEvent): void => {
@@ -151,7 +170,7 @@ export function Dropdown<T extends string>({
             aria-label={ariaLabel}
             // Clicks in here must not close the window the list sits in.
             data-keep-open
-            style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, width: pos?.width, visibility: pos ? 'visible' : 'hidden' }}
+            style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, width: pos?.width, maxHeight: pos?.height, visibility: pos ? 'visible' : 'hidden' }}
           >
             {options.map((o, i) => (
               <div

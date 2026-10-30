@@ -1371,6 +1371,24 @@ textarea.field {
   line-height: 1.5;
   user-select: text;
 }
+.dlg-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.dlg-checks label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.dlg-checks input {
+  margin-top: 2px;
+  flex: none;
+}
 .dialog .buttons {
   display: flex;
   justify-content: flex-end;
@@ -2323,7 +2341,7 @@ html[data-anim='off'] button:active {
 }
 .dd-list {
   position: fixed;
-  z-index: 70;
+  z-index: 95; /* above the Settings window (80), below dialogs (100) */
   padding: 4px;
   border-radius: 10px;
   background: var(--panel-2);
@@ -2331,6 +2349,8 @@ html[data-anim='off'] button:active {
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
   animation: cal-in var(--anim-fast) ease-out;
   user-select: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .dd-item {
   display: flex;
@@ -2562,6 +2582,32 @@ select option {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.preset-parts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.preset-part {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 12px;
+  transition: background var(--anim-fast) ease, color var(--anim-fast) ease, border-color var(--anim-fast) ease,
+    scale var(--press-out) var(--press-spring);
+}
+.preset-part:hover {
+  color: var(--text);
+  border-color: var(--border-2);
+}
+.preset-part.on {
+  background: rgba(255, 143, 63, 0.16);
+  border-color: var(--accent);
+  color: var(--accent-soft);
 }
 .preset-row .err {
   color: var(--danger);

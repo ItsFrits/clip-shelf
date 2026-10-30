@@ -22,7 +22,7 @@ export function presetSummary(p: Preset, tagName: (id: string) => string | undef
   for (const id of f.excludeTagIds) out.push('not ' + (tagName(id) ?? '?'))
   const rating = ratingChipLabel(f)
   if (rating && isRatingFiltered(f)) out.push(rating)
-  if (p.parts.date) out.push(dateLabel({ ...DEFAULT_FILTERS, ...f } as Filters))
+  if (p.parts.date && f.dateMode !== 'all') out.push(dateLabel({ ...DEFAULT_FILTERS, ...f } as Filters))
   if (p.parts.folders) out.push(...f.folderIds.map((id) => folderName(id) ?? '?'))
   if (p.parts.sort) out.push(sortButtonLabel(p.sortRules))
   return out
