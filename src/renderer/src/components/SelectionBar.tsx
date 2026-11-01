@@ -1,4 +1,4 @@
-import { Download, Star, Tag, Trash2, X } from 'lucide-react'
+import { Check, Download, FolderMinus, FolderPlus, Pin, Star, Tag, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useApp, useSettings } from '../lib/store'
 import { Stars } from './Stars'
@@ -12,8 +12,15 @@ export function SelectionBar(): React.JSX.Element | null {
   const patch = useApp((s) => s.patch)
   const addTagByName = useApp((s) => s.addTagByName)
   const trashKeys = useApp((s) => s.trashKeys)
+  const projects = useApp((s) => s.user.projects)
+  const projectId = useApp((s) => s.projectId)
+  const activeId = useApp((s) => s.user.settings.activeProjectId)
+  const addToProject = useApp((s) => s.addToProject)
+  const removeFromProject = useApp((s) => s.removeFromProject)
+  const createProject = useApp((s) => s.createProject)
+  const [newName, setNewName] = useState('')
   const settings = useSettings()
-  const [open, setOpen] = useState<'tag' | 'rate' | null>(null)
+  const [open, setOpen] = useState<'tag' | 'rate' | 'project' | null>(null)
   const wrap = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -88,6 +95,74 @@ export function SelectionBar(): React.JSX.Element | null {
             </div>
           )}
         </div>
+        {projectId ? (
+          <button
+            className="btn"
+            title="Take the selected clips out of this project. The clips themselves stay in your library."
+            onClick={() => removeFromProject(projectId, keys)}
+          >
+            <FolderMinus size={16} strokeWidth={1.75} />
+            Remove from project
+          </button>
+        ) : (
+          <div className="popover-wrap">
+            <button className="btn" onClick={() => setOpen(open === 'project' ? null : 'project')}>
+              <FolderPlus size={16} strokeWidth={1.75} />
+              Add to project
+            </button>
+            {open === 'project' && (
+              <div className="popover">
+                <span className="muted" style={{ fontSize: 13 }}>
+                  Add {keys.length} clip{keys.length === 1 ? '' : 's'} to a project
+                </span>
+                {projects.length > 0 && (
+                  <div className="proj-pick">
+                    {projects.map((p) => {
+                      const all = keys.every((k) => p.clipKeys.includes(k))
+                      return (
+                        <button
+                          key={p.id}
+                          className="proj-pick-row"
+                          onClick={() => {
+                            addToProject(p.id, keys)
+                            setOpen(null)
+                          }}
+                        >
+                          <span className="proj-pick-name">{p.name}</span>
+                          {p.id === activeId && <Pin size={12} aria-label="Active project" />}
+                          {all && <Check size={14} aria-label="Already in this project" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                <form
+                  className="proj-pick-new"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    const clean = newName.trim()
+                    if (!clean) return
+                    setNewName('')
+                    setOpen(null)
+                    void createProject(clean).then((id) => addToProject(id, keys))
+                  }}
+                >
+                  <input
+                    className="field"
+                    placeholder="New project"
+                    value={newName}
+                    maxLength={60}
+                    aria-label="Name of a new project"
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                  <button type="submit" className="btn" disabled={!newName.trim()}>
+                    Make
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
         <button className="btn danger" onClick={() => void trashKeys(keys)}>
           <Trash2 size={16} strokeWidth={1.75} />
           Move to recycle bin

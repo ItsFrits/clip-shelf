@@ -33,8 +33,9 @@ import {
 import { DEFAULT_SETTINGS } from '@shared/userLogic'
 import { settingsTabOnOpen } from '@shared/uiPrefs'
 import { DEFAULT_FILTERS, type Filters, computeVisible } from './filter'
+import { plural } from './format'
 
-export type View = 'library' | 'player' | 'settings'
+export type View = 'library' | 'player' | 'settings' | 'projects'
 export type SettingsTab =
   'general' | 'folders' | 'playback' | 'tags' | 'presets' | 'hotkeys' | 'backup' | 'about'
 
@@ -80,6 +81,10 @@ interface AppState {
   update: UpdateStatus
 
   view: View
+  /** Where closing Settings goes: the library, or the projects page. */
+  returnView: 'library' | 'projects'
+  /** The project that is open in the library view, or null for the whole library. */
+  projectId: string | null
   settingsTab: SettingsTab
   filters: Filters
   /** Clips that pass the filters, in display order. */
@@ -110,6 +115,19 @@ interface AppState {
   ignorePreset: () => void
   setView: (view: View) => void
   openSettings: (tab?: SettingsTab) => void
+
+  openProjects: () => void
+  /** Show only the clips of this project in the library view. */
+  openProject: (id: string) => void
+  /** Back from a project to the projects page. */
+  leaveProject: () => void
+  /** Make a project and give back its id. */
+  createProject: (name: string) => Promise<string>
+  /** Add clips to a project. Gives a toast with Undo. */
+  addToProject: (id: string, keys: string[]) => void
+  removeFromProject: (id: string, keys: string[]) => void
+  deleteProject: (id: string) => Promise<void>
+  setActiveProject: (id: string | null) => void
 
   select: (key: string, mode: 'only' | 'toggle' | 'range') => void
   selectAll: () => void
@@ -170,6 +188,8 @@ export const useApp = create<AppState>((set, get) => ({
   update: { state: 'idle' },
 
   view: 'library',
+  returnView: 'library',
+  projectId: null,
   settingsTab: 'general',
   filters: { ...DEFAULT_FILTERS, anchor: Date.now() },
   visible: [],
@@ -216,7 +236,17 @@ export const useApp = create<AppState>((set, get) => ({
       }
     }
     api.on('updater:status', onUpdate)
-    api.on('user:replaced', (user) => set({ user, tagById: tagMap(user.tags) }))
+    api.on('user:replaced', (user) =>
+      set((s) => {
+        // A project that was deleted closes itself.
+        const gone = s.projectId !== null && !user.projects.some((p) => p.id === s.projectId)
+        return {
+          user,
+          tagById: tagMap(user.tags),
+          ...(gone ? { projectId: null, view: s.view === 'library' ? 'projects' : s.view } : {})
+        }
+      })
+    )
 
     const snap = await api.getSnapshot()
     set({
@@ -343,10 +373,16 @@ export const useApp = create<AppState>((set, get) => ({
     return id
   },
   ignorePreset: () => get().updateSettings({ activePresetId: null }),
-  setView: (view) => set({ view }),
+  setView: (view) =>
+    set((s) => ({
+      view: view === 'library' && s.view === 'settings' ? s.returnView : view,
+      // Leaving the projects page for the library means the whole library.
+      ...(view === 'library' && s.view === 'projects' ? { projectId: null } : {})
+    })),
   openSettings: (tab) =>
     set((s) => ({
       view: 'settings',
+      returnView: s.view === 'projects' ? 'projects' : 'library',
       settingsTab: settingsTabOnOpen(
         tab,
         s.settingsTab,
@@ -354,6 +390,77 @@ export const useApp = create<AppState>((set, get) => ({
         'general'
       )
     })),
+
+  openProjects: () =>
+    set({ view: 'projects', projectId: null, selected: new Set(), anchorKey: null }),
+  openProject: (id) =>
+    set({
+      view: 'library',
+      projectId: id,
+      selected: new Set(),
+      anchorKey: null,
+      focusKey: null
+    }),
+  leaveProject: () =>
+    set({ view: 'projects', projectId: null, selected: new Set(), anchorKey: null }),
+  createProject: async (name) => {
+    const project = await window.api.createProject(name)
+    // The update from the main process may not have arrived yet.
+    set((s) =>
+      s.user.projects.some((p) => p.id === project.id)
+        ? {}
+        : { user: { ...s.user, projects: [...s.user.projects, project] } }
+    )
+    return project.id
+  },
+  addToProject: (id, keys) => {
+    const project = get().user.projects.find((p) => p.id === id)
+    if (!project || keys.length === 0) return
+    const have = new Set(project.clipKeys)
+    const added = [...new Set(keys)].filter((k) => !have.has(k))
+    if (added.length === 0) {
+      get().toast(
+        keys.length === 1
+          ? `Already in “${project.name}”.`
+          : `All of these are already in “${project.name}”.`
+      )
+      return
+    }
+    void window.api.addToProject(id, added)
+    const skipped = new Set(keys).size - added.length
+    get().toast(
+      `Added ${plural(added.length, 'clip')} to “${project.name}”.` +
+        (skipped > 0 ? ` ${skipped} ${skipped === 1 ? 'was' : 'were'} already in it.` : ''),
+      { actionLabel: 'Undo', action: () => void window.api.removeFromProject(id, added) }
+    )
+  },
+  removeFromProject: (id, keys) => {
+    const project = get().user.projects.find((p) => p.id === id)
+    if (!project || keys.length === 0) return
+    const drop = new Set(keys)
+    const removed = project.clipKeys.filter((k) => drop.has(k))
+    if (removed.length === 0) return
+    void window.api.removeFromProject(id, removed)
+    set((s) => ({ selected: new Set([...s.selected].filter((k) => !drop.has(k))) }))
+    get().toast(`Removed ${plural(removed.length, 'clip')} from “${project.name}”.`, {
+      actionLabel: 'Undo',
+      // The clips go back at the end of the project.
+      action: () => void window.api.addToProject(id, removed)
+    })
+  },
+  deleteProject: async (id) => {
+    const project = get().user.projects.find((p) => p.id === id)
+    if (!project) return
+    const ok = await get().ask({
+      title: `Delete “${project.name}”?`,
+      body: 'The project is removed. Your clips, tags and ratings stay as they are.',
+      confirmLabel: 'Delete project',
+      danger: true
+    })
+    if (!ok) return
+    await window.api.deleteProject(id)
+  },
+  setActiveProject: (id) => get().updateSettings({ activeProjectId: id }),
 
   select: (key, mode) =>
     set((s) => {
@@ -609,13 +716,26 @@ useApp.subscribe((s, prev) => {
     s.user.clips !== prev.user.clips ||
     s.user.tags !== prev.user.tags ||
     s.filters !== prev.filters ||
+    s.projectId !== prev.projectId ||
+    s.user.projects !== prev.user.projects ||
     a.sortRules !== b.sortRules ||
     a.randomSeed !== b.randomSeed
   ) {
+    // A project shows its own clips, and only the search box still filters them.
+    const project = s.projectId ? s.user.projects.find((p) => p.id === s.projectId) : null
+    const source = project
+      ? project.clipKeys.flatMap((k) => {
+          const c = s.clips.get(k)
+          return c ? [c] : []
+        })
+      : s.clips.values()
+    const filters = project
+      ? { ...DEFAULT_FILTERS, anchor: s.filters.anchor, query: s.filters.query }
+      : s.filters
     const visible = computeVisible(
-      s.clips.values(),
+      source,
       { user: s.user, tags: s.user.tags, folders: s.folders },
-      s.filters,
+      filters,
       a
     )
     useApp.setState({ visible })

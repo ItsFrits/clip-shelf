@@ -21,6 +21,23 @@ function focusSearch(): void {
   el?.select()
 }
 
+/** Put the open clip, or the selected clips, in the active project. */
+function addToActiveProject(): void {
+  const s = useApp.getState()
+  const keys = s.view === 'player' ? (s.playerKey ? [s.playerKey] : []) : [...s.selected]
+  const project = s.user.projects.find((p) => p.id === s.user.settings.activeProjectId)
+  if (!project) {
+    s.toast('There is no active project yet. Pick one on the Projects page.', {
+      actionLabel: 'Open Projects',
+      action: () => useApp.getState().openProjects()
+    })
+  } else if (keys.length === 0) {
+    s.toast('Select one or more clips first.')
+  } else {
+    s.addToProject(project.id, keys)
+  }
+}
+
 /** Run an action by id. Returns true if something handled it. */
 export function runAction(id: string): boolean {
   const s = useApp.getState()
@@ -37,15 +54,21 @@ export function runAction(id: string): boolean {
       return true
     case 'back':
       if (s.view === 'player') s.closePlayer()
-      else if (s.view === 'settings') s.setView('library')
+      else if (s.view === 'settings' || s.view === 'projects') s.setView('library')
       else if (s.selected.size > 0) s.clearSelection()
+      else if (s.projectId) s.leaveProject()
       else return false
+      return true
+    case 'addToProject':
+      if (s.view !== 'library' && s.view !== 'player') return false
+      addToActiveProject()
       return true
     case 'openSettings':
       if (s.view === 'settings') s.setView('library')
       else s.openSettings()
       return true
     case 'presetAll':
+      if (s.projectId) return false
       s.applyPreset(null)
       return true
     case 'selectAll':
@@ -92,7 +115,7 @@ export function useHotkeys(): void {
         if (!scopes.includes(a.scope) || !(map[a.id] ?? []).includes(chord)) continue
         // Let the text field keep its own undo and select-all.
         if (typing && (a.id === 'undo' || a.id === 'selectAll')) return
-        if (s.view === 'settings' && a.scope !== 'global') continue
+        if ((s.view === 'settings' || s.view === 'projects') && a.scope !== 'global') continue
         if (runAction(a.id)) {
           e.preventDefault()
           const active = document.activeElement
@@ -102,7 +125,7 @@ export function useHotkeys(): void {
         }
       }
       // The keys of the presets work in the library.
-      if (s.view === 'library') {
+      if (s.view === 'library' && !s.projectId) {
         const preset = presetForKey(s.user.settings.presets ?? [], chord)
         if (preset) {
           e.preventDefault()

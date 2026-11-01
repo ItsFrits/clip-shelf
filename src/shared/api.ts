@@ -3,6 +3,7 @@ import type {
   ApiEvents,
   ClipBulkPatch,
   FolderConfig,
+  Project,
   PreparedAudio,
   Settings,
   Snapshot,
@@ -27,6 +28,13 @@ export interface ClipShelfApi {
   updateTag(id: string, patch: { name?: string; suggests?: string[] }): Promise<void>
   mergeTags(sourceIds: string[], targetId: string): Promise<void>
   updateSettings(patch: Partial<Settings>): Promise<void>
+
+  createProject(name: string): Promise<Project>
+  renameProject(id: string, name: string): Promise<void>
+  deleteProject(id: string): Promise<void>
+  duplicateProject(id: string): Promise<Project | null>
+  addToProject(id: string, keys: string[]): Promise<void>
+  removeFromProject(id: string, keys: string[]): Promise<void>
 
   prepareAudio(key: string): Promise<PreparedAudio>
   prioritizeThumbs(keys: string[]): void
@@ -67,6 +75,12 @@ export const INVOKE_METHODS = [
   'updateTag',
   'mergeTags',
   'updateSettings',
+  'createProject',
+  'renameProject',
+  'deleteProject',
+  'duplicateProject',
+  'addToProject',
+  'removeFromProject',
   'prepareAudio',
   'showInFolder',
   'trashClips',

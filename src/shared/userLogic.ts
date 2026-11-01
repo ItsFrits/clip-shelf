@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   savedFilters: null,
   presets: null,
   activePresetId: null,
+  activeProjectId: null,
   mergeTagsInPresets: 'ask',
   lastSeenVersion: '',
   masterVolume: 1,

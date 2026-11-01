@@ -3,6 +3,7 @@ import { ConfirmDialog, Toasts } from './components/Overlays'
 import { Library } from './components/Library'
 import { NewPresetDialog } from './components/NewPresetDialog'
 import { Player } from './components/Player'
+import { ProjectsPage } from './components/ProjectsPage'
 import { Settings } from './components/Settings'
 import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
@@ -15,6 +16,7 @@ import { useApp, useSettings } from './lib/store'
 export default function App(): React.JSX.Element {
   const ready = useApp((s) => s.ready)
   const view = useApp((s) => s.view)
+  const inProject = useApp((s) => s.projectId !== null)
   const init = useApp((s) => s.init)
   useHotkeys()
 
@@ -81,8 +83,14 @@ export default function App(): React.JSX.Element {
         <>
           <TopBar />
           <div className="app-body">
-            <Sidebar />
-            <Library />
+            {view === 'projects' ? (
+              <ProjectsPage />
+            ) : (
+              <>
+                {!inProject && <Sidebar />}
+                <Library />
+              </>
+            )}
           </div>
         </>
       )}

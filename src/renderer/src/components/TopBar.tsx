@@ -10,6 +10,10 @@ export function TopBar(): React.JSX.Element {
   const setFilters = useApp((s) => s.setFilters)
   const randomClip = useApp((s) => s.randomClip)
   const openSettings = useApp((s) => s.openSettings)
+  const openProjects = useApp((s) => s.openProjects)
+  const setView = useApp((s) => s.setView)
+  const view = useApp((s) => s.view)
+  const projectId = useApp((s) => s.projectId)
   const overrides = useApp((s) => s.user.settings.keymap)
   const keymap = useMemo(() => effectiveKeymap(overrides), [overrides])
   const chord = (id: string): string => formatChord(keymap[id]?.[0] ?? '').replace('Ctrl+', 'Ctrl ')
@@ -40,7 +44,10 @@ export function TopBar(): React.JSX.Element {
           Random clip
           <KeyHint style={ON_ACCENT}>{chord('random')}</KeyHint>
         </button>
-        <button className="btn lg" disabled title="Coming in the next version">
+        <button
+          className={'btn lg' + (view === 'projects' || projectId ? ' on' : '')}
+          onClick={() => (view === 'projects' ? setView('library') : openProjects())}
+        >
           <LayoutGrid size={18} strokeWidth={1.75} />
           <span className="lbl">Projects</span>
         </button>

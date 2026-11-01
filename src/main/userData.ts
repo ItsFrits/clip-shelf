@@ -5,6 +5,7 @@ import type {
   ClipBulkPatch,
   ClipUser,
   FolderConfig,
+  Project,
   Settings,
   Tag,
   UserData
@@ -18,6 +19,15 @@ import {
   markTagsUsed
 } from '../shared/userLogic'
 import { defaultPresets, sanitizePresets } from '../shared/presets'
+import {
+  addToProject,
+  duplicateProject,
+  newProject,
+  removeFromProject,
+  sanitizeProjects,
+  syncUsed,
+  uniqueProjectName
+} from '../shared/projects'
 import { migrateSortSettings } from '../shared/sort'
 import { JsonStore } from './lib/jsonStore'
 
@@ -55,6 +65,7 @@ function normalizeSettings(
     settings.mergeTagsInPresets = DEFAULT_SETTINGS.mergeTagsInPresets
   if (settings.activePresetId && !settings.presets.some((p) => p.id === settings.activePresetId))
     settings.activePresetId = null
+  if (typeof settings.activeProjectId !== 'string') settings.activeProjectId = null
   return settings
 }
 
@@ -62,17 +73,26 @@ function normalize(raw: unknown, defaults: UserData): UserData {
   const r = (raw ?? {}) as Partial<UserData>
   const tags = Array.isArray(r.tags) ? r.tags : []
   const folders = Array.isArray(r.folders) ? r.folders : defaults.folders
+  const projects = sanitizeProjects(r.projects)
+  const settings = normalizeSettings(
+    r.settings,
+    tags.map((t) => t.id),
+    folders.map((f) => f.id)
+  )
+  if (settings.activeProjectId && !projects.some((p) => p.id === settings.activeProjectId))
+    settings.activeProjectId = null
   return {
     v: 1,
     folders,
     tags,
-    clips: r.clips && typeof r.clips === 'object' ? r.clips : {},
-    projects: Array.isArray(r.projects) ? r.projects : [],
-    settings: normalizeSettings(
-      r.settings,
-      tags.map((t) => t.id),
-      folders.map((f) => f.id)
+    // A clip counts as used when it is in a project.
+    clips: syncUsed(
+      r.clips && typeof r.clips === 'object' ? r.clips : {},
+      projects,
+      EMPTY_CLIP_USER
     ),
+    projects,
+    settings,
     lastBackupAt: typeof r.lastBackupAt === 'number' ? r.lastBackupAt : null
   }
 }
@@ -199,6 +219,66 @@ export class UserDataStore {
   updateSettings(patch: Partial<Settings>): void {
     this.store.mutate((d) => {
       d.settings = { ...d.settings, ...patch }
+    })
+  }
+
+  // ---- projects
+  /** Run a change to the project list, then make "used" on the clips match it. */
+  private changeProjects(fn: (d: UserData) => void): void {
+    this.store.mutate((d) => {
+      fn(d)
+      if (
+        d.settings.activeProjectId &&
+        !d.projects.some((p) => p.id === d.settings.activeProjectId)
+      )
+        d.settings.activeProjectId = null
+      d.clips = syncUsed(d.clips, d.projects, EMPTY_CLIP_USER)
+    })
+  }
+
+  createProject(name: string): Project {
+    const project = newProject(this.data.projects, randomUUID(), name, Date.now())
+    this.changeProjects((d) => d.projects.push(project))
+    return project
+  }
+
+  renameProject(id: string, name: string): void {
+    const clean = name.trim()
+    if (!clean) return
+    this.changeProjects((d) => {
+      const p = d.projects.find((x) => x.id === id)
+      if (p && p.name !== clean) {
+        p.name = uniqueProjectName(
+          d.projects.filter((x) => x.id !== id),
+          clean
+        )
+      }
+    })
+  }
+
+  deleteProject(id: string): void {
+    this.changeProjects((d) => {
+      d.projects = d.projects.filter((p) => p.id !== id)
+    })
+  }
+
+  duplicateProject(id: string): Project | null {
+    const source = this.data.projects.find((p) => p.id === id)
+    if (!source) return null
+    const copy = duplicateProject(this.data.projects, source, randomUUID(), Date.now())
+    this.changeProjects((d) => d.projects.push(copy))
+    return copy
+  }
+
+  addToProject(id: string, keys: string[]): void {
+    this.changeProjects((d) => {
+      d.projects = addToProject(d.projects, id, keys)
+    })
+  }
+
+  removeFromProject(id: string, keys: string[]): void {
+    this.changeProjects((d) => {
+      d.projects = removeFromProject(d.projects, id, keys)
     })
   }
 

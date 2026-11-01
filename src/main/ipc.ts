@@ -72,6 +72,33 @@ export function registerIpc(ctx: IpcContext): void {
     if (patch && 'ignorePatterns' in patch) library.rescan()
   })
 
+  handle('createProject', (name) => {
+    const project = user.createProject(name)
+    emit('user:replaced', user.data)
+    return project
+  })
+  handle('renameProject', (id, name) => {
+    user.renameProject(id, name)
+    emit('user:replaced', user.data)
+  })
+  handle('deleteProject', (id) => {
+    user.deleteProject(id)
+    emit('user:replaced', user.data)
+  })
+  handle('duplicateProject', (id) => {
+    const copy = user.duplicateProject(id)
+    emit('user:replaced', user.data)
+    return copy
+  })
+  handle('addToProject', (id, keys) => {
+    user.addToProject(id, keys)
+    emit('user:replaced', user.data)
+  })
+  handle('removeFromProject', (id, keys) => {
+    user.removeFromProject(id, keys)
+    emit('user:replaced', user.data)
+  })
+
   handle('prepareAudio', (key) => library.prepareAudio(key))
   handle('showInFolder', (key) => {
     const p = library.primaryPath(key)

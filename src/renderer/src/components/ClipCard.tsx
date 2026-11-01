@@ -25,6 +25,16 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
     return !clip.files.some((f) => online.has(f.folderId))
   })
 
+  // For a used clip, the tooltip on its status names the projects it is in.
+  const projectNames = useApp((s) =>
+    user.used
+      ? s.user.projects
+          .filter((p) => p.clipKeys.includes(clip.key))
+          .map((p) => p.name)
+          .join(', ')
+      : ''
+  )
+
   // When you sort on name or size, that part of the card lights up so you can see what the order is based on.
   const sortedOnName = useApp((s) => s.user.settings.sortRules.some((r) => r.field === 'name'))
   const sortedOnSize = useApp((s) => s.user.settings.sortRules.some((r) => r.field === 'size'))
@@ -96,7 +106,11 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
             {showDate ? `${fmtDay(clip.date)}, ` : ''}
             {fmtTime(clip.date)}
           </span>
-          <span className="status" style={{ color: STATUS_COLOR[status] }}>
+          <span
+            className="status"
+            style={{ color: STATUS_COLOR[status] }}
+            title={status === 'used' && projectNames ? `In: ${projectNames}` : undefined}
+          >
             <span className="dot" style={{ background: STATUS_COLOR[status] }} />
             {STATUS_LABEL[status]}
           </span>

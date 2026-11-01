@@ -21,6 +21,13 @@ export const ACTIONS: ActionDef[] = [
     defaults: ['Ctrl+,']
   },
 
+  {
+    id: 'addToProject',
+    label: 'Add to the active project (the open clip, or the selected clips)',
+    scope: 'global',
+    defaults: ['P']
+  },
+
   { id: 'presetAll', label: 'Show all clips (no filters)', scope: 'library', defaults: [] },
   { id: 'selectAll', label: 'Select all visible clips', scope: 'library', defaults: ['Ctrl+A'] },
   {

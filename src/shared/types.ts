@@ -120,7 +120,7 @@ export interface ClipUser {
   ignoredHints: string[]
 }
 
-export type ProjectStatus = 'idea' | 'working' | 'published'
+export type ProjectStatus = 'working' | 'published'
 
 export interface Project {
   id: string
@@ -175,6 +175,8 @@ export interface Settings {
   presets: Preset[] | null
   /** The preset the filters were taken from. The filters can have been changed since. */
   activePresetId: string | null
+  /** The project that the Add to project key puts clips in. */
+  activeProjectId: string | null
   /** When a tag is merged into another: ask whether presets that used the old tag get the new one. */
   mergeTagsInPresets: MergeTagsInPresets
   /** The app version the user last saw, to show a "what's new" notice after an update. */

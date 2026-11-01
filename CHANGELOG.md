@@ -4,6 +4,13 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+### Added
+- Projects. The Projects button in the top bar now opens a page where you make projects for your videos. Each project shows a few thumbnails, how many clips it has and how long they are together. You can open, rename, duplicate and delete a project there.
+- Select clips and choose Add to project in the bar at the bottom. You can pick a project or type a new name. A clip can be in more than one project, and every add has an Undo.
+- Open a project to see only its clips. Sorting, grouping and search work like in the library. Remove from project takes selected clips out again (the clips themselves stay in your library). Esc goes back to the projects page.
+- Make a project the active project (the pin button), then press P to add the open clip, or the selected clips, to it. You can change the key under Hotkeys.
+- A clip that is in a project now gets the Used status. Hover over the status on a card to see which projects it is in.
+
 ## 0.6.0
 
 ### Added

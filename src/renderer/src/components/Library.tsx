@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Film, FolderPlus, Grid3x3 } from 'lucide-react'
+import { ArrowLeft, Film, FolderPlus, Grid3x3, LayoutGrid } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FULL_RATING_RANGE, ratingChipLabel } from '@shared/rating'
 import type { Clip } from '@shared/types'
@@ -7,6 +7,7 @@ import { STATUS_LABEL, dateLabel, groupClips, isFiltered } from '../lib/filter'
 import { plural } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
 import { groupClipsByField, groupField } from '@shared/groups'
+import { lengthLabel, projectStats } from '@shared/projects'
 import { canGroup, FIELD_INFO } from '@shared/sort'
 import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { ClipCard } from './ClipCard'
@@ -38,6 +39,10 @@ export function Library(): React.JSX.Element {
   const tagById = useApp((s) => s.tagById)
   const selectionActive = useApp((s) => s.selected.size > 0)
   const settings = useSettings()
+  const project = useApp((s) =>
+    s.projectId ? s.user.projects.find((p) => p.id === s.projectId) : null
+  )
+  const leaveProject = useApp((s) => s.leaveProject)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
@@ -111,6 +116,7 @@ export function Library(): React.JSX.Element {
   // Back to the top when the filters change.
   const filterSig = JSON.stringify([
     filters,
+    project?.id,
     settings.sortRules,
     settings.randomSeed,
     group,
@@ -210,7 +216,9 @@ export function Library(): React.JSX.Element {
 
   const noFolders = folders.length === 0
   const loading = !noFolders && clips.size === 0
-  const noMatch = clips.size > 0 && visible.length === 0
+  const emptyProject = !!project && visible.length === 0 && filters.query === ''
+  const noMatch = clips.size > 0 && visible.length === 0 && !emptyProject
+  const stats = project ? projectStats(project, clips) : null
 
   return (
     <div className="lib">
@@ -218,8 +226,18 @@ export function Library(): React.JSX.Element {
         <div className="lib-title-row">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <h1 className="lib-title">{dateLabel(filters)}</h1>
-              {anyOnline && (
+              {project && (
+                <button
+                  className="btn icon"
+                  aria-label="Back to all projects"
+                  title="Back to all projects (Esc)"
+                  onClick={leaveProject}
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              )}
+              <h1 className="lib-title">{project ? project.name : dateLabel(filters)}</h1>
+              {!project && anyOnline && (
                 <span className="live" title="New clips in your folders show up automatically">
                   <span className="dot" />
                   Live
@@ -227,8 +245,10 @@ export function Library(): React.JSX.Element {
               )}
             </div>
             <span className="muted">
-              {plural(visible.length, 'clip')} in this view · {counts.fresh.toLocaleString('en-US')}{' '}
-              still new · {counts.reviewed.toLocaleString('en-US')} reviewed
+              {project && stats
+                ? `${plural(stats.count - stats.missing, 'clip')} · ${lengthLabel(stats)}` +
+                  (stats.missing > 0 ? ` · ${stats.missing} not in your library right now` : '')
+                : `${plural(visible.length, 'clip')} in this view · ${counts.fresh.toLocaleString('en-US')} still new · ${counts.reviewed.toLocaleString('en-US')} reviewed`}
             </span>
           </div>
           <div className="lib-tools">
@@ -292,7 +312,7 @@ export function Library(): React.JSX.Element {
             </label>
           </div>
         </div>
-        {(chips.length > 0 || filtered) && (
+        {!project && (chips.length > 0 || filtered) && (
           <div className="active-filters">
             {chips.map((c) => (
               <span key={c.id} className="fchip">
@@ -331,13 +351,37 @@ export function Library(): React.JSX.Element {
           <span>Big folders can take a minute the first time.</span>
         </div>
       )}
+      {emptyProject && (
+        <div className="empty">
+          <LayoutGrid size={48} strokeWidth={1.25} />
+          <h2>This project is empty</h2>
+          <span>
+            Select clips in your library and choose Add to project, or press P to add them to the
+            active project.
+          </span>
+          <button className="btn lg" onClick={() => useApp.setState({ projectId: null })}>
+            Browse the library
+          </button>
+        </div>
+      )}
       {noMatch && (
         <div className="empty">
           <h2>No clips match</h2>
-          <span>Nothing in your library fits the current filters.</span>
-          <button className="btn lg" onClick={resetFilters}>
-            Reset all filters
-          </button>
+          {project ? (
+            <>
+              <span>Nothing in this project fits your search.</span>
+              <button className="btn lg" onClick={() => setFilters({ query: '' })}>
+                Clear the search
+              </button>
+            </>
+          ) : (
+            <>
+              <span>Nothing in your library fits the current filters.</span>
+              <button className="btn lg" onClick={resetFilters}>
+                Reset all filters
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -347,7 +391,7 @@ export function Library(): React.JSX.Element {
         onScroll={(e) => {
           savedScroll = e.currentTarget.scrollTop
         }}
-        style={{ display: noFolders || loading || noMatch ? 'none' : undefined }}
+        style={{ display: noFolders || loading || noMatch || emptyProject ? 'none' : undefined }}
       >
         <div
           ref={innerRef}
