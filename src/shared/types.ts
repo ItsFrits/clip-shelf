@@ -198,6 +198,8 @@ export interface Settings {
   autoBackup: boolean
   thumbSize: number
   group: 'day' | 'week' | 'month' | 'none'
+  /** Group by the first sort rule when that is Rating, Length, Size or Name. */
+  groupByValue: boolean
   /** How the clips are ordered. The first rule counts most, the next ones break ties. */
   sortRules: SortRule[]
   /** Decides the order when sorting at random. A new number shuffles again. */

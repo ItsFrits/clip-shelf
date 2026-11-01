@@ -1,5 +1,6 @@
 import { FULL_RATING_RANGE, isRatingFiltered, ratingMatches } from '@shared/rating'
 import type { Clip, FolderInfo, Settings, Tag, UserData } from '@shared/types'
+import type { ClipGroup } from '@shared/groups'
 import { sortClips } from '@shared/sort'
 import { type ClipStatus, EMPTY_CLIP_USER, clipStatus } from '@shared/userLogic'
 import { fmtDay, fmtMonth, fmtShortDate, startOfDay, startOfMonth, startOfWeek } from './format'
@@ -195,11 +196,7 @@ export function computeVisible(
   )
 }
 
-export interface ClipGroup {
-  id: string
-  label: string
-  clips: Clip[]
-}
+export type { ClipGroup }
 
 export function groupClips(clips: Clip[], mode: Settings['group']): ClipGroup[] {
   if (mode === 'none') return [{ id: 'all', label: '', clips }]

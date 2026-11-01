@@ -6,7 +6,8 @@ import type { Clip } from '@shared/types'
 import { STATUS_LABEL, dateLabel, groupClips, isFiltered } from '../lib/filter'
 import { plural } from '../lib/format'
 import { useApp, useSettings } from '../lib/store'
-import { canGroup } from '@shared/sort'
+import { groupClipsByField, groupField } from '@shared/groups'
+import { canGroup, FIELD_INFO } from '@shared/sort'
 import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { ClipCard } from './ClipCard'
 import { SelectionBar } from './SelectionBar'
@@ -66,10 +67,21 @@ export function Library(): React.JSX.Element {
   const cardW = (width - GAP * (cols - 1)) / cols
   const cardH = Math.ceil(((cardW - 14) * 9) / 16) + CARD_CHROME
 
-  // Day, week and month groups only make sense when the clips are in date order.
-  const groupable = canGroup(settings.sortRules)
-  const group = groupable ? settings.group : 'none'
-  const groups = useMemo(() => groupClips(visible, group), [visible, group])
+  // The groups follow the first sort rule: day, week or month for Date, and one group per rating,
+  // length, size or first letter for the other fields. Random has no groups.
+  const byDate = canGroup(settings.sortRules)
+  const valueField = groupField(settings.sortRules)
+  const groupable = byDate || valueField !== null
+  const group = byDate ? settings.group : 'none'
+  const byValue = valueField !== null && settings.groupByValue
+  const userClips = user.clips
+  const groups = useMemo(
+    () =>
+      byValue && valueField
+        ? groupClipsByField(visible, valueField, (key) => userClips[key]?.rating ?? 0)
+        : groupClips(visible, group),
+    [visible, group, byValue, valueField, userClips]
+  )
   const rows = useMemo(() => {
     const out: Row[] = []
     for (const g of groups) {
@@ -97,7 +109,13 @@ export function Library(): React.JSX.Element {
   }, [cardH, rows, virt])
 
   // Back to the top when the filters change.
-  const filterSig = JSON.stringify([filters, settings.sortRules, settings.randomSeed, group])
+  const filterSig = JSON.stringify([
+    filters,
+    settings.sortRules,
+    settings.randomSeed,
+    group,
+    byValue
+  ])
   useEffect(() => {
     if (firstFilterRun.current) {
       firstFilterRun.current = false
@@ -224,19 +242,36 @@ export function Library(): React.JSX.Element {
               title={
                 groupable
                   ? undefined
-                  : 'Groups follow the date. Put Date first in the sort menu to use them.'
+                  : 'Random order has no groups. Put another rule first in the sort menu to use them.'
               }
             >
-              {(['day', 'week', 'month', 'none'] as const).map((g) => (
-                <button
-                  key={g}
-                  className={group === g ? 'on' : ''}
-                  disabled={!groupable}
-                  onClick={() => updateSettings({ group: g })}
-                >
-                  {g === 'none' ? 'No groups' : g[0].toUpperCase() + g.slice(1)}
-                </button>
-              ))}
+              {valueField ? (
+                <>
+                  <button
+                    className={byValue ? 'on' : ''}
+                    onClick={() => updateSettings({ groupByValue: true })}
+                  >
+                    By {FIELD_INFO[valueField].label.toLowerCase()}
+                  </button>
+                  <button
+                    className={byValue ? '' : 'on'}
+                    onClick={() => updateSettings({ groupByValue: false })}
+                  >
+                    No groups
+                  </button>
+                </>
+              ) : (
+                (['day', 'week', 'month', 'none'] as const).map((g) => (
+                  <button
+                    key={g}
+                    className={group === g ? 'on' : ''}
+                    disabled={!groupable}
+                    onClick={() => updateSettings({ group: g })}
+                  >
+                    {g === 'none' ? 'No groups' : g[0].toUpperCase() + g.slice(1)}
+                  </button>
+                ))
+              )}
             </div>
             <SortMenu />
             <label
@@ -347,7 +382,7 @@ export function Library(): React.JSX.Element {
                     }}
                   >
                     {row.clips.map((c) => (
-                      <ClipCard key={c.key} clip={c} showDate={group !== 'day'} />
+                      <ClipCard key={c.key} clip={c} showDate={byValue || group !== 'day'} />
                     ))}
                   </div>
                 )}

@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoBackup: true,
   thumbSize: 3,
   group: 'day',
+  groupByValue: true,
   sortRules: [{ field: 'date', dir: 'desc' }],
   randomSeed: 1
 }

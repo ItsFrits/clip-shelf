@@ -6,9 +6,11 @@ All notable changes to Clip Shelf. Newest first.
 
 ### Added
 - Ctrl+, opens Settings, and closes it again. You can change the key under Hotkeys.
+- Group by now works for more than the date. The groups follow the first rule of the sort menu. With Rating first you get a group per rating (5 stars down to Unrated), with Length and Size groups of similar clips (for example "10 to 20 s" or "50 to 100 MB"), and with Name one group per first letter. The Group by buttons change to "By rating" and "No groups" (and so on). Random order has no groups.
 - A new switch in Settings, Tags: "Tags you filter on first". When it is on, the tags you are showing or hiding stay at the top of the tag list in the sidebar.
 
 ### Changed
+- The Group by buttons are no longer greyed out when you sort on Rating, Length, Size or Name.
 - Clicking a tag in Settings, Tags shrinks it a little less.
 
 ## 0.5.0
