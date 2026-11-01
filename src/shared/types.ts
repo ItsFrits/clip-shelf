@@ -160,6 +160,8 @@ export interface Settings {
   showKeyHints: boolean
   /** Order of the tag lists in the sidebar and in Settings, Tags. */
   tagSort: TagSort
+  /** In the sidebar, tags you are showing or hiding come first, above the rest. */
+  statusTagsFirst: boolean
   /** Open Settings as a window over the library, or as a full page. */
   settingsView: SettingsView
   /** Open Settings on the tab you used last. When off it starts on the first tab. */

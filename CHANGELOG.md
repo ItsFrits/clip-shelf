@@ -4,6 +4,13 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+### Added
+- Ctrl+, opens Settings, and closes it again. You can change the key under Hotkeys.
+- A new switch in Settings, Tags: "Tags you filter on first". When it is on, the tags you are showing or hiding stay at the top of the tag list in the sidebar.
+
+### Changed
+- Clicking a tag in Settings, Tags shrinks it a little less.
+
 ## 0.5.0
 
 ### Added

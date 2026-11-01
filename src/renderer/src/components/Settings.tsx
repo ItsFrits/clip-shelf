@@ -1257,6 +1257,18 @@ function TagsTab(): React.JSX.Element {
     <>
       <h1>Tags</h1>
       <div className="sec-card">
+        <Row
+          title="Tags you filter on first"
+          desc="In the sidebar, the tags you are showing or hiding stay at the top of the list, above the other tags."
+        >
+          <Switch
+            label="Tags you filter on first"
+            on={settings.statusTagsFirst}
+            onChange={(v) => updateSettings({ statusTagsFirst: v })}
+          />
+        </Row>
+      </div>
+      <div className="sec-card">
         <span className="muted">
           Choose which tags are suggested after a tag is added to a clip. It works one way: if
           &quot;Air dribble&quot; suggests &quot;Sidewall&quot;, adding &quot;Sidewall&quot; does

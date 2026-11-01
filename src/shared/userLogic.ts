@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
   loop: true,
   showKeyHints: true,
   tagSort: 'count',
+  statusTagsFirst: false,
   settingsView: 'window',
   rememberSettingsTab: true,
   animations: 'system',
@@ -168,6 +169,12 @@ export function sortTags<T extends Tag>(
         ? (t: T): number => t.usedAt ?? 0
         : null
   return [...tags].sort((a, b) => (key ? key(b) - key(a) : 0) || byName(a, b))
+}
+
+/** The tags in `first` go to the top. Both groups keep the order they had. */
+export function tagsFirst<T extends Tag>(tags: T[], first: ReadonlySet<string>): T[] {
+  if (first.size === 0) return tags
+  return [...tags.filter((t) => first.has(t.id)), ...tags.filter((t) => !first.has(t.id))]
 }
 
 /** Note that these tags were just put on a clip. Returns the same array when nothing changes. */

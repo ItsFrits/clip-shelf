@@ -8,6 +8,7 @@ import {
   parentDir,
   sortTags,
   suggestedTags,
+  tagsFirst,
   trackProfileKey,
   whatsNewNotice
 } from '../src/shared/userLogic'
@@ -163,6 +164,21 @@ describe('tag sorting', () => {
     const copy = JSON.stringify(tags)
     sortTags(tags, counts, 'recent')
     expect(JSON.stringify(tags)).toBe(copy)
+  })
+
+  it('puts the chosen tags first and keeps the order within each group', () => {
+    const sorted = sortTags(tags, counts, 'count')
+    expect(tagsFirst(sorted, new Set(['c', 'b'])).map((t) => t.name)).toEqual([
+      'Air dribble',
+      'Flip reset',
+      'Ceiling shot',
+      'Sidewall'
+    ])
+  })
+
+  it('gives the same list back when no tag is chosen', () => {
+    expect(tagsFirst(tags, new Set())).toBe(tags)
+    expect(tagsFirst(tags, new Set(['zzz'])).map((t) => t.name)).toEqual(tags.map((t) => t.name))
   })
 
   it('marks only the added tags as used', () => {

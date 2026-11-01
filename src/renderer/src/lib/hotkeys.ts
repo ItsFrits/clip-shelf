@@ -41,6 +41,10 @@ export function runAction(id: string): boolean {
       else if (s.selected.size > 0) s.clearSelection()
       else return false
       return true
+    case 'openSettings':
+      if (s.view === 'settings') s.setView('library')
+      else s.openSettings()
+      return true
     case 'presetAll':
       s.applyPreset(null)
       return true

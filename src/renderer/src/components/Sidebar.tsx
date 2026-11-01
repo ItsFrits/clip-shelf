@@ -3,7 +3,13 @@ import { useMemo, useState } from 'react'
 import { type RangePreset, rangePreset } from '@shared/calendar'
 import { pickMaxRating, pickMinRating } from '@shared/rating'
 import { cycleTag, describeTagFilter } from '@shared/tagFilter'
-import { clipStatus, type ClipStatus, EMPTY_CLIP_USER, sortTags } from '@shared/userLogic'
+import {
+  clipStatus,
+  type ClipStatus,
+  EMPTY_CLIP_USER,
+  sortTags,
+  tagsFirst
+} from '@shared/userLogic'
 import {
   ALL_STATUSES,
   type DateMode,
@@ -91,14 +97,20 @@ export function Sidebar(): React.JSX.Element {
 
   const total = clips.size
   const reviewed = total - counts.status.new
-  const sortedTags = useMemo(
-    () =>
-      sortTags(user.tags, counts.tags, settings.tagSort).map((t) => ({
-        ...t,
-        count: counts.tags.get(t.id) ?? 0
-      })),
-    [user.tags, counts.tags, settings.tagSort]
-  )
+  const sortedTags = useMemo(() => {
+    const sorted = sortTags(user.tags, counts.tags, settings.tagSort)
+    const shown = settings.statusTagsFirst
+      ? tagsFirst(sorted, new Set([...filters.tagIds, ...filters.excludeTagIds]))
+      : sorted
+    return shown.map((t) => ({ ...t, count: counts.tags.get(t.id) ?? 0 }))
+  }, [
+    user.tags,
+    counts.tags,
+    settings.tagSort,
+    settings.statusTagsFirst,
+    filters.tagIds,
+    filters.excludeTagIds
+  ])
 
   const toggleStatus = (s: ClipStatus): void => {
     const on = filters.statuses.includes(s)

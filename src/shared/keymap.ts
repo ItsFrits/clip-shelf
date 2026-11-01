@@ -14,6 +14,12 @@ export const ACTIONS: ActionDef[] = [
   { id: 'undo', label: 'Undo', scope: 'global', defaults: ['Ctrl+Z'] },
   { id: 'back', label: 'Back / clear selection', scope: 'global', defaults: ['Escape'] },
   { id: 'random', label: 'Random clip', scope: 'global', defaults: ['R'] },
+  {
+    id: 'openSettings',
+    label: 'Open Settings (press again to close)',
+    scope: 'global',
+    defaults: ['Ctrl+,']
+  },
 
   { id: 'presetAll', label: 'Show all clips (no filters)', scope: 'library', defaults: [] },
   { id: 'selectAll', label: 'Select all visible clips', scope: 'library', defaults: ['Ctrl+A'] },
