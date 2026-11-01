@@ -251,7 +251,7 @@ export function Library(): React.JSX.Element {
                     className={byValue ? 'on' : ''}
                     onClick={() => updateSettings({ groupByValue: true })}
                   >
-                    By {FIELD_INFO[valueField].label.toLowerCase()}
+                    {FIELD_INFO[valueField].label}
                   </button>
                   <button
                     className={byValue ? '' : 'on'}
