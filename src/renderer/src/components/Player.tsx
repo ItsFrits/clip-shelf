@@ -789,15 +789,16 @@ export function Player(): React.JSX.Element {
               <button
                 type="button"
                 role="switch"
-                aria-checked={manualUsed}
-                className={'switch' + (manualUsed ? ' on' : '')}
-                title="For clips you used before Clip Shelf. A clip in a project counts as used by itself."
+                aria-checked={user.used}
+                className={'switch' + (user.used ? ' on' : '')}
+                disabled={inProject}
+                title={
+                  inProject
+                    ? 'This clip is in a project, so it counts as used. It goes off by itself when the clip leaves every project.'
+                    : 'For clips you used before Clip Shelf. Adding a clip to a project switches this on by itself.'
+                }
                 onClick={() =>
-                  patch(
-                    [key],
-                    { set: { usedManual: !manualUsed, used: !manualUsed || inProject } },
-                    'Used'
-                  )
+                  patch([key], { set: { usedManual: !manualUsed, used: !manualUsed } }, 'Used')
                 }
               />
             </label>

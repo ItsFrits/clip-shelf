@@ -387,6 +387,10 @@ svg {
   background: var(--text-2);
   transition: transform var(--anim-fast) ease;
 }
+.switch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .switch.on {
   background: var(--accent);
   border-color: var(--accent);

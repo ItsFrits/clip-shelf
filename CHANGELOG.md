@@ -13,7 +13,7 @@ All notable changes to Clip Shelf. Newest first.
 - The player has a Projects section. It shows the projects the clip is in (click one to open it, and Back brings you to the clip again), a cross to take the clip out, and Add to a project.
 - On the projects page the Projects button turns into Home, and the Random clip button is hidden there.
 - The active project comes first on the projects page and in the Add to project lists.
-- A clip that is in a project now gets the Used status. Hover over the status on a card to see which projects it is in. The switch "Already used in a video" in the player stays for clips you used before Clip Shelf, and it is not changed by projects.
+- A clip that is in a project now gets the Used status. Hover over the status on a card to see which projects it is in. In the player the switch "Already used in a video" goes on by itself when you add the clip to a project (and cannot be switched off while it is in one). It goes off again when the clip leaves every project, unless you switched it on yourself.
 
 ## 0.6.0
 
