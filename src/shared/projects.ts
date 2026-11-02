@@ -134,6 +134,26 @@ export function syncUsed(
   return next ?? clips
 }
 
+/**
+ * `before` are the clips that were in a project before the change. Clips that just left their last project are no longer used, also when the switch was on by hand:
+ * the switch follows the projects. Gives back the same object when nothing changed.
+ */
+export function clearLeftProjects(
+  clips: Record<string, ClipUser>,
+  before: ReadonlySet<string>,
+  after: Project[]
+): Record<string, ClipUser> {
+  const still = usedKeys(after)
+  let next: Record<string, ClipUser> | null = null
+  for (const key of before) {
+    const u = clips[key]
+    if (still.has(key) || !u?.usedManual) continue
+    next ??= { ...clips }
+    next[key] = { ...u, usedManual: false }
+  }
+  return next ?? clips
+}
+
 export interface ProjectStats {
   /** Clips in the project. */
   count: number

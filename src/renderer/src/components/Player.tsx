@@ -785,7 +785,7 @@ export function Player(): React.JSX.Element {
               />
             </label>
             <label className="toggle-row">
-              <span>Already used in a video</span>
+              <span>In a project or video</span>
               <button
                 type="button"
                 role="switch"
@@ -794,8 +794,8 @@ export function Player(): React.JSX.Element {
                 disabled={inProject}
                 title={
                   inProject
-                    ? 'This clip is in a project, so it counts as used. It goes off by itself when the clip leaves every project.'
-                    : 'For clips you used before Clip Shelf. Adding a clip to a project switches this on by itself.'
+                    ? 'This clip is in a project. The switch goes off by itself when the clip leaves every project.'
+                    : 'Switches on by itself when you add the clip to a project. Switch it on yourself for a clip you used in a video before Clip Shelf.'
                 }
                 onClick={() =>
                   patch([key], { set: { usedManual: !manualUsed, used: !manualUsed } }, 'Used')

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   addToProject,
+  clearLeftProjects,
   duplicateProject,
   lengthLabel,
   newProject,
@@ -137,6 +138,23 @@ describe('syncUsed', () => {
   it('does not touch clips that were never used', () => {
     const clips = { a: tagged }
     expect(syncUsed(clips, [], EMPTY_CLIP_USER)).toBe(clips)
+  })
+})
+
+describe('clearLeftProjects', () => {
+  const manual: ClipUser = { ...EMPTY_CLIP_USER, rating: 2, used: true, usedManual: true }
+  it('switches the hand-set switch off for clips that left their last project', () => {
+    const before = usedKeys([proj('1', ['a', 'b']), proj('2', ['b'])])
+    const after = [proj('1', ['a']), proj('2', [])]
+    const out = clearLeftProjects({ a: manual, b: manual }, before, after)
+    expect(out.a).toBe(manual)
+    expect(out.b).toMatchObject({ usedManual: false })
+    // With the project list as it is now, "used" then goes off too.
+    expect(syncUsed(out, after, EMPTY_CLIP_USER).b).toMatchObject({ used: false, rating: 2 })
+  })
+  it('leaves clips alone that were never in a project', () => {
+    const clips = { z: manual }
+    expect(clearLeftProjects(clips, new Set(['a']), [])).toBe(clips)
   })
 })
 

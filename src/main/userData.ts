@@ -21,12 +21,14 @@ import {
 import { defaultPresets, sanitizePresets } from '../shared/presets'
 import {
   addToProject,
+  clearLeftProjects,
   duplicateProject,
   newProject,
   removeFromProject,
   sanitizeProjects,
   syncUsed,
-  uniqueProjectName
+  uniqueProjectName,
+  usedKeys
 } from '../shared/projects'
 import { migrateSortSettings } from '../shared/sort'
 import { JsonStore } from './lib/jsonStore'
@@ -226,7 +228,9 @@ export class UserDataStore {
   /** Run a change to the project list, then make "used" on the clips match it. */
   private changeProjects(fn: (d: UserData) => void): void {
     this.store.mutate((d) => {
+      const before = usedKeys(d.projects)
       fn(d)
+      d.clips = clearLeftProjects(d.clips, before, d.projects)
       if (
         d.settings.activeProjectId &&
         !d.projects.some((p) => p.id === d.settings.activeProjectId)
