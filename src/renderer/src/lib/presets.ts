@@ -27,6 +27,7 @@ export function presetSummary(
   if (f.statuses.length !== 4) out.push(...f.statuses.map((s) => STATUS_LABEL[s]))
   for (const id of f.tagIds) out.push(tagName(id) ?? '?')
   for (const id of f.excludeTagIds) out.push('not ' + (tagName(id) ?? '?'))
+  if (f.inProject !== 'any') out.push(f.inProject === 'yes' ? 'In a project' : 'Not in a project')
   const rating = ratingChipLabel(f)
   if (rating && isRatingFiltered(f)) out.push(rating)
   if (p.parts.date && f.dateMode !== 'all')

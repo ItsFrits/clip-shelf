@@ -1,6 +1,6 @@
-import { Check, Copy, FolderOpen, Pencil, Pin, Plus, Trash2 } from 'lucide-react'
+import { Check, Copy, ExternalLink, FolderOpen, Pencil, Pin, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
-import { lengthLabel, projectStats } from '@shared/projects'
+import { lengthLabel, projectStats, watchUrl } from '@shared/projects'
 import type { Project } from '@shared/types'
 import { plural } from '../lib/format'
 import { useApp } from '../lib/store'
@@ -19,6 +19,7 @@ function ProjectCard({
   const setActiveProject = useApp((s) => s.setActiveProject)
   const deleteProject = useApp((s) => s.deleteProject)
   const removeFromProject = useApp((s) => s.removeFromProject)
+  const openLink = useApp((s) => s.openLink)
   const [renaming, setRenaming] = useState(false)
   const [name, setName] = useState(project.name)
   const stats = projectStats(project, clips)
@@ -64,6 +65,11 @@ function ProjectCard({
         ) : (
           <div className="proj-name-row">
             <h3 className="proj-name">{project.name}</h3>
+            {project.status === 'published' && (
+              <span className="proj-done" title="This video is out">
+                <Check size={12} strokeWidth={3} /> Published
+              </span>
+            )}
             {active && (
               <span
                 className="proj-active"
@@ -101,6 +107,16 @@ function ProjectCard({
           <FolderOpen size={14} />
           Open
         </button>
+        {watchUrl(project) && (
+          <button
+            className="btn small"
+            title="Watch the video in your browser"
+            onClick={() => openLink(project.link)}
+          >
+            <ExternalLink size={14} />
+            Watch video
+          </button>
+        )}
         <button
           className={'btn small icon' + (active ? ' on' : '')}
           aria-label={active ? 'Stop using as the active project' : 'Make the active project'}
@@ -152,14 +168,20 @@ export function ProjectsPage(): React.JSX.Element {
   const [name, setName] = useState('')
   const input = useRef<HTMLInputElement>(null)
 
-  // The active project first, then the newest.
+  // The projects you are working on first (the active one on top, then the newest), then the ones
+  // that are published.
   const sorted = useMemo(
     () =>
       [...projects].sort(
-        (a, b) => Number(b.id === activeId) - Number(a.id === activeId) || b.createdAt - a.createdAt
+        (a, b) =>
+          Number(a.status === 'published') - Number(b.status === 'published') ||
+          Number(b.id === activeId) - Number(a.id === activeId) ||
+          b.createdAt - a.createdAt
       ),
     [projects, activeId]
   )
+  const working = sorted.filter((p) => p.status !== 'published')
+  const published = sorted.filter((p) => p.status === 'published')
 
   const create = async (): Promise<void> => {
     const clean = name.trim()
@@ -217,11 +239,28 @@ export function ProjectsPage(): React.JSX.Element {
         </div>
       ) : (
         <div className="lib-scroll">
+          {published.length > 0 && (
+            <h2 className="proj-sec">
+              Working on <span className="muted">({working.length})</span>
+            </h2>
+          )}
           <div className="proj-grid">
-            {sorted.map((p) => (
+            {working.map((p) => (
               <ProjectCard key={p.id} project={p} active={p.id === activeId} />
             ))}
           </div>
+          {published.length > 0 && (
+            <>
+              <h2 className="proj-sec">
+                Published <span className="muted">({published.length})</span>
+              </h2>
+              <div className="proj-grid">
+                {published.map((p) => (
+                  <ProjectCard key={p.id} project={p} active={p.id === activeId} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

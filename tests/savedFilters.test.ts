@@ -33,9 +33,16 @@ describe('sanitizeSavedFilters', () => {
       anchor: WEEK,
       rangeFrom: '',
       rangeTo: '',
-      folderIds: ['f1']
+      folderIds: ['f1'],
+      inProject: 'no'
     }
     expect(sanitizeSavedFilters(saved, ['t1', 't2', 't3'], ['f1'], NOW)).toEqual(saved)
+  })
+
+  it('only accepts the known project filters', () => {
+    expect(sanitizeSavedFilters({ inProject: 'yes' }, [], [], NOW).inProject).toBe('yes')
+    expect(sanitizeSavedFilters({ inProject: 'maybe' }, [], [], NOW).inProject).toBe('any')
+    expect(sanitizeSavedFilters({}, [], [], NOW).inProject).toBe('any')
   })
 
   it('drops tags and folders that no longer exist', () => {

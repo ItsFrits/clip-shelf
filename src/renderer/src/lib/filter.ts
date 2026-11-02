@@ -1,6 +1,7 @@
 import { FULL_RATING_RANGE, isRatingFiltered, ratingMatches } from '@shared/rating'
 import type { Clip, FolderInfo, Settings, Tag, UserData } from '@shared/types'
 import type { ClipGroup } from '@shared/groups'
+import { usedKeys } from '@shared/projects'
 import { sortClips } from '@shared/sort'
 import { type ClipStatus, EMPTY_CLIP_USER, clipStatus } from '@shared/userLogic'
 import { fmtDay, fmtMonth, fmtShortDate, startOfDay, startOfMonth, startOfWeek } from './format'
@@ -27,6 +28,8 @@ export interface Filters {
   rangeTo: string
   /** Empty means every folder. */
   folderIds: string[]
+  /** Only clips that are in a project, only clips that are in none, or all of them. */
+  inProject: 'any' | 'yes' | 'no'
 }
 
 export const ALL_STATUSES: ClipStatus[] = ['new', 'watched', 'tagged', 'used']
@@ -42,7 +45,8 @@ export const DEFAULT_FILTERS: Filters = {
   anchor: Date.now(),
   rangeFrom: '',
   rangeTo: '',
-  folderIds: []
+  folderIds: [],
+  inProject: 'any'
 }
 
 export const STATUS_LABEL: Record<ClipStatus, string> = {
@@ -144,7 +148,8 @@ export function isFiltered(f: Filters): boolean {
     f.excludeTagIds.length > 0 ||
     isRatingFiltered(f) ||
     (f.dateMode !== 'all' && !(f.dateMode === 'range' && !f.rangeFrom && !f.rangeTo)) ||
-    f.folderIds.length > 0
+    f.folderIds.length > 0 ||
+    f.inProject !== 'any'
   )
 }
 
@@ -156,12 +161,14 @@ export function filterClips(clips: Iterable<Clip>, ctx: FilterContext, f: Filter
   const statusSet = new Set(f.statuses)
   const folderSet = new Set(f.folderIds)
   const excludeSet = new Set(f.excludeTagIds)
+  const inProject = f.inProject === 'any' ? null : usedKeys(ctx.user.projects)
   const out: Clip[] = []
 
   for (const c of clips) {
     const u = ctx.user.clips[c.key] ?? EMPTY_CLIP_USER
     const status = clipStatus(u)
     if (!statusSet.has(status)) continue
+    if (inProject && inProject.has(c.key) !== (f.inProject === 'yes')) continue
     if (!ratingMatches(u.rating, f)) continue
     if (window && (c.date < window[0] || c.date >= window[1])) continue
     if (folderSet.size > 0 && !c.files.some((x) => folderSet.has(x.folderId))) continue

@@ -15,7 +15,12 @@ import {
   markSent,
   pickedKeys,
   pickOnly,
+  projectsLabel,
+  publishProject,
   removeFromAllProjects,
+  safeUrl,
+  updateProject,
+  watchUrl,
   setPicked,
   removeFromProject,
   reverseOrder,
@@ -305,6 +310,96 @@ describe('order', () => {
       skipped: ['b'],
       sent: ['a']
     })
+  })
+  it('only opens links that are safe', () => {
+    expect(safeUrl('https://youtu.be/abc')).toBe('https://youtu.be/abc')
+    expect(safeUrl('  youtube.com/watch?v=1 ')).toBe('https://youtube.com/watch?v=1')
+    expect(safeUrl('http://example.com')).toBe('http://example.com/')
+    expect(safeUrl('javascript:alert(1)')).toBeNull()
+    expect(safeUrl('file:///C:/secret.txt')).toBeNull()
+    expect(safeUrl('not a link')).toBeNull()
+    expect(safeUrl('')).toBeNull()
+    expect(watchUrl(proj('1', [], { status: 'working', link: 'https://youtu.be/a' }))).toBeNull()
+    expect(watchUrl(proj('1', [], { status: 'published', link: 'youtu.be/a' }))).toBe(
+      'https://youtu.be/a'
+    )
+  })
+  it('changes the status, link and notes of a project', () => {
+    const list = [proj('1', ['a']), proj('2', [])]
+    const out = updateProject(list, '1', { status: 'published', link: ' https://x.y ', notes: 'n' })
+    expect(out[0]).toMatchObject({ status: 'published', link: 'https://x.y', notes: 'n' })
+    expect(out[1]).toBe(list[1])
+    expect(updateProject(out, '1', { status: 'nonsense' as never })[0].status).toBe('published')
+  })
+  it('publishes a project and moves the clips that were not used to a new one', () => {
+    const src = {
+      ...proj('1', ['a', 'b', 'c', 'd', 'e'], { name: 'Oktober' }),
+      order: ['c', 'a', 'd', 'b'],
+      skipped: ['a', 'b'],
+      sent: ['c']
+    }
+    const plan = { used: ['c', 'a'], unused: 'move' as const, newName: '', link: ' https://x.y ' }
+    const { projects, created } = publishProject([src], '1', plan, 'new', 5)
+    const old = projects[0]
+    expect(old).toMatchObject({ status: 'published', link: 'https://x.y' })
+    expect(old.clipKeys).toEqual(['a', 'c'])
+    expect(old.order).toEqual(['c', 'a'])
+    // The used clip a was left out of the video, but it was used, so it is back in.
+    expect(old.skipped).toEqual([])
+    expect(created).toMatchObject({ id: 'new', name: 'Oktober part 2', status: 'working' })
+    // The new project keeps the order of the clips that had a place, and the rest follows.
+    expect(created?.clipKeys).toEqual(['d', 'b', 'e'])
+    expect(created?.order).toEqual(['d', 'b'])
+    expect(created?.skipped).toEqual([])
+    expect(projects[1]).toBe(created)
+  })
+  it('can keep or remove the clips that were not used', () => {
+    const src = { ...proj('1', ['a', 'b']), order: ['a', 'b'] }
+    const keep = publishProject(
+      [src],
+      '1',
+      { used: ['a'], unused: 'keep', newName: '', link: '' },
+      'n',
+      1
+    )
+    expect(keep.projects[0].clipKeys).toEqual(['a', 'b'])
+    expect(keep.created).toBeNull()
+    const gone = publishProject(
+      [src],
+      '1',
+      { used: ['a'], unused: 'remove', newName: '', link: '' },
+      'n',
+      1
+    )
+    expect(gone.projects[0].clipKeys).toEqual(['a'])
+    expect(gone.projects).toHaveLength(1)
+    // Everything used: nothing to move, so no new project.
+    const all = publishProject(
+      [src],
+      '1',
+      { used: ['a', 'b'], unused: 'move', newName: 'x', link: '' },
+      'n',
+      1
+    )
+    expect(all.created).toBeNull()
+    // A name that is taken gets a number.
+    const taken = publishProject(
+      [src, proj('2', ['z'], { name: 'Part' })],
+      '1',
+      { used: ['a'], unused: 'move', newName: 'Part', link: '' },
+      'n',
+      1
+    )
+    expect(taken.created?.name).toBe('Part 2')
+  })
+  it('tells where a clip is for the tooltip', () => {
+    const list = [
+      proj('1', ['a'], { name: 'Oktober', status: 'published' }),
+      proj('2', ['a', 'b'], { name: 'Nieuw' })
+    ]
+    expect(projectsLabel(list, 'a')).toBe('Published in: Oktober\nWorking on: Nieuw')
+    expect(projectsLabel(list, 'b')).toBe('Working on: Nieuw')
+    expect(projectsLabel(list, 'c')).toBe('')
   })
   it('takes deleted clips out of every project, including the order', () => {
     const one = { ...proj('1', ['a', 'b', 'c']), order: ['c', 'a'] }

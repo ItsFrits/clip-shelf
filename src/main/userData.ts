@@ -6,6 +6,7 @@ import type {
   ClipUser,
   FolderConfig,
   Project,
+  ProjectStatus,
   Settings,
   Tag,
   UserData
@@ -26,6 +27,9 @@ import {
   duplicateProject,
   newProject,
   cleanPicks,
+  publishProject,
+  updateProject,
+  type PublishPlan,
   removeFromAllProjects,
   removeFromProject,
   sanitizeProjects,
@@ -291,6 +295,26 @@ export class UserDataStore {
       // Clips that lose their place also lose their pick.
       Object.assign(p, cleanPicks(p.order, p.skipped, p.sent))
     })
+  }
+
+  updateProject(
+    id: string,
+    patch: { status?: ProjectStatus; link?: string; notes?: string }
+  ): void {
+    this.changeProjects((d) => {
+      d.projects = updateProject(d.projects, id, patch)
+    })
+  }
+
+  /** Publish a project. Gives the new project when the unused clips moved to one. */
+  publishProject(id: string, plan: PublishPlan): Project | null {
+    let created: Project | null = null
+    this.changeProjects((d) => {
+      const res = publishProject(d.projects, id, plan, randomUUID(), Date.now())
+      d.projects = res.projects
+      created = res.created
+    })
+    return created
   }
 
   setProjectPicks(id: string, skipped: string[], sent: string[]): void {

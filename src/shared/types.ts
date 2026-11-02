@@ -88,6 +88,8 @@ export interface SavedFilters {
   rangeFrom: string
   rangeTo: string
   folderIds: string[]
+  /** Only clips that are in a project, only clips that are in none, or all of them. */
+  inProject: 'any' | 'yes' | 'no'
 }
 
 /** The parts of the library view a preset can also keep, besides status, tags and rating. */

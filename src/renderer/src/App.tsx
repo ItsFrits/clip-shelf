@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { ConfirmDialog, Toasts } from './components/Overlays'
+import { PublishDialog } from './components/PublishDialog'
 import { Library } from './components/Library'
 import { NewPresetDialog } from './components/NewPresetDialog'
 import { Player } from './components/Player'
@@ -102,6 +103,7 @@ export default function App(): React.JSX.Element {
       {view === 'settings' && settingsView === 'window' && <Settings modal />}
       <StatusBar />
       <ConfirmDialog />
+      <PublishDialog />
       <NewPresetDialog />
       <Toasts />
       <Tooltips />

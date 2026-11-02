@@ -4,12 +4,14 @@ import type {
   ClipBulkPatch,
   FolderConfig,
   Project,
+  ProjectStatus,
   PreparedAudio,
   Settings,
   Snapshot,
   Tag,
   TrashResult
 } from './types'
+import type { PublishPlan } from './projects'
 
 /** Everything the renderer can ask the main process to do. */
 export interface ClipShelfApi {
@@ -38,6 +40,14 @@ export interface ClipShelfApi {
   /** Set the order of a project: the clips that have a place, first to last. */
   setProjectOrder(id: string, order: string[]): Promise<void>
   setProjectPicks(id: string, skipped: string[], sent: string[]): Promise<void>
+  updateProject(
+    id: string,
+    patch: { status?: ProjectStatus; link?: string; notes?: string }
+  ): Promise<void>
+  /** Mark a project as published. Gives the id of the new project when unused clips moved to one. */
+  publishProject(id: string, plan: PublishPlan): Promise<string | null>
+  /** Open a link of a project in the browser. Only http and https links are opened. */
+  openLink(url: string): Promise<void>
 
   prepareAudio(key: string): Promise<PreparedAudio>
   prioritizeThumbs(keys: string[]): void
@@ -86,6 +96,9 @@ export const INVOKE_METHODS = [
   'removeFromProject',
   'setProjectOrder',
   'setProjectPicks',
+  'updateProject',
+  'publishProject',
+  'openLink',
   'prepareAudio',
   'showInFolder',
   'trashClips',

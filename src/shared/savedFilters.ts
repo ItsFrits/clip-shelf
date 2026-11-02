@@ -15,7 +15,8 @@ export const DEFAULT_SAVED_FILTERS: SavedFilters = {
   anchor: 0,
   rangeFrom: '',
   rangeTo: '',
-  folderIds: []
+  folderIds: [],
+  inProject: 'any'
 }
 
 /**
@@ -64,7 +65,8 @@ export function sanitizeSavedFilters(
         : now,
     rangeFrom: typeof r.rangeFrom === 'string' && DAY.test(r.rangeFrom) ? r.rangeFrom : '',
     rangeTo: typeof r.rangeTo === 'string' && DAY.test(r.rangeTo) ? r.rangeTo : '',
-    folderIds: list(r.folderIds, (id) => folders.has(id))
+    folderIds: list(r.folderIds, (id) => folders.has(id)),
+    inProject: r.inProject === 'yes' || r.inProject === 'no' ? r.inProject : 'any'
   }
 }
 
@@ -84,6 +86,7 @@ export function toSavedFilters(f: SavedFilters): SavedFilters {
     anchor: keepsAnchor ? f.anchor : 0,
     rangeFrom: f.rangeFrom,
     rangeTo: f.rangeTo,
-    folderIds: [...f.folderIds]
+    folderIds: [...f.folderIds],
+    inProject: f.inProject
   }
 }

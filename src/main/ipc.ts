@@ -1,7 +1,8 @@
 import { BrowserWindow, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { readFileSync } from 'fs'
 import icon from '../../resources/icon.png?asset'
-import type { ApiEventName, ApiEvents, Snapshot } from '../shared/types'
+import { safeUrl, type PublishPlan } from '../shared/projects'
+import type { ApiEventName, ApiEvents, ProjectStatus, Snapshot } from '../shared/types'
 import { TITLE_BAR_HEIGHT, titleBarColors } from '../shared/uiPrefs'
 import { mkdirSync } from 'fs'
 import { logLine } from './log'
@@ -102,6 +103,22 @@ export function registerIpc(ctx: IpcContext): void {
   handle('setProjectOrder', (id, order) => {
     user.setProjectOrder(id, order)
     emit('user:replaced', user.data)
+  })
+  handle(
+    'updateProject',
+    (id: string, patch: { status?: ProjectStatus; link?: string; notes?: string }) => {
+      user.updateProject(id, patch)
+      emit('user:replaced', user.data)
+    }
+  )
+  handle('publishProject', (id: string, plan: PublishPlan) => {
+    const created = user.publishProject(id, plan)
+    emit('user:replaced', user.data)
+    return created?.id ?? null
+  })
+  handle('openLink', (url: string) => {
+    const safe = safeUrl(String(url))
+    if (safe) void shell.openExternal(safe)
   })
   handle('setProjectPicks', (id: string, skipped: string[], sent: string[]) => {
     user.setProjectPicks(id, skipped, sent)

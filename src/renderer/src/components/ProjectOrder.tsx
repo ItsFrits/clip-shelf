@@ -29,6 +29,7 @@ import type { Clip, Project } from '@shared/types'
 import { fmtDay, fmtDuration, fmtSeconds, fmtTime, plural } from '../lib/format'
 import { motionMs } from '../lib/motion'
 import { useApp, useSettings } from '../lib/store'
+import { ProjectDetails } from './ProjectDetails'
 import { SortMenu } from './SortMenu'
 import { TagPills } from './TagPills'
 
@@ -813,6 +814,7 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
               </button>
               <h1 className="lib-title">{project.name}</h1>
               <ProjectTabs project={project} />
+              <ProjectDetails project={project} />
             </div>
             <span className="muted">
               {plural(base.length, 'clip')} in order · {unplacedTotal} still to place

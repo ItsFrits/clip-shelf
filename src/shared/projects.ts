@@ -1,4 +1,4 @@
-import type { ClipUser, Project } from './types'
+import type { ClipUser, Project, ProjectStatus } from './types'
 import { isDefaultClipUser } from './userLogic'
 
 /** The order as it should be kept: only clips that are in the project, each once. */
@@ -174,6 +174,112 @@ export function removeFromProject(projects: Project[], id: string, keys: string[
   return projects.map((p) =>
     p.id === id && p.clipKeys.some((k) => drop.has(k)) ? withoutClips(p, drop) : p
   )
+}
+
+/** A link that is safe to open in the browser: only http and https, and a missing scheme becomes https. */
+export function safeUrl(raw: string): string | null {
+  const t = raw.trim()
+  if (!t || /\s/.test(t)) return null
+  const full = /^[a-z][a-z0-9+.-]*:/i.test(t) ? t : /^[^/]+\.[^/]+/.test(t) ? 'https://' + t : null
+  if (!full) return null
+  try {
+    const u = new URL(full)
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null
+  } catch {
+    return null
+  }
+}
+
+/** The link of a project that is out, when it has one that can be opened. */
+export function watchUrl(p: Project): string | null {
+  return p.status === 'published' ? safeUrl(p.link) : null
+}
+
+/** Change the status, link or notes of a project. */
+export function updateProject(
+  projects: Project[],
+  id: string,
+  patch: { status?: ProjectStatus; link?: string; notes?: string }
+): Project[] {
+  return projects.map((p) =>
+    p.id !== id
+      ? p
+      : {
+          ...p,
+          status:
+            patch.status === 'published' || patch.status === 'working' ? patch.status : p.status,
+          link: typeof patch.link === 'string' ? patch.link.trim().slice(0, 2000) : p.link,
+          notes: typeof patch.notes === 'string' ? patch.notes.slice(0, 20000) : p.notes
+        }
+  )
+}
+
+export type UnusedAction = 'move' | 'keep' | 'remove'
+
+export interface PublishPlan {
+  /** The clips that ended up in the video. */
+  used: string[]
+  /** What happens with the other clips of the project. */
+  unused: UnusedAction
+  /** The name of the new project when the unused clips move. */
+  newName: string
+  link: string
+}
+
+/**
+ * Mark a project as published. The clips that were not used stay, leave or move to a new project
+ * (a working project that keeps their order). Returns the new project too, when there is one.
+ */
+export function publishProject(
+  projects: Project[],
+  id: string,
+  plan: PublishPlan,
+  newId: string,
+  now: number
+): { projects: Project[]; created: Project | null } {
+  const p = projects.find((x) => x.id === id)
+  if (!p) return { projects, created: null }
+  const used = new Set(plan.used.filter((k) => p.clipKeys.includes(k)))
+  const unused = p.clipKeys.filter((k) => !used.has(k))
+  let created: Project | null = null
+  let next: Project = { ...p, status: 'published', link: plan.link.trim().slice(0, 2000) }
+  if (unused.length > 0 && plan.unused !== 'keep') {
+    if (plan.unused === 'move') {
+      const placed = p.order.filter((k) => !used.has(k))
+      const rest = unused.filter((k) => !placed.includes(k))
+      created = {
+        ...newProject(projects, newId, plan.newName.trim() || `${p.name} part 2`, now),
+        clipKeys: [...placed, ...rest],
+        order: placed
+      }
+    }
+    next = withoutClips(next, new Set(unused))
+  }
+  // Every clip that was used is in the video, so none of them stays left out.
+  next = {
+    ...next,
+    ...cleanPicks(
+      next.order,
+      next.skipped.filter((k) => !used.has(k)),
+      next.sent
+    )
+  }
+  const out = projects.map((x) => (x.id === id ? next : x))
+  return { projects: created ? [...out, created] : out, created }
+}
+
+/** Where a clip is: "Published in A, B. Working on C." for the tooltip of its Used status. */
+export function projectsLabel(projects: readonly Project[], key: string): string {
+  const inside = projects.filter((p) => p.clipKeys.includes(key))
+  const names = (status: ProjectStatus): string =>
+    inside
+      .filter((p) => p.status === status)
+      .map((p) => p.name)
+      .join(', ')
+  const out: string[] = []
+  if (names('published')) out.push(`Published in: ${names('published')}`)
+  if (names('working')) out.push(`Working on: ${names('working')}`)
+  return out.join('\n')
 }
 
 /** Take clips out of every project, for clips that are gone for good (moved to the recycle bin). */

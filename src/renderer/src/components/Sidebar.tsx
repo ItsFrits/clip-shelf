@@ -193,6 +193,27 @@ export function Sidebar(): React.JSX.Element {
       </section>
 
       <section className="side-sec">
+        <h2 className="h-label">Projects</h2>
+        <div className="seg" role="group" aria-label="Projects filter">
+          {(
+            [
+              ['any', 'All'],
+              ['yes', 'In a project'],
+              ['no', 'Not in one']
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              className={filters.inProject === value ? 'on' : ''}
+              onClick={() => setFilters({ inProject: value })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="side-sec">
         <div className="side-sec-head">
           <h2 className="h-label">Tags</h2>
           <span

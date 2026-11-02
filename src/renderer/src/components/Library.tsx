@@ -11,6 +11,7 @@ import { lengthLabel, projectStats } from '@shared/projects'
 import { canGroup, FIELD_INFO } from '@shared/sort'
 import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { ClipCard } from './ClipCard'
+import { ProjectDetails } from './ProjectDetails'
 import { ProjectTabs } from './ProjectOrder'
 import { SelectionBar } from './SelectionBar'
 import { SortMenu } from './SortMenu'
@@ -192,6 +193,12 @@ export function Library(): React.JSX.Element {
       remove: () => setFilters({ excludeTagIds: filters.excludeTagIds.filter((t) => t !== id) })
     })
   }
+  if (filters.inProject !== 'any')
+    chips.push({
+      id: 'inproject',
+      label: filters.inProject === 'yes' ? 'In a project' : 'Not in a project',
+      remove: () => setFilters({ inProject: 'any' })
+    })
   const ratingLabel = ratingChipLabel(filters)
   if (ratingLabel)
     chips.push({
@@ -240,6 +247,7 @@ export function Library(): React.JSX.Element {
               )}
               <h1 className="lib-title">{project ? project.name : dateLabel(filters)}</h1>
               {project && <ProjectTabs project={project} />}
+              {project && <ProjectDetails project={project} />}
               {!project && anyOnline && (
                 <span className="live" title="New clips in your folders show up automatically">
                   <span className="dot" />

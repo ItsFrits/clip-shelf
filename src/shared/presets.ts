@@ -41,7 +41,8 @@ export function scopedFilters(f: SavedFilters, parts: PresetParts): SavedFilters
     anchor: dateOn ? s.anchor : 0,
     rangeFrom: dateOn && s.dateMode === 'range' ? s.rangeFrom : '',
     rangeTo: dateOn && s.dateMode === 'range' ? s.rangeTo : '',
-    folderIds: parts.folders ? [...s.folderIds].sort() : []
+    folderIds: parts.folders ? [...s.folderIds].sort() : [],
+    inProject: s.inProject
   }
 }
 

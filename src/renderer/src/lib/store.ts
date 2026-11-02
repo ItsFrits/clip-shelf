@@ -6,13 +6,21 @@ import type {
   ClipUser,
   FolderInfo,
   JobProgress,
+  ProjectStatus,
   Settings,
   Snapshot,
   Tag,
   UpdateStatus,
   UserData
 } from '@shared/types'
-import { cleanOrder, cleanPicks, sortByOrder, type Picks } from '@shared/projects'
+import {
+  cleanOrder,
+  cleanPicks,
+  sortByOrder,
+  updateProject,
+  type Picks,
+  type PublishPlan
+} from '@shared/projects'
 import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '@shared/savedFilters'
 import { effectiveKeymap } from '@shared/keymap'
 import {
@@ -129,6 +137,16 @@ interface AppState {
   removeFromProject: (id: string, keys: string[]) => void
   deleteProject: (id: string) => Promise<void>
   setActiveProject: (id: string | null) => void
+  /** Change the status, link or notes of a project. */
+  updateProject: (
+    id: string,
+    patch: { status?: ProjectStatus; link?: string; notes?: string }
+  ) => void
+  /** The project that the Mark as published window is open for. */
+  publishFor: string | null
+  openPublish: (id: string | null) => void
+  publishProject: (id: string, plan: PublishPlan) => Promise<void>
+  openLink: (url: string) => void
   /** The tab of the open project: its clips, or the order of the clips. */
   projectTab: 'clips' | 'order'
   setProjectTab: (tab: 'clips' | 'order') => void
@@ -201,6 +219,7 @@ export const useApp = create<AppState>((set, get) => ({
   view: 'library',
   returnView: 'library',
   projectId: null,
+  publishFor: null,
   projectTab: 'clips',
   settingsTab: 'general',
   filters: { ...DEFAULT_FILTERS, anchor: Date.now() },
@@ -476,6 +495,29 @@ export const useApp = create<AppState>((set, get) => ({
     await window.api.deleteProject(id)
   },
   setActiveProject: (id) => get().updateSettings({ activeProjectId: id }),
+  updateProject: (id, patch) => {
+    // Show it at once, the main process sends the saved version after that.
+    set((s) => ({
+      user: { ...s.user, projects: updateProject(s.user.projects, id, patch) }
+    }))
+    void window.api.updateProject(id, patch)
+  },
+  openPublish: (id) => set({ publishFor: id }),
+  publishProject: async (id, plan) => {
+    const project = get().user.projects.find((p) => p.id === id)
+    set({ publishFor: null })
+    if (!project) return
+    const created = await window.api.publishProject(id, plan)
+    const moved = plan.unused === 'move' && created
+    get().toast(
+      `“${project.name}” is published.` +
+        (moved
+          ? ` The clips you did not use are in “${plan.newName.trim() || project.name + ' part 2'}”.`
+          : ''),
+      moved ? { actionLabel: 'Open it', action: () => get().openProject(created) } : undefined
+    )
+  },
+  openLink: (url) => void window.api.openLink(url),
   setProjectTab: (tab) => set({ projectTab: tab, selected: new Set(), anchorKey: null }),
   setProjectOrder: (id, order, undoLabel) => {
     const project = get().user.projects.find((p) => p.id === id)

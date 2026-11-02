@@ -1,6 +1,7 @@
 import { Check, Film, Star } from 'lucide-react'
 import { memo } from 'react'
 import type { Clip } from '@shared/types'
+import { projectsLabel } from '@shared/projects'
 import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
 import { fmtBytes, fmtDay, fmtDuration, fmtTime } from '../lib/format'
@@ -34,14 +35,7 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
   })
 
   // For a used clip, the tooltip on its status names the projects it is in.
-  const projectNames = useApp((s) =>
-    user.used
-      ? s.user.projects
-          .filter((p) => p.clipKeys.includes(clip.key))
-          .map((p) => p.name)
-          .join(', ')
-      : ''
-  )
+  const projectNames = useApp((s) => (user.used ? projectsLabel(s.user.projects, clip.key) : ''))
 
   // When you sort on name or size, that part of the card lights up so you can see what the order is based on.
   const sortedOnName = useApp((s) => s.user.settings.sortRules.some((r) => r.field === 'name'))
@@ -122,7 +116,7 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
           <span
             className="status"
             style={{ color: STATUS_COLOR[status] }}
-            title={status === 'used' && projectNames ? `In: ${projectNames}` : undefined}
+            title={status === 'used' && projectNames ? projectNames : undefined}
           >
             <span className="dot" style={{ background: STATUS_COLOR[status] }} />
             {STATUS_LABEL[status]}

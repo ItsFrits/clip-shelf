@@ -122,7 +122,8 @@ export function DatePicker({
     filters.minRating,
     filters.maxRating,
     filters.showUnrated,
-    filters.folderIds
+    filters.folderIds,
+    filters.inProject
   ])
 
   const years = useMemo(() => {

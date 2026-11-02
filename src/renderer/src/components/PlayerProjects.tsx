@@ -1,5 +1,6 @@
-import { FolderPlus, X } from 'lucide-react'
+import { ExternalLink, FolderPlus, X } from 'lucide-react'
 import { useMemo } from 'react'
+import { watchUrl } from '@shared/projects'
 import { useApp } from '../lib/store'
 import { Dropdown } from './Dropdown'
 
@@ -10,6 +11,7 @@ export function PlayerProjects({ clipKey }: { clipKey: string }): React.JSX.Elem
   const openProject = useApp((s) => s.openProject)
   const addToProject = useApp((s) => s.addToProject)
   const removeFromProject = useApp((s) => s.removeFromProject)
+  const openLink = useApp((s) => s.openLink)
 
   // The active project comes first in both lists.
   const sorted = useMemo(
@@ -35,7 +37,10 @@ export function PlayerProjects({ clipKey }: { clipKey: string }): React.JSX.Elem
       {inside.length > 0 && (
         <div className="pjc-list">
           {inside.map((p) => (
-            <span key={p.id} className="pjc-chip">
+            <span
+              key={p.id}
+              className={'pjc-chip' + (p.status === 'published' ? ' published' : '')}
+            >
               <button
                 type="button"
                 className="pjc-open"
@@ -45,6 +50,17 @@ export function PlayerProjects({ clipKey }: { clipKey: string }): React.JSX.Elem
                 {p.name}
                 {p.id === activeId && <span className="pjc-active">active</span>}
               </button>
+              {watchUrl(p) && (
+                <button
+                  type="button"
+                  className="pjc-x pjc-watch"
+                  aria-label={`Watch the video of ${p.name}`}
+                  title={`Watch the video of ${p.name}`}
+                  onClick={() => openLink(p.link)}
+                >
+                  <ExternalLink size={12} />
+                </button>
+              )}
               <button
                 type="button"
                 className="pjc-x"

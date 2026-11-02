@@ -69,6 +69,42 @@ describe('computeVisible', () => {
     expect(run({ statuses: ['watched'] })).toEqual(['b'])
     expect(run({ statuses: ['new'] })).toEqual(['d'])
   })
+  it('filters on being in a project', () => {
+    const withProject = {
+      ...ctx,
+      user: {
+        ...user,
+        projects: [
+          {
+            id: 'p',
+            name: 'P',
+            status: 'working' as const,
+            link: '',
+            notes: '',
+            clipKeys: ['a', 'c'],
+            order: [],
+            skipped: [],
+            sent: [],
+            createdAt: 1
+          }
+        ]
+      }
+    }
+    const go = (inProject: 'any' | 'yes' | 'no'): string[] =>
+      computeVisible(
+        clips,
+        withProject,
+        { ...DEFAULT_FILTERS, inProject },
+        {
+          ...DEFAULT_SETTINGS,
+          sortRules: [{ field: 'date', dir: 'asc' }]
+        }
+      ).map((c) => c.key)
+    expect(go('any')).toEqual(['a', 'b', 'c', 'd'])
+    expect(go('yes')).toEqual(['a', 'c'])
+    expect(go('no')).toEqual(['b', 'd'])
+    expect(isFiltered({ ...DEFAULT_FILTERS, inProject: 'no' })).toBe(true)
+  })
   it('filters by tags with any / all', () => {
     expect(run({ tagIds: ['t1', 't2'], tagMode: 'any' })).toEqual(['a', 'c'])
     expect(run({ tagIds: ['t1', 't2'], tagMode: 'all' })).toEqual(['c'])
