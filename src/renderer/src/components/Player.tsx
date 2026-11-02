@@ -4,6 +4,7 @@ import {
   Download,
   Eye,
   FolderOpen,
+  LayoutGrid,
   Pause,
   Play,
   Repeat,
@@ -785,7 +786,9 @@ export function Player(): React.JSX.Element {
               />
             </label>
             <label className="toggle-row">
-              <span>In a project or video</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <LayoutGrid size={16} /> In a project or video
+              </span>
               <button
                 type="button"
                 role="switch"
