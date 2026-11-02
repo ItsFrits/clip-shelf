@@ -3,6 +3,7 @@ import { ConfirmDialog, Toasts } from './components/Overlays'
 import { Library } from './components/Library'
 import { NewPresetDialog } from './components/NewPresetDialog'
 import { Player } from './components/Player'
+import { ProjectOrder } from './components/ProjectOrder'
 import { ProjectsPage } from './components/ProjectsPage'
 import { Settings } from './components/Settings'
 import { Sidebar } from './components/Sidebar'
@@ -17,6 +18,10 @@ export default function App(): React.JSX.Element {
   const ready = useApp((s) => s.ready)
   const view = useApp((s) => s.view)
   const inProject = useApp((s) => s.projectId !== null)
+  const project = useApp((s) =>
+    s.projectId ? (s.user.projects.find((p) => p.id === s.projectId) ?? null) : null
+  )
+  const tab = useApp((s) => s.projectTab)
   const init = useApp((s) => s.init)
   useHotkeys()
 
@@ -88,7 +93,7 @@ export default function App(): React.JSX.Element {
             ) : (
               <>
                 {!inProject && <Sidebar />}
-                <Library />
+                {project && tab === 'order' ? <ProjectOrder project={project} /> : <Library />}
               </>
             )}
           </div>

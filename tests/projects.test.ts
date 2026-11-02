@@ -1,16 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import {
   addToProject,
+  cleanOrder,
   clearLeftProjects,
   duplicateProject,
   lengthLabel,
   newProject,
+  orderNumbers,
+  orderTimes,
+  placeInOrder,
   projectStats,
   projectsOfClip,
   removeFromProject,
+  reverseOrder,
   sanitizeProjects,
+  sortByOrder,
+  stepInOrder,
   syncUsed,
   totalLength,
+  unplaceFromOrder,
   uniqueProjectName,
   usedKeys
 } from '../src/shared/projects'
@@ -24,6 +32,7 @@ const proj = (id: string, keys: string[], extra: Partial<Project> = {}): Project
   link: '',
   notes: '',
   clipKeys: keys,
+  order: [],
   createdAt: 1,
   ...extra
 })
@@ -190,5 +199,74 @@ describe('lengths', () => {
     expect(lengthLabel({ count: 0, missing: 0, durationMs: 0, unknownLength: 0 })).toBe(
       'No length yet'
     )
+  })
+})
+
+describe('order', () => {
+  it('cleans an order read from disk', () => {
+    expect(cleanOrder(['a', 'x', 'a', 'b', 4], ['a', 'b', 'c'])).toEqual(['a', 'b'])
+    expect(cleanOrder(undefined, ['a'])).toEqual([])
+    const p = sanitizeProjects([{ id: '1', clipKeys: ['a', 'b'], order: ['b', 'z', 'a'] }])
+    expect(p[0].order).toEqual(['b', 'a'])
+  })
+  it('places clips at the end by default, and moves clips that already have a place', () => {
+    expect(placeInOrder(['a', 'b'], ['c', 'd'])).toEqual(['a', 'b', 'c', 'd'])
+    expect(placeInOrder(['a', 'b', 'c'], ['a'])).toEqual(['b', 'c', 'a'])
+    expect(placeInOrder(['a', 'b'], ['c', 'c'])).toEqual(['a', 'b', 'c'])
+  })
+  it('places clips at a position of the list as it is now', () => {
+    expect(placeInOrder(['a', 'b', 'c'], ['x', 'y'], 1)).toEqual(['a', 'x', 'y', 'b', 'c'])
+    expect(placeInOrder(['a', 'b', 'c'], ['x'], 0)).toEqual(['x', 'a', 'b', 'c'])
+    expect(placeInOrder(['a', 'b', 'c'], ['x'], 99)).toEqual(['a', 'b', 'c', 'x'])
+    expect(placeInOrder(['a', 'b', 'c'], ['x'], -3)).toEqual(['x', 'a', 'b', 'c'])
+  })
+  it('moving a clip down lands it before the place that was dropped on', () => {
+    // Drop "a" in front of "c" (place 2 of the list as it is now).
+    expect(placeInOrder(['a', 'b', 'c', 'd'], ['a'], 2)).toEqual(['b', 'a', 'c', 'd'])
+    // Drop "c" in front of "a" (place 0).
+    expect(placeInOrder(['a', 'b', 'c', 'd'], ['c'], 0)).toEqual(['c', 'a', 'b', 'd'])
+    // Dropping a clip right where it already is changes nothing.
+    expect(placeInOrder(['a', 'b', 'c'], ['b'], 1)).toEqual(['a', 'b', 'c'])
+    expect(placeInOrder(['a', 'b', 'c'], ['b'], 2)).toEqual(['a', 'b', 'c'])
+  })
+  it('takes clips out, reverses, and steps', () => {
+    expect(unplaceFromOrder(['a', 'b', 'c'], ['b', 'x'])).toEqual(['a', 'c'])
+    expect(reverseOrder(['a', 'b', 'c'])).toEqual(['c', 'b', 'a'])
+    expect(stepInOrder(['a', 'b', 'c'], 'b', -1)).toEqual(['b', 'a', 'c'])
+    expect(stepInOrder(['a', 'b', 'c'], 'b', 1)).toEqual(['a', 'c', 'b'])
+    expect(stepInOrder(['a', 'b', 'c'], 'a', -1)).toEqual(['a', 'b', 'c'])
+    expect(stepInOrder(['a', 'b', 'c'], 'c', 1)).toEqual(['a', 'b', 'c'])
+    expect(stepInOrder(['a', 'b'], 'x', 1)).toEqual(['a', 'b'])
+  })
+  it('sorts clips by their place, the clips without a place last', () => {
+    expect(sortByOrder(['x', 'b', 'y', 'a'], ['a', 'b', 'c'])).toEqual(['a', 'b', 'x', 'y'])
+  })
+  it('numbers the places from 1', () => {
+    expect([...orderNumbers(['x', 'y'])]).toEqual([
+      ['x', 1],
+      ['y', 2]
+    ])
+  })
+  it('works out when each clip starts', () => {
+    const clips = new Map([
+      ['a', { durationMs: 5000 }],
+      ['b', {}],
+      ['c', { durationMs: 2000 }]
+    ])
+    expect(orderTimes(['a', 'b', 'c', 'gone'], clips)).toEqual({
+      starts: [0, 5000, 5000, 7000],
+      totalMs: 7000,
+      unknown: 2
+    })
+  })
+  it('keeps the order in step when clips leave the project or the project is copied', () => {
+    const src = { ...proj('1', ['a', 'b', 'c']), order: ['c', 'a'] }
+    expect(removeFromProject([src], '1', ['a'])[0].order).toEqual(['c'])
+    expect(removeFromProject([src], '1', ['b'])[0].order).toEqual(['c', 'a'])
+    const copy = duplicateProject([src], src, '2', 1)
+    expect(copy.order).toEqual(['c', 'a'])
+    expect(copy.order).not.toBe(src.order)
+    // New clips are not placed.
+    expect(addToProject([src], '1', ['d'])[0].order).toEqual(['c', 'a'])
   })
 })

@@ -1,6 +1,20 @@
 import type { ClipUser, Project } from './types'
 import { isDefaultClipUser } from './userLogic'
 
+/** The order as it should be kept: only clips that are in the project, each once. */
+export function cleanOrder(raw: unknown, clipKeys: readonly string[]): string[] {
+  if (!Array.isArray(raw)) return []
+  const inside = new Set(clipKeys)
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const k of raw) {
+    if (typeof k !== 'string' || !inside.has(k) || seen.has(k)) continue
+    seen.add(k)
+    out.push(k)
+  }
+  return out
+}
+
 /** Make a list read from disk safe to use. The old "idea" status is now "working". */
 export function sanitizeProjects(raw: unknown, now: number = Date.now()): Project[] {
   if (!Array.isArray(raw)) return []
@@ -21,6 +35,7 @@ export function sanitizeProjects(raw: unknown, now: number = Date.now()): Projec
       link: typeof p.link === 'string' ? p.link : '',
       notes: typeof p.notes === 'string' ? p.notes : '',
       clipKeys: keys,
+      order: cleanOrder(p.order, keys),
       createdAt: typeof p.createdAt === 'number' ? p.createdAt : now
     })
   }
@@ -46,6 +61,7 @@ export function newProject(projects: Project[], id: string, name: string, now: n
     link: '',
     notes: '',
     clipKeys: [],
+    order: [],
     createdAt: now
   }
 }
@@ -64,6 +80,7 @@ export function duplicateProject(
     status: 'working',
     link: '',
     clipKeys: [...source.clipKeys],
+    order: [...source.order],
     createdAt: now
   }
 }
@@ -82,7 +99,11 @@ export function removeFromProject(projects: Project[], id: string, keys: string[
   const drop = new Set(keys)
   return projects.map((p) =>
     p.id === id && p.clipKeys.some((k) => drop.has(k))
-      ? { ...p, clipKeys: p.clipKeys.filter((k) => !drop.has(k)) }
+      ? {
+          ...p,
+          clipKeys: p.clipKeys.filter((k) => !drop.has(k)),
+          order: p.order.filter((k) => !drop.has(k))
+        }
       : p
   )
 }
@@ -196,4 +217,79 @@ export function lengthLabel(stats: ProjectStats): string {
   if (stats.durationMs === 0 && stats.unknownLength === 0) return 'No length yet'
   const base = `${totalLength(stats.durationMs)} in total`
   return stats.unknownLength > 0 ? `${base} (${stats.unknownLength} not measured yet)` : base
+}
+
+/**
+ * Put clips in the order. Clips that already have a place move there. `at` is a place in the list as
+ * it is now (0 is the very first place); without it they go to the end.
+ */
+export function placeInOrder(
+  order: readonly string[],
+  keys: readonly string[],
+  at?: number
+): string[] {
+  const moving = [...new Set(keys)]
+  const drop = new Set(moving)
+  const target = at === undefined ? order.length : Math.min(Math.max(0, at), order.length)
+  // Clips that leave a place before the target make the target move up.
+  const before = order.slice(0, target).filter((k) => !drop.has(k))
+  const after = order.slice(target).filter((k) => !drop.has(k))
+  return [...before, ...moving, ...after]
+}
+
+/** Take clips out of the order. They stay in the project. */
+export function unplaceFromOrder(order: readonly string[], keys: readonly string[]): string[] {
+  const drop = new Set(keys)
+  return order.filter((k) => !drop.has(k))
+}
+
+export function reverseOrder(order: readonly string[]): string[] {
+  return [...order].reverse()
+}
+
+/** Move one clip a place up (-1) or down (1). Gives back the same list at the edges. */
+export function stepInOrder(order: readonly string[], key: string, dir: 1 | -1): string[] {
+  const i = order.indexOf(key)
+  const j = i + dir
+  if (i < 0 || j < 0 || j >= order.length) return [...order]
+  const next = [...order]
+  ;[next[i], next[j]] = [next[j], next[i]]
+  return next
+}
+
+/** The place of every clip in the order, counting from 1. */
+export function orderNumbers(order: readonly string[]): Map<string, number> {
+  return new Map(order.map((k, i) => [k, i + 1]))
+}
+
+export interface OrderTimes {
+  /** Where each place starts, in ms from the start of the video. */
+  starts: number[]
+  totalMs: number
+  /** Places whose clip has no known length (they count as 0). */
+  unknown: number
+}
+
+/** When each clip in the order starts, if they are placed one after the other. */
+export function orderTimes(
+  order: readonly string[],
+  clips: { get(key: string): { durationMs?: number } | undefined }
+): OrderTimes {
+  const starts: number[] = []
+  let total = 0
+  let unknown = 0
+  for (const key of order) {
+    starts.push(total)
+    const ms = clips.get(key)?.durationMs
+    if (ms) total += ms
+    else unknown++
+  }
+  return { starts, totalMs: total, unknown }
+}
+
+/** The clips with a place first, in that order, then the others as they came. */
+export function sortByOrder(keys: readonly string[], order: readonly string[]): string[] {
+  const place = orderNumbers(order)
+  const placed = keys.filter((k) => place.has(k)).sort((a, b) => place.get(a)! - place.get(b)!)
+  return [...placed, ...keys.filter((k) => !place.has(k))]
 }

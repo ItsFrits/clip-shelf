@@ -131,7 +131,10 @@ export interface Project {
   status: ProjectStatus
   link: string
   notes: string
+  /** Every clip in the project. */
   clipKeys: string[]
+  /** The clips that have a place in the order, first to last. Always a part of clipKeys. */
+  order: string[]
   createdAt: number
 }
 

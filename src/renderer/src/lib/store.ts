@@ -12,6 +12,7 @@ import type {
   UpdateStatus,
   UserData
 } from '@shared/types'
+import { cleanOrder, sortByOrder } from '@shared/projects'
 import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '@shared/savedFilters'
 import { effectiveKeymap } from '@shared/keymap'
 import {
@@ -128,6 +129,11 @@ interface AppState {
   removeFromProject: (id: string, keys: string[]) => void
   deleteProject: (id: string) => Promise<void>
   setActiveProject: (id: string | null) => void
+  /** The tab of the open project: its clips, or the order of the clips. */
+  projectTab: 'clips' | 'order'
+  setProjectTab: (tab: 'clips' | 'order') => void
+  /** Change the order of a project. With a label there is a toast with Undo. */
+  setProjectOrder: (id: string, order: string[], undoLabel?: string) => void
   /** Back and forward through the places you have been (library, projects, a project, the player). */
   navBack: () => void
   navForward: () => void
@@ -193,6 +199,7 @@ export const useApp = create<AppState>((set, get) => ({
   view: 'library',
   returnView: 'library',
   projectId: null,
+  projectTab: 'clips',
   settingsTab: 'general',
   filters: { ...DEFAULT_FILTERS, anchor: Date.now() },
   visible: [],
@@ -400,6 +407,7 @@ export const useApp = create<AppState>((set, get) => ({
     set((s) => ({
       view: 'library',
       projectId: id,
+      projectTab: 'clips',
       // Coming from the player: the project scrolls to the clip you had open, when it is in it.
       playerKey: null,
       focusKey: s.view === 'player' ? s.playerKey : null,
@@ -466,6 +474,26 @@ export const useApp = create<AppState>((set, get) => ({
     await window.api.deleteProject(id)
   },
   setActiveProject: (id) => get().updateSettings({ activeProjectId: id }),
+  setProjectTab: (tab) => set({ projectTab: tab, selected: new Set(), anchorKey: null }),
+  setProjectOrder: (id, order, undoLabel) => {
+    const project = get().user.projects.find((p) => p.id === id)
+    if (!project) return
+    const next = cleanOrder(order, project.clipKeys)
+    const before = project.order
+    if (next.length === before.length && next.every((k, i) => k === before[i])) return
+    set((s) => ({
+      user: {
+        ...s.user,
+        projects: s.user.projects.map((p) => (p.id === id ? { ...p, order: next } : p))
+      }
+    }))
+    void window.api.setProjectOrder(id, next)
+    if (undoLabel)
+      get().toast(undoLabel, {
+        actionLabel: 'Undo',
+        action: () => get().setProjectOrder(id, before)
+      })
+  },
   navBack: () => stepHistory(-1),
   navForward: () => stepHistory(1),
 
@@ -676,7 +704,11 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   startDrag: (keys) => {
-    if (keys.length > 0) window.api.startDrag(keys)
+    if (keys.length === 0) return
+    // Inside a project the clips go to the editor in the order of the project.
+    const s = get()
+    const project = s.projectId ? s.user.projects.find((p) => p.id === s.projectId) : null
+    window.api.startDrag(project ? sortByOrder(keys, project.order) : keys)
   },
 
   toast: (message, opts) => {

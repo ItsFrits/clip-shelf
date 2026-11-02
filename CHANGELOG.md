@@ -14,6 +14,10 @@ All notable changes to Clip Shelf. Newest first.
 - On the projects page the Projects button turns into Home, and the Random clip button is hidden there.
 - The active project comes first on the projects page and in the Add to project lists.
 - A clip that is in a project now gets the Used status. Hover over the status on a card to see which projects it is in. In the player the switch (now called "In a project or video") goes on by itself when you add the clip to a project, and cannot be switched off while it is in one. It goes off again when the clip leaves its last project. You can still switch it on yourself for a clip you used before Clip Shelf.
+- Every project has two tabs: Clips (as before) and Order. On the Order tab, the clips that have no place yet are on the left (sorted with the sort menu, and the search box works), and the order of your video is on the right, with the length and where each clip starts.
+- Give clips a place by dragging them into the list, or select them and press Enter (or Place at end), or type a number and press Place at #. Drag the rows or use Alt+Up and Alt+Down to move one, the cross takes a clip out of the order again, and Reverse turns the whole order around (with Undo).
+- Drag order to your editor drags the clips of the order, first to last. When you drag selected clips out of a project, the clips that have a place go first, in the order of the project. On the Clips tab a clip that has a place shows its number.
+- Clips you add to a project later start on the left, without a place. A clip that is not in your library right now (for example an offline drive) keeps its place in the order.
 
 ## 0.6.0
 

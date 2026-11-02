@@ -99,6 +99,11 @@ export function registerIpc(ctx: IpcContext): void {
     emit('user:replaced', user.data)
   })
 
+  handle('setProjectOrder', (id, order) => {
+    user.setProjectOrder(id, order)
+    emit('user:replaced', user.data)
+  })
+
   handle('prepareAudio', (key) => library.prepareAudio(key))
   handle('showInFolder', (key) => {
     const p = library.primaryPath(key)

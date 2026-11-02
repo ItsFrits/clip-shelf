@@ -35,6 +35,8 @@ export interface ClipShelfApi {
   duplicateProject(id: string): Promise<Project | null>
   addToProject(id: string, keys: string[]): Promise<void>
   removeFromProject(id: string, keys: string[]): Promise<void>
+  /** Set the order of a project: the clips that have a place, first to last. */
+  setProjectOrder(id: string, order: string[]): Promise<void>
 
   prepareAudio(key: string): Promise<PreparedAudio>
   prioritizeThumbs(keys: string[]): void
@@ -81,6 +83,7 @@ export const INVOKE_METHODS = [
   'duplicateProject',
   'addToProject',
   'removeFromProject',
+  'setProjectOrder',
   'prepareAudio',
   'showInFolder',
   'trashClips',

@@ -25,6 +25,13 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
     return !clip.files.some((f) => online.has(f.folderId))
   })
 
+  // Inside a project: the place of the clip in its order, when it has one.
+  const place = useApp((s) => {
+    if (!s.projectId) return 0
+    const p = s.user.projects.find((x) => x.id === s.projectId)
+    return p ? p.order.indexOf(clip.key) + 1 : 0
+  })
+
   // For a used clip, the tooltip on its status names the projects it is in.
   const projectNames = useApp((s) =>
     user.used
@@ -88,6 +95,11 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
           <span className="badge br">{trackCount === 1 ? '1 track' : `${trackCount} tracks`}</span>
         )}
         {offline && <span className="badge center">Drive offline</span>}
+        {place > 0 && (
+          <span className="badge bl mono" title={`Place ${place} in the order of this project`}>
+            #{place}
+          </span>
+        )}
         <button
           type="button"
           className="check"

@@ -21,6 +21,7 @@ import {
 import { defaultPresets, sanitizePresets } from '../shared/presets'
 import {
   addToProject,
+  cleanOrder,
   clearLeftProjects,
   duplicateProject,
   newProject,
@@ -277,6 +278,13 @@ export class UserDataStore {
   addToProject(id: string, keys: string[]): void {
     this.changeProjects((d) => {
       d.projects = addToProject(d.projects, id, keys)
+    })
+  }
+
+  setProjectOrder(id: string, order: string[]): void {
+    this.changeProjects((d) => {
+      const p = d.projects.find((x) => x.id === id)
+      if (p) p.order = cleanOrder(order, p.clipKeys)
     })
   }
 
