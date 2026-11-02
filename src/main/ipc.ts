@@ -103,6 +103,10 @@ export function registerIpc(ctx: IpcContext): void {
     user.setProjectOrder(id, order)
     emit('user:replaced', user.data)
   })
+  handle('setProjectPicks', (id: string, skipped: string[], sent: string[]) => {
+    user.setProjectPicks(id, skipped, sent)
+    emit('user:replaced', user.data)
+  })
 
   handle('prepareAudio', (key) => library.prepareAudio(key))
   handle('showInFolder', (key) => {

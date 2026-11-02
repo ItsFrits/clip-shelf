@@ -13,7 +13,18 @@ import {
   X
 } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { orderTimes, placeInOrder, reverseOrder, stepInOrder, totalLength } from '@shared/projects'
+import {
+  markSent,
+  orderTimes,
+  pickedKeys,
+  pickOnly,
+  placeInOrder,
+  reverseOrder,
+  setPicked,
+  stepInOrder,
+  totalLength,
+  type Picks
+} from '@shared/projects'
 import type { Clip, Project } from '@shared/types'
 import { fmtDay, fmtDuration, fmtSeconds, fmtTime, plural } from '../lib/format'
 import { motionMs } from '../lib/motion'
@@ -181,21 +192,32 @@ function OrderRow({
   clipKey,
   clip,
   start,
+  picked,
+  sent,
+  editor,
   playList,
   held,
   setEl,
   onPress,
+  onPick,
+  onSend,
   wasDrag
 }: {
   project: Project
   index: number
   clipKey: string
   clip: Clip | undefined
-  start: number
+  /** Where the clip starts in the video, or null when it is left out of the video. */
+  start: number | null
+  picked: boolean
+  sent: boolean
+  editor: string
   playList: string[]
   held: boolean
   setEl: (key: string, el: HTMLElement | null) => void
   onPress: PressStart
+  onPick: (key: string, on: boolean, range: boolean) => void
+  onSend: (key: string) => void
   wasDrag: () => boolean
 }): React.JSX.Element {
   const user = useApp((s) => s.user.clips[clipKey])
@@ -220,7 +242,9 @@ function OrderRow({
     <div
       ref={(el) => setEl(clipKey, el)}
       data-key={clipKey}
-      className={'ord-row' + (clip ? '' : ' missing') + (held ? ' held' : '')}
+      className={
+        'ord-row' + (clip ? '' : ' missing') + (held ? ' held' : '') + (picked ? '' : ' skipped')
+      }
       tabIndex={0}
       onPointerDown={(e) => {
         if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return
@@ -239,6 +263,10 @@ function OrderRow({
           e.preventDefault()
           e.stopPropagation()
           unplace()
+        } else if (e.key === ' ' && clip && e.target === e.currentTarget) {
+          e.preventDefault()
+          e.stopPropagation()
+          onPick(clipKey, !picked, e.shiftKey)
         } else if (e.key === 'Enter' && clip) {
           e.preventDefault()
           e.stopPropagation()
@@ -263,6 +291,15 @@ function OrderRow({
                 {fmtDay(clip.date)}, {fmtTime(clip.date)}
               </b>
               <span className="muted">{fmtDuration(clip.durationMs)}</span>
+              {sent && (
+                <span
+                  className="ord-sent"
+                  title={`Already dragged to ${editor}. Untick the circle if you took it out again.`}
+                >
+                  <Check size={11} strokeWidth={3} />
+                  In editor
+                </span>
+              )}
               {rating > 0 && (
                 <span className="rating-mini">
                   <Star size={12} fill="currentColor" strokeWidth={0} />
@@ -280,8 +317,11 @@ function OrderRow({
           </>
         )}
       </div>
-      <span className="ord-start mono" title="Where this clip starts in the video">
-        {fmtSeconds(start / 1000)}
+      <span
+        className="ord-start mono"
+        title={start === null ? 'Left out of the video' : 'Where this clip starts in the video'}
+      >
+        {start === null ? '–' : fmtSeconds(start / 1000)}
       </span>
       <div className="ord-arrows">
         <button
@@ -307,6 +347,36 @@ function OrderRow({
       </div>
       <button
         type="button"
+        className="btn icon ghost small ord-out"
+        draggable
+        disabled={!clip}
+        aria-label={`Drag this clip to ${editor}`}
+        title={`Drag this clip into ${editor}. It also goes in the video.`}
+        onDragStart={(e) => {
+          e.preventDefault()
+          onSend(clipKey)
+        }}
+      >
+        <Download size={14} />
+      </button>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={picked}
+        disabled={!clip}
+        className={'ord-check' + (picked ? ' on' : '')}
+        aria-label={picked ? 'In the video' : 'Left out of the video'}
+        title={
+          picked
+            ? 'In the video. Click to leave it out (Shift+click for a range).'
+            : 'Left out of the video. Click to put it in (Shift+click for a range).'
+        }
+        onClick={(e) => onPick(clipKey, !picked, e.shiftKey)}
+      >
+        {picked && <Check size={13} strokeWidth={3} />}
+      </button>
+      <button
+        type="button"
         className="btn icon ghost small"
         aria-label="Take out of the order"
         title={
@@ -330,11 +400,14 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
   const clearSelection = useApp((s) => s.clearSelection)
   const leaveProject = useApp((s) => s.leaveProject)
   const setOrder = useApp((s) => s.setProjectOrder)
+  const setPicks = useApp((s) => s.setProjectPicks)
   const startDrag = useApp((s) => s.startDrag)
   const setCapturing = useApp((s) => s.setCapturing)
   const settings = useSettings()
   const editor = settings.editorName.trim() || 'editor'
   const [atText, setAtText] = useState('')
+  const [firstText, setFirstText] = useState('10')
+  const lastPick = useRef<string | null>(null)
 
   // Dragging: what is held, the order a row would get, and where clips from the left would go.
   const [held, setHeld] = useState<{
@@ -377,8 +450,60 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
   // The clips without a place, in the order of the sort menu (and the search box).
   const todo = useMemo(() => visible.filter((c) => !placed.has(c.key)), [visible, placed])
   const todoKeys = useMemo(() => todo.map((c) => c.key), [todo])
-  const times = useMemo(() => orderTimes(shown, clips), [shown, clips])
+  // What goes in the video: the clips of the order that are not left out. Only those have a start.
+  const skipped = useMemo(() => new Set(project.skipped), [project.skipped])
+  const sentSet = useMemo(() => new Set(project.sent), [project.sent])
+  const videoOrder = useMemo(() => pickedKeys(shown, project.skipped), [shown, project.skipped])
+  const times = useMemo(() => orderTimes(videoOrder, clips), [videoOrder, clips])
+  const startOf = useMemo(
+    () => new Map(videoOrder.map((k, i) => [k, times.starts[i]] as const)),
+    [videoOrder, times]
+  )
   const playList = useMemo(() => base.filter((k) => clips.has(k)), [base, clips])
+  const here = playList
+  const videoKeys = useMemo(
+    () => pickedKeys(playList, project.skipped),
+    [playList, project.skipped]
+  )
+  const newKeys = useMemo(() => videoKeys.filter((k) => !sentSet.has(k)), [videoKeys, sentSet])
+  // After everything went to the editor, the button drags all of it again.
+  const dragKeys = newKeys.length > 0 ? newKeys : videoKeys
+  const picks = (): Picks => ({ skipped: project.skipped, sent: project.sent })
+
+  const pick = (key: string, on: boolean, range: boolean): void => {
+    let keys = [key]
+    const from = lastPick.current ? base.indexOf(lastPick.current) : -1
+    const to = base.indexOf(key)
+    if (range && from >= 0 && to >= 0) {
+      const [a, b] = from < to ? [from, to] : [to, from]
+      keys = base.slice(a, b + 1).filter((k) => clips.has(k))
+    }
+    lastPick.current = key
+    const wasSent = !on && keys.some((k) => sentSet.has(k))
+    setPicks(
+      project.id,
+      setPicked(base, picks(), keys, on),
+      wasSent ? 'Left out of the video, so it is no longer in the editor.' : undefined
+    )
+  }
+  const sendToEditor = (keys: string[]): void => {
+    if (keys.length === 0) return
+    startDrag(keys)
+    setPicks(
+      project.id,
+      markSent(base, picks(), keys),
+      `${plural(keys.length, 'clip')} marked as in ${editor}.`
+    )
+  }
+  const pickFirst = (): void => {
+    const n = Number.parseInt(firstText, 10)
+    if (!Number.isFinite(n) || n < 1) return
+    setPicks(
+      project.id,
+      pickOnly(base, picks(), here.slice(0, n)),
+      `Only the first ${Math.min(n, here.length)} clips are in the video now.`
+    )
+  }
   const picked = useMemo(() => todoKeys.filter((k) => selected.has(k)), [todoKeys, selected])
   const unplacedTotal = project.clipKeys.filter((k) => !placed.has(k)).length
 
@@ -690,12 +815,7 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
               <ProjectTabs project={project} />
             </div>
             <span className="muted">
-              {plural(base.length, 'clip')} in order
-              {times.totalMs > 0 || times.unknown < base.length
-                ? ` · ${totalLength(times.totalMs)} long`
-                : ''}
-              {' · '}
-              {unplacedTotal} still to place
+              {plural(base.length, 'clip')} in order · {unplacedTotal} still to place
             </span>
           </div>
           <div className="lib-tools">
@@ -711,15 +831,21 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
             <button
               className="btn primary grab"
               draggable
-              disabled={playList.length === 0}
-              title="Drag the clips in the order into your video editor"
+              disabled={dragKeys.length === 0}
+              title={`Drag the clips of the video, first to last, into ${editor}. Clips that are already there are skipped, so you can add more later.`}
               onDragStart={(e) => {
                 e.preventDefault()
-                startDrag(playList)
+                sendToEditor(dragKeys)
               }}
             >
               <Download size={18} strokeWidth={2} />
-              Drag order to {editor}
+              {videoKeys.length === 0
+                ? 'Nothing in the video'
+                : newKeys.length === 0
+                  ? `Drag all ${videoKeys.length} again to ${editor}`
+                  : newKeys.length === videoKeys.length
+                    ? `Drag ${plural(newKeys.length, 'clip')} to ${editor}`
+                    : `Drag ${newKeys.length} new ${newKeys.length === 1 ? 'clip' : 'clips'} to ${editor}`}
             </button>
           </div>
         </div>
@@ -810,6 +936,70 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
                 In order <span className="muted">({base.length})</span>
               </h2>
             </div>
+            {base.length > 0 && (
+              <div className="ord-pickbar">
+                <span className="ord-pick-count">
+                  <b>{videoKeys.length}</b> of {here.length} in the video
+                  {videoKeys.length > 0 && times.totalMs > 0
+                    ? ` · ${totalLength(times.totalMs)}`
+                    : ''}
+                  {project.sent.length > 0 ? ` · ${project.sent.length} in ${editor}` : ''}
+                </span>
+                <div className="ord-pick-tools">
+                  <button
+                    className="btn ghost small"
+                    disabled={videoKeys.length === here.length}
+                    title="Put every clip in the video"
+                    onClick={() =>
+                      setPicks(
+                        project.id,
+                        setPicked(base, picks(), here, true),
+                        'Every clip is in the video.'
+                      )
+                    }
+                  >
+                    All
+                  </button>
+                  <button
+                    className="btn ghost small"
+                    disabled={videoKeys.length === 0}
+                    title="Leave every clip out of the video"
+                    onClick={() =>
+                      setPicks(
+                        project.id,
+                        setPicked(base, picks(), here, false),
+                        'Every clip is left out of the video.'
+                      )
+                    }
+                  >
+                    None
+                  </button>
+                  <form
+                    className="ord-first"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      pickFirst()
+                    }}
+                  >
+                    <button
+                      className="btn small"
+                      type="submit"
+                      title="Put only the first clips of the order in the video"
+                    >
+                      Pick first
+                    </button>
+                    <input
+                      className="field"
+                      inputMode="numeric"
+                      aria-label="How many clips"
+                      value={firstText}
+                      maxLength={3}
+                      onChange={(e) => setFirstText(e.target.value.replace(/\D/g, ''))}
+                    />
+                  </form>
+                </div>
+              </div>
+            )}
             <div
               ref={listRef}
               className="ord-list"
@@ -832,7 +1022,12 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
                     index={r.index}
                     clipKey={r.key}
                     clip={clips.get(r.key)}
-                    start={times.starts[r.index]}
+                    start={startOf.get(r.key) ?? null}
+                    picked={!skipped.has(r.key)}
+                    sent={sentSet.has(r.key)}
+                    editor={editor}
+                    onPick={pick}
+                    onSend={(k) => sendToEditor([k])}
                     playList={playList}
                     held={held?.source === 'row' && held.keys[0] === r.key}
                     setEl={setRowEl}

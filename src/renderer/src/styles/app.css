@@ -3107,6 +3107,72 @@ select option {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Which clips go in the video */
+.ord-pickbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 0 2px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.ord-pickbar b {
+  color: var(--text);
+}
+.ord-pick-tools,
+.ord-first {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ord-first .field {
+  width: 52px;
+  text-align: center;
+  padding: 4px 6px;
+}
+.ord-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-2);
+  background: transparent;
+  color: #fff;
+  transition:
+    background var(--anim-fast) var(--ease),
+    border-color var(--anim-fast) var(--ease);
+}
+.ord-check:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.ord-check.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ord-check:disabled {
+  opacity: 0.35;
+}
+.ord-row.skipped .ord-thumb,
+.ord-row.skipped .ord-info,
+.ord-row.skipped .ord-start {
+  opacity: 0.45;
+}
+.ord-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
 .ord-note {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -25,6 +25,7 @@ import {
   clearLeftProjects,
   duplicateProject,
   newProject,
+  cleanPicks,
   removeFromAllProjects,
   removeFromProject,
   sanitizeProjects,
@@ -285,7 +286,17 @@ export class UserDataStore {
   setProjectOrder(id: string, order: string[]): void {
     this.changeProjects((d) => {
       const p = d.projects.find((x) => x.id === id)
-      if (p) p.order = cleanOrder(order, p.clipKeys)
+      if (!p) return
+      p.order = cleanOrder(order, p.clipKeys)
+      // Clips that lose their place also lose their pick.
+      Object.assign(p, cleanPicks(p.order, p.skipped, p.sent))
+    })
+  }
+
+  setProjectPicks(id: string, skipped: string[], sent: string[]): void {
+    this.changeProjects((d) => {
+      const p = d.projects.find((x) => x.id === id)
+      if (p) Object.assign(p, cleanPicks(p.order, skipped, sent))
     })
   }
 

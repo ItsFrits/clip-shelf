@@ -11,7 +11,12 @@ import {
   placeInOrder,
   projectStats,
   projectsOfClip,
+  cleanPicks,
+  markSent,
+  pickedKeys,
+  pickOnly,
   removeFromAllProjects,
+  setPicked,
   removeFromProject,
   reverseOrder,
   sanitizeProjects,
@@ -34,6 +39,8 @@ const proj = (id: string, keys: string[], extra: Partial<Project> = {}): Project
   notes: '',
   clipKeys: keys,
   order: [],
+  skipped: [],
+  sent: [],
   createdAt: 1,
   ...extra
 })
@@ -258,6 +265,45 @@ describe('order', () => {
       starts: [0, 5000, 5000, 7000],
       totalMs: 7000,
       unknown: 2
+    })
+  })
+  it('keeps picks in step with the order', () => {
+    const order = ['a', 'b', 'c', 'd']
+    expect(cleanPicks(order, ['b', 'x', 'b'], ['b', 'c', 'y'])).toEqual({
+      skipped: ['b'],
+      sent: ['c']
+    })
+    expect(cleanPicks(order, undefined, 'nope')).toEqual({ skipped: [], sent: [] })
+    expect(pickedKeys(order, ['b', 'd'])).toEqual(['a', 'c'])
+    const none = { skipped: [], sent: [] }
+    // First two only.
+    expect(pickOnly(order, none, ['a', 'b'])).toEqual({ skipped: ['c', 'd'], sent: [] })
+    // Dragging to the editor picks the clip as well.
+    const sent = markSent(order, { skipped: ['c'], sent: [] }, ['a', 'c'])
+    expect(sent).toEqual({ skipped: [], sent: ['a', 'c'] })
+    // Leaving a clip out takes it out of the editor too, and putting it back does not send it again.
+    const out = setPicked(order, sent, ['c'], false)
+    expect(out).toEqual({ skipped: ['c'], sent: ['a'] })
+    expect(setPicked(order, out, ['c'], true)).toEqual({ skipped: [], sent: ['a'] })
+  })
+  it('drops picks of clips that leave the project, and does not copy what is in the editor', () => {
+    const src = {
+      ...proj('1', ['a', 'b', 'c']),
+      order: ['a', 'b', 'c'],
+      skipped: ['b'],
+      sent: ['a']
+    }
+    const out = removeFromProject([src], '1', ['a', 'b'])[0]
+    expect(out.skipped).toEqual([])
+    expect(out.sent).toEqual([])
+    const copy = duplicateProject([src], src, '2', 1)
+    expect(copy.skipped).toEqual(['b'])
+    expect(copy.sent).toEqual([])
+    expect(
+      sanitizeProjects([{ ...src, skipped: ['b', 'zzz'], sent: ['b', 'a'] }])[0]
+    ).toMatchObject({
+      skipped: ['b'],
+      sent: ['a']
     })
   })
   it('takes deleted clips out of every project, including the order', () => {

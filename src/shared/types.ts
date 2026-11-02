@@ -135,6 +135,10 @@ export interface Project {
   clipKeys: string[]
   /** The clips that have a place in the order, first to last. Always a part of clipKeys. */
   order: string[]
+  /** Clips with a place that are left out of the video, so they are not dragged to the editor. */
+  skipped: string[]
+  /** Clips that were dragged to the editor. Always in the order and never skipped. */
+  sent: string[]
   createdAt: number
 }
 

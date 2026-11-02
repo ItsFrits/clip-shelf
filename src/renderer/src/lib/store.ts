@@ -12,7 +12,7 @@ import type {
   UpdateStatus,
   UserData
 } from '@shared/types'
-import { cleanOrder, sortByOrder } from '@shared/projects'
+import { cleanOrder, cleanPicks, sortByOrder, type Picks } from '@shared/projects'
 import { DEFAULT_SAVED_FILTERS, sanitizeSavedFilters, toSavedFilters } from '@shared/savedFilters'
 import { effectiveKeymap } from '@shared/keymap'
 import {
@@ -134,6 +134,8 @@ interface AppState {
   setProjectTab: (tab: 'clips' | 'order') => void
   /** Change the order of a project. With a label there is a toast with Undo. */
   setProjectOrder: (id: string, order: string[], undoLabel?: string) => void
+  /** Which clips of the order go in the video (skipped are left out) and which are in the editor. */
+  setProjectPicks: (id: string, picks: Picks, undoLabel?: string) => void
   /** Back and forward through the places you have been (library, projects, a project, the player). */
   navBack: () => void
   navForward: () => void
@@ -484,7 +486,9 @@ export const useApp = create<AppState>((set, get) => ({
     set((s) => ({
       user: {
         ...s.user,
-        projects: s.user.projects.map((p) => (p.id === id ? { ...p, order: next } : p))
+        projects: s.user.projects.map((p) =>
+          p.id === id ? { ...p, order: next, ...cleanPicks(next, p.skipped, p.sent) } : p
+        )
       }
     }))
     void window.api.setProjectOrder(id, next)
@@ -492,6 +496,27 @@ export const useApp = create<AppState>((set, get) => ({
       get().toast(undoLabel, {
         actionLabel: 'Undo',
         action: () => get().setProjectOrder(id, before)
+      })
+  },
+  setProjectPicks: (id, picks, undoLabel) => {
+    const project = get().user.projects.find((p) => p.id === id)
+    if (!project) return
+    const next = cleanPicks(project.order, picks.skipped, picks.sent)
+    const before = { skipped: project.skipped, sent: project.sent }
+    const same = (a: string[], b: string[]): boolean =>
+      a.length === b.length && a.every((k, i) => k === b[i])
+    if (same(next.skipped, before.skipped) && same(next.sent, before.sent)) return
+    set((s) => ({
+      user: {
+        ...s.user,
+        projects: s.user.projects.map((p) => (p.id === id ? { ...p, ...next } : p))
+      }
+    }))
+    void window.api.setProjectPicks(id, next.skipped, next.sent)
+    if (undoLabel)
+      get().toast(undoLabel, {
+        actionLabel: 'Undo',
+        action: () => get().setProjectPicks(id, before)
       })
   },
   navBack: () => stepHistory(-1),

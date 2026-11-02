@@ -15,6 +15,63 @@ export function cleanOrder(raw: unknown, clipKeys: readonly string[]): string[] 
   return out
 }
 
+export interface Picks {
+  skipped: string[]
+  sent: string[]
+}
+
+/** Skipped and sent as they should be kept: only clips in the order, and a skipped clip is not sent. */
+export function cleanPicks(order: readonly string[], skipped: unknown, sent: unknown): Picks {
+  const inOrder = new Set(order)
+  const list = (raw: unknown): string[] =>
+    Array.isArray(raw)
+      ? [...new Set(raw.filter((k): k is string => typeof k === 'string' && inOrder.has(k)))]
+      : []
+  const skip = list(skipped)
+  const left = new Set(skip)
+  return { skipped: skip, sent: list(sent).filter((k) => !left.has(k)) }
+}
+
+/** The clips that go in the video: those in the order that are not skipped, first to last. */
+export function pickedKeys(order: readonly string[], skipped: readonly string[]): string[] {
+  const left = new Set(skipped)
+  return order.filter((k) => !left.has(k))
+}
+
+/** Put clips in the video (on) or leave them out (off). Leaving a clip out also takes it out of the editor. */
+export function setPicked(
+  order: readonly string[],
+  picks: Picks,
+  keys: readonly string[],
+  on: boolean
+): Picks {
+  const set = new Set(keys)
+  const skipped = on
+    ? picks.skipped.filter((k) => !set.has(k))
+    : [...picks.skipped, ...keys.filter((k) => !picks.skipped.includes(k))]
+  return cleanPicks(order, skipped, picks.sent)
+}
+
+/** Only these clips go in the video. The rest of the order is left out. */
+export function pickOnly(order: readonly string[], picks: Picks, keep: readonly string[]): Picks {
+  const set = new Set(keep)
+  return cleanPicks(
+    order,
+    order.filter((k) => !set.has(k)),
+    picks.sent
+  )
+}
+
+/** Clips that were dragged to the editor. They also go in the video. */
+export function markSent(order: readonly string[], picks: Picks, keys: readonly string[]): Picks {
+  const set = new Set(keys)
+  return cleanPicks(
+    order,
+    picks.skipped.filter((k) => !set.has(k)),
+    [...picks.sent, ...keys]
+  )
+}
+
 /** Make a list read from disk safe to use. The old "idea" status is now "working". */
 export function sanitizeProjects(raw: unknown, now: number = Date.now()): Project[] {
   if (!Array.isArray(raw)) return []
@@ -36,6 +93,7 @@ export function sanitizeProjects(raw: unknown, now: number = Date.now()): Projec
       notes: typeof p.notes === 'string' ? p.notes : '',
       clipKeys: keys,
       order: cleanOrder(p.order, keys),
+      ...cleanPicks(cleanOrder(p.order, keys), p.skipped, p.sent),
       createdAt: typeof p.createdAt === 'number' ? p.createdAt : now
     })
   }
@@ -62,6 +120,8 @@ export function newProject(projects: Project[], id: string, name: string, now: n
     notes: '',
     clipKeys: [],
     order: [],
+    skipped: [],
+    sent: [],
     createdAt: now
   }
 }
@@ -81,6 +141,9 @@ export function duplicateProject(
     link: '',
     clipKeys: [...source.clipKeys],
     order: [...source.order],
+    skipped: [...source.skipped],
+    // The copy is a new video, so nothing is in the editor yet.
+    sent: [],
     createdAt: now
   }
 }
@@ -95,31 +158,28 @@ export function addToProject(projects: Project[], id: string, keys: string[]): P
   })
 }
 
+function withoutClips(p: Project, drop: ReadonlySet<string>): Project {
+  const keep = (k: string): boolean => !drop.has(k)
+  return {
+    ...p,
+    clipKeys: p.clipKeys.filter(keep),
+    order: p.order.filter(keep),
+    skipped: p.skipped.filter(keep),
+    sent: p.sent.filter(keep)
+  }
+}
+
 export function removeFromProject(projects: Project[], id: string, keys: string[]): Project[] {
   const drop = new Set(keys)
   return projects.map((p) =>
-    p.id === id && p.clipKeys.some((k) => drop.has(k))
-      ? {
-          ...p,
-          clipKeys: p.clipKeys.filter((k) => !drop.has(k)),
-          order: p.order.filter((k) => !drop.has(k))
-        }
-      : p
+    p.id === id && p.clipKeys.some((k) => drop.has(k)) ? withoutClips(p, drop) : p
   )
 }
 
 /** Take clips out of every project, for clips that are gone for good (moved to the recycle bin). */
 export function removeFromAllProjects(projects: Project[], keys: string[]): Project[] {
   const drop = new Set(keys)
-  return projects.map((p) =>
-    p.clipKeys.some((k) => drop.has(k))
-      ? {
-          ...p,
-          clipKeys: p.clipKeys.filter((k) => !drop.has(k)),
-          order: p.order.filter((k) => !drop.has(k))
-        }
-      : p
-  )
+  return projects.map((p) => (p.clipKeys.some((k) => drop.has(k)) ? withoutClips(p, drop) : p))
 }
 
 /** Keys of the clips that are in at least one project. */
