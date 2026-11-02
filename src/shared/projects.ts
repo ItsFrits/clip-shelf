@@ -108,6 +108,20 @@ export function removeFromProject(projects: Project[], id: string, keys: string[
   )
 }
 
+/** Take clips out of every project, for clips that are gone for good (moved to the recycle bin). */
+export function removeFromAllProjects(projects: Project[], keys: string[]): Project[] {
+  const drop = new Set(keys)
+  return projects.map((p) =>
+    p.clipKeys.some((k) => drop.has(k))
+      ? {
+          ...p,
+          clipKeys: p.clipKeys.filter((k) => !drop.has(k)),
+          order: p.order.filter((k) => !drop.has(k))
+        }
+      : p
+  )
+}
+
 /** Keys of the clips that are in at least one project. */
 export function usedKeys(projects: Project[]): Set<string> {
   const out = new Set<string>()

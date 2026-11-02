@@ -44,6 +44,7 @@ export function Library(): React.JSX.Element {
     s.projectId ? s.user.projects.find((p) => p.id === s.projectId) : null
   )
   const leaveProject = useApp((s) => s.leaveProject)
+  const removeFromProject = useApp((s) => s.removeFromProject)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
@@ -251,6 +252,23 @@ export function Library(): React.JSX.Element {
                 ? `${plural(stats.count - stats.missing, 'clip')} · ${lengthLabel(stats)}` +
                   (stats.missing > 0 ? ` · ${stats.missing} not in your library right now` : '')
                 : `${plural(visible.length, 'clip')} in this view · ${counts.fresh.toLocaleString('en-US')} still new · ${counts.reviewed.toLocaleString('en-US')} reviewed`}
+              {project && stats && stats.missing > 0 && (
+                <>
+                  {' '}
+                  <button
+                    className="btn ghost small"
+                    title="Take the clips that are not in your library out of this project"
+                    onClick={() =>
+                      removeFromProject(
+                        project.id,
+                        project.clipKeys.filter((k) => !clips.has(k))
+                      )
+                    }
+                  >
+                    Remove {stats.missing === 1 ? 'it' : 'them'}
+                  </button>
+                </>
+              )}
             </span>
           </div>
           <div className="lib-tools">

@@ -11,6 +11,7 @@ import {
   placeInOrder,
   projectStats,
   projectsOfClip,
+  removeFromAllProjects,
   removeFromProject,
   reverseOrder,
   sanitizeProjects,
@@ -258,6 +259,15 @@ describe('order', () => {
       totalMs: 7000,
       unknown: 2
     })
+  })
+  it('takes deleted clips out of every project, including the order', () => {
+    const one = { ...proj('1', ['a', 'b', 'c']), order: ['c', 'a'] }
+    const two = proj('2', ['d'])
+    const out = removeFromAllProjects([one, two], ['a', 'x'])
+    expect(out[0].clipKeys).toEqual(['b', 'c'])
+    expect(out[0].order).toEqual(['c'])
+    // A project without those clips is the same object.
+    expect(out[1]).toBe(two)
   })
   it('keeps the order in step when clips leave the project or the project is copied', () => {
     const src = { ...proj('1', ['a', 'b', 'c']), order: ['c', 'a'] }

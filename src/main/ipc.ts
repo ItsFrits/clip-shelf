@@ -109,7 +109,13 @@ export function registerIpc(ctx: IpcContext): void {
     const p = library.primaryPath(key)
     if (p) shell.showItemInFolder(p)
   })
-  handle('trashClips', (keys) => library.trashClips(keys, (p) => shell.trashItem(p)))
+  handle('trashClips', async (keys: string[]) => {
+    const res = await library.trashClips(keys, (p) => shell.trashItem(p))
+    // A clip that is really gone (not just on an offline drive) also leaves its projects.
+    const gone = keys.filter((k) => !library.getClip(k))
+    if (gone.length > 0 && user.removeClipsFromProjects(gone)) emit('user:replaced', user.data)
+    return res
+  })
 
   handle('exportBackup', async () => {
     const win = getWindow()

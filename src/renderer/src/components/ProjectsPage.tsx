@@ -18,6 +18,7 @@ function ProjectCard({
   const openProject = useApp((s) => s.openProject)
   const setActiveProject = useApp((s) => s.setActiveProject)
   const deleteProject = useApp((s) => s.deleteProject)
+  const removeFromProject = useApp((s) => s.removeFromProject)
   const [renaming, setRenaming] = useState(false)
   const [name, setName] = useState(project.name)
   const stats = projectStats(project, clips)
@@ -78,7 +79,20 @@ function ProjectCard({
         </span>
         {stats.missing > 0 && (
           <span className="proj-missing">
-            {plural(stats.missing, 'clip')} not in your library right now (drive offline?)
+            {plural(stats.missing, 'clip')} not in your library right now (drive offline?){' '}
+            <button
+              className="btn ghost small"
+              title="Take the clips that are not in your library out of this project"
+              onClick={(e) => {
+                e.stopPropagation()
+                removeFromProject(
+                  project.id,
+                  project.clipKeys.filter((k) => !clips.has(k))
+                )
+              }}
+            >
+              Remove {stats.missing === 1 ? 'it' : 'them'}
+            </button>
           </span>
         )}
       </div>

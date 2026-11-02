@@ -28,10 +28,29 @@ const GAP_H = 64
 const EDGE = 56
 const SCROLL_MAX = 16
 
+/** Where the two lists were scrolled to, so coming back from the player lands in the same place. */
+let savedScroll: { project: string; grid: number; list: number } | null = null
+function remember(project: string, part: 'grid' | 'list', top: number): void {
+  const prev = savedScroll?.project === project ? savedScroll : { project, grid: 0, list: 0 }
+  savedScroll = { ...prev, [part]: top }
+}
+
+/** Scroll a list so the element sits in the middle, but only when it is not fully in view yet. */
+function reveal(box: HTMLElement, el: HTMLElement): void {
+  const b = box.getBoundingClientRect()
+  const r = el.getBoundingClientRect()
+  if (r.top >= b.top && r.bottom <= b.bottom) return
+  box.scrollTop += r.top - b.top - (box.clientHeight - r.height) / 2
+}
+
 /** The two tabs of an open project. */
 export function ProjectTabs({ project }: { project: Project }): React.JSX.Element {
   const tab = useApp((s) => s.projectTab)
   const setTab = useApp((s) => s.setProjectTab)
+  const clips = useApp((s) => s.clips)
+  // Only count the clips that are there, so the numbers match what you see in the lists.
+  const total = project.clipKeys.filter((k) => clips.has(k)).length
+  const placed = project.order.filter((k) => clips.has(k)).length
   return (
     <div className="seg" role="tablist" aria-label="Project view">
       <button
@@ -40,7 +59,7 @@ export function ProjectTabs({ project }: { project: Project }): React.JSX.Elemen
         className={tab === 'clips' ? 'on' : ''}
         onClick={() => setTab('clips')}
       >
-        Clips ({project.clipKeys.length})
+        Clips ({total})
       </button>
       <button
         role="tab"
@@ -49,7 +68,7 @@ export function ProjectTabs({ project }: { project: Project }): React.JSX.Elemen
         title="Put the clips in the order of your video"
         onClick={() => setTab('order')}
       >
-        Order ({project.order.length}/{project.clipKeys.length})
+        Order ({placed}/{total})
       </button>
     </div>
   )
@@ -105,6 +124,7 @@ function TodoCard({
   const anySelected = useApp((s) => s.selected.size > 0)
   return (
     <div
+      data-key={clip.key}
       className={'ord-card' + (selected ? ' selected' : '') + (anySelected ? ' has-selection' : '')}
       onPointerDown={(e) => {
         if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return
@@ -186,14 +206,19 @@ function OrderRow({
   const note = (user?.note ?? '').trim().replace(/\s+/g, ' ')
   const last = index === project.order.length - 1
   const step = (dir: 1 | -1): void => setOrder(project.id, stepInOrder(project.order, clipKey, dir))
+  const removeFromProject = useApp((s) => s.removeFromProject)
+  // A clip that is not in the library has nothing left to place, so the cross takes it out of the project.
   const unplace = (): void =>
-    setOrder(
-      project.id,
-      project.order.filter((k) => k !== clipKey)
-    )
+    clip
+      ? setOrder(
+          project.id,
+          project.order.filter((k) => k !== clipKey)
+        )
+      : removeFromProject(project.id, [clipKey])
   return (
     <div
       ref={(el) => setEl(clipKey, el)}
+      data-key={clipKey}
       className={'ord-row' + (clip ? '' : ' missing') + (held ? ' held' : '')}
       tabIndex={0}
       onPointerDown={(e) => {
@@ -292,7 +317,11 @@ function OrderRow({
         type="button"
         className="btn icon ghost small"
         aria-label="Take out of the order"
-        title="Take out of the order (it stays in the project)"
+        title={
+          clip
+            ? 'Take out of the order (it stays in the project)'
+            : 'Remove this missing clip from the project'
+        }
         onClick={unplace}
       >
         <X size={14} />
@@ -327,6 +356,7 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
   const [liveOrder, setLiveOrder] = useState<string[] | null>(null)
   const [gapAt, setGapAt] = useState<number | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
   const ghostRef = useRef<HTMLDivElement>(null)
   const rowEls = useRef(new Map<string, HTMLElement>())
   const lastTop = useRef(new Map<string, number>())
@@ -359,6 +389,34 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
   const playList = useMemo(() => base.filter((k) => clips.has(k)), [base, clips])
   const picked = useMemo(() => todoKeys.filter((k) => selected.has(k)), [todoKeys, selected])
   const unplacedTotal = project.clipKeys.filter((k) => !placed.has(k)).length
+
+  // Coming back from the player: both lists go back to where they were, and the clip you were just
+  // watching is brought into view when it is not.
+  useLayoutEffect(() => {
+    const focus = useApp.getState().focusKey
+    useApp.setState({ focusKey: null })
+    const grid = gridRef.current
+    const list = listRef.current
+    // Only when you come back from the player. Opening a project fresh starts at the top.
+    const mine = focus && savedScroll?.project === project.id ? savedScroll : null
+    if (mine) {
+      if (grid) grid.scrollTop = mine.grid
+      if (list) list.scrollTop = mine.list
+    }
+    if (focus) {
+      const find = (box: HTMLElement | null): HTMLElement | null =>
+        box
+          ? ([...box.querySelectorAll<HTMLElement>('[data-key]')].find(
+              (el) => el.dataset.key === focus
+            ) ?? null)
+          : null
+      const inList = find(list)
+      const inGrid = find(grid)
+      if (list && inList) reveal(list, inList)
+      else if (grid && inGrid) reveal(grid, inGrid)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Make the thumbnails of what is on screen first.
   useEffect(() => {
@@ -700,7 +758,11 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
                   : 'No clips match your search.'}
               </div>
             ) : (
-              <div className="ord-grid">
+              <div
+                ref={gridRef}
+                className="ord-grid"
+                onScroll={(e) => remember(project.id, 'grid', e.currentTarget.scrollTop)}
+              >
                 {todo.map((c) => (
                   <TodoCard
                     key={c.key}
@@ -756,7 +818,11 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
                 In order <span className="muted">({base.length})</span>
               </h2>
             </div>
-            <div ref={listRef} className="ord-list">
+            <div
+              ref={listRef}
+              className="ord-list"
+              onScroll={(e) => remember(project.id, 'list', e.currentTarget.scrollTop)}
+            >
               {shown.length === 0 && gapAt === null && (
                 <div className="ord-hint ord-empty">
                   Drag clips here, or select clips on the left and press Enter.

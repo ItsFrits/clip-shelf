@@ -25,6 +25,7 @@ import {
   clearLeftProjects,
   duplicateProject,
   newProject,
+  removeFromAllProjects,
   removeFromProject,
   sanitizeProjects,
   syncUsed,
@@ -286,6 +287,15 @@ export class UserDataStore {
       const p = d.projects.find((x) => x.id === id)
       if (p) p.order = cleanOrder(order, p.clipKeys)
     })
+  }
+
+  /** Clips that were moved to the recycle bin leave all their projects. */
+  removeClipsFromProjects(keys: string[]): boolean {
+    if (!this.data.projects.some((p) => p.clipKeys.some((k) => keys.includes(k)))) return false
+    this.changeProjects((d) => {
+      d.projects = removeFromAllProjects(d.projects, keys)
+    })
+    return true
   }
 
   removeFromProject(id: string, keys: string[]): void {

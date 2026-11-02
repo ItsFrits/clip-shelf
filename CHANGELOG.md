@@ -18,6 +18,8 @@ All notable changes to Clip Shelf. Newest first.
 - Give clips a place by dragging them into the list, or select them and press Enter (or Place at end), or type a number and press Place at #. Dragging works like with tags: the clip follows your pointer and the rows slide aside to make room (the list scrolls when you drag near its edge, and Esc cancels the drag). Every row also has up and down arrows, and Alt+Up and Alt+Down work too. The cross takes a clip out of the order again, and Reverse turns the whole order around (with Undo). The rows slide to their new place when you use the arrows or Reverse.
 - Drag order to your editor drags the clips of the order, first to last. When you drag selected clips out of a project, the clips that have a place go first, in the order of the project. On the Clips tab a clip that has a place shows its number.
 - Clips you add to a project later start on the left, without a place. A clip that is not in your library right now (for example an offline drive) keeps its place in the order.
+- Moving a clip to the recycle bin now also takes it out of all its projects, so the numbers stay right. For a clip that is missing from a project already, the projects page and the project header have a Remove button, and the cross on a missing row in the Order tab removes it too. The numbers on the two tabs only count the clips that are there.
+- Coming back from the player to the Order tab brings both lists back to where they were, and scrolls to the clip you watched when it is out of view.
 
 ## 0.6.0
 
