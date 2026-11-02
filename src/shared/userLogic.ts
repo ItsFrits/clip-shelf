@@ -48,6 +48,7 @@ export function isDefaultClipUser(u: ClipUser): boolean {
     u.rating === 0 &&
     !u.watched &&
     !u.used &&
+    !u.usedManual &&
     u.note === '' &&
     u.ignoredHints.length === 0
   )

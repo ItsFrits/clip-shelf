@@ -117,23 +117,25 @@ export function SelectionBar(): React.JSX.Element | null {
                 </span>
                 {projects.length > 0 && (
                   <div className="proj-pick">
-                    {projects.map((p) => {
-                      const all = keys.every((k) => p.clipKeys.includes(k))
-                      return (
-                        <button
-                          key={p.id}
-                          className="proj-pick-row"
-                          onClick={() => {
-                            addToProject(p.id, keys)
-                            setOpen(null)
-                          }}
-                        >
-                          <span className="proj-pick-name">{p.name}</span>
-                          {p.id === activeId && <Pin size={12} aria-label="Active project" />}
-                          {all && <Check size={14} aria-label="Already in this project" />}
-                        </button>
-                      )
-                    })}
+                    {[...projects]
+                      .sort((a, b) => Number(b.id === activeId) - Number(a.id === activeId))
+                      .map((p) => {
+                        const all = keys.every((k) => p.clipKeys.includes(k))
+                        return (
+                          <button
+                            key={p.id}
+                            className="proj-pick-row"
+                            onClick={() => {
+                              addToProject(p.id, keys)
+                              setOpen(null)
+                            }}
+                          >
+                            <span className="proj-pick-name">{p.name}</span>
+                            {p.id === activeId && <Pin size={12} aria-label="Active project" />}
+                            {all && <Check size={14} aria-label="Already in this project" />}
+                          </button>
+                        )
+                      })}
                   </div>
                 )}
                 <form

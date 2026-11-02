@@ -28,6 +28,18 @@ export const ACTIONS: ActionDef[] = [
     defaults: ['P']
   },
 
+  {
+    id: 'navBack',
+    label: 'Go back (also the back button of the mouse)',
+    scope: 'global',
+    defaults: ['Alt+ArrowLeft']
+  },
+  {
+    id: 'navForward',
+    label: 'Go forward (also the forward button of the mouse)',
+    scope: 'global',
+    defaults: ['Alt+ArrowRight']
+  },
   { id: 'presetAll', label: 'Show all clips (no filters)', scope: 'library', defaults: [] },
   { id: 'selectAll', label: 'Select all visible clips', scope: 'library', defaults: ['Ctrl+A'] },
   {

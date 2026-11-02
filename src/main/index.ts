@@ -52,6 +52,11 @@ function createWindow(): BrowserWindow {
   if (state.maximized) win.maximize()
   trackWindowState(win, stateFile)
   win.on('ready-to-show', () => win.show())
+  // The side buttons of the mouse (Windows reports them as app commands).
+  win.on('app-command', (_e, command) => {
+    if (command === 'browser-backward') win.webContents.send('evt:nav:step', -1)
+    else if (command === 'browser-forward') win.webContents.send('evt:nav:step', 1)
+  })
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//i.test(url)) void shell.openExternal(url)
     return { action: 'deny' }

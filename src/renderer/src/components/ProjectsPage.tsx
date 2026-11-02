@@ -138,7 +138,14 @@ export function ProjectsPage(): React.JSX.Element {
   const [name, setName] = useState('')
   const input = useRef<HTMLInputElement>(null)
 
-  const sorted = useMemo(() => [...projects].sort((a, b) => b.createdAt - a.createdAt), [projects])
+  // The active project first, then the newest.
+  const sorted = useMemo(
+    () =>
+      [...projects].sort(
+        (a, b) => Number(b.id === activeId) - Number(a.id === activeId) || b.createdAt - a.createdAt
+      ),
+    [projects, activeId]
+  )
 
   const create = async (): Promise<void> => {
     const clean = name.trim()

@@ -32,6 +32,7 @@ import { useApp, useSettings } from '../lib/store'
 import { KeyHint } from './KeyHint'
 import { Meter } from './Meter'
 import { Stars } from './Stars'
+import { PlayerProjects } from './PlayerProjects'
 import { TagInput } from './TagInput'
 import { TagList } from './TagList'
 
@@ -45,6 +46,10 @@ export function Player(): React.JSX.Element {
   const playerList = useApp((s) => s.playerList)
   const user =
     useApp((s) => (s.playerKey ? s.user.clips[s.playerKey] : undefined)) ?? EMPTY_CLIP_USER
+  const inProject = useApp((s) =>
+    s.playerKey ? s.user.projects.some((p) => p.clipKeys.includes(s.playerKey!)) : false
+  )
+  const manualUsed = !!user.usedManual || (user.used && !inProject)
   const tagById = useApp((s) => s.tagById)
   const allTags = useApp((s) => s.user.tags)
   const folders = useApp((s) => s.folders)
@@ -784,9 +789,16 @@ export function Player(): React.JSX.Element {
               <button
                 type="button"
                 role="switch"
-                aria-checked={user.used}
-                className={'switch' + (user.used ? ' on' : '')}
-                onClick={() => patch([key], { set: { used: !user.used } }, 'Used')}
+                aria-checked={manualUsed}
+                className={'switch' + (manualUsed ? ' on' : '')}
+                title="For clips you used before Clip Shelf. A clip in a project counts as used by itself."
+                onClick={() =>
+                  patch(
+                    [key],
+                    { set: { usedManual: !manualUsed, used: !manualUsed || inProject } },
+                    'Used'
+                  )
+                }
               />
             </label>
           </section>
@@ -888,6 +900,8 @@ export function Player(): React.JSX.Element {
               size={28}
             />
           </section>
+
+          <PlayerProjects clipKey={key} />
 
           <NoteEditor
             key={key}

@@ -100,7 +100,9 @@ export function projectsOfClip(projects: Project[], key: string): Project[] {
 }
 
 /**
- * Make "used" on every clip match the projects: used when it is in one, not used otherwise.
+ * Make "used" on every clip match the projects and the switch you set by hand: used when it is in a
+ * project or the switch is on. Clips from before the switch was kept apart (no `usedManual` yet) count
+ * as set by hand when they are used but in no project.
  * Gives back the same object when nothing needed to change.
  */
 export function syncUsed(
@@ -108,7 +110,7 @@ export function syncUsed(
   projects: Project[],
   empty: ClipUser
 ): Record<string, ClipUser> {
-  const used = usedKeys(projects)
+  const inProject = usedKeys(projects)
   let next: Record<string, ClipUser> | null = null
   const set = (key: string, u: ClipUser | null): void => {
     next ??= { ...clips }
@@ -117,12 +119,17 @@ export function syncUsed(
   }
   for (const key of Object.keys(clips)) {
     const u = clips[key]
-    if (u.used === used.has(key)) continue
-    const changed = { ...u, used: used.has(key) }
+    const there = inProject.has(key)
+    const manual = u.usedManual ?? (u.used && !there)
+    const used = manual || there
+    // Old data that is used gets its origin written down now, or it would be guessed again later.
+    const settled = u.usedManual !== undefined || !u.used
+    if (u.used === used && settled && !!u.usedManual === manual) continue
+    const changed = { ...u, used, usedManual: manual }
     set(key, isDefaultClipUser(changed) ? null : changed)
   }
-  for (const key of used) {
-    if (!clips[key]) set(key, { ...empty, used: true })
+  for (const key of inProject) {
+    if (!clips[key]) set(key, { ...empty, used: true, usedManual: false })
   }
   return next ?? clips
 }

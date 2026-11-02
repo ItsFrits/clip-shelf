@@ -2779,3 +2779,57 @@ select option {
   flex: 1;
   min-width: 0;
 }
+.pjc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pjc-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 999px;
+  background: var(--input);
+  border: 1px solid var(--border-2);
+  overflow: hidden;
+}
+.pjc-chip:hover {
+  border-color: var(--accent);
+}
+.pjc-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pjc-active {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+}
+.pjc-x {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+}
+.pjc-x:hover {
+  color: var(--danger);
+}
+/* The side panel scrolls when it is full, instead of squeezing its sections. */
+.player-side > *,
+.side-sec > * {
+  flex-shrink: 0;
+}

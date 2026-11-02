@@ -128,6 +128,9 @@ interface AppState {
   removeFromProject: (id: string, keys: string[]) => void
   deleteProject: (id: string) => Promise<void>
   setActiveProject: (id: string | null) => void
+  /** Back and forward through the places you have been (library, projects, a project, the player). */
+  navBack: () => void
+  navForward: () => void
 
   select: (key: string, mode: 'only' | 'toggle' | 'range') => void
   selectAll: () => void
@@ -394,13 +397,15 @@ export const useApp = create<AppState>((set, get) => ({
   openProjects: () =>
     set({ view: 'projects', projectId: null, selected: new Set(), anchorKey: null }),
   openProject: (id) =>
-    set({
+    set((s) => ({
       view: 'library',
       projectId: id,
+      // Coming from the player: the project scrolls to the clip you had open, when it is in it.
+      playerKey: null,
+      focusKey: s.view === 'player' ? s.playerKey : null,
       selected: new Set(),
-      anchorKey: null,
-      focusKey: null
-    }),
+      anchorKey: null
+    })),
   leaveProject: () =>
     set({ view: 'projects', projectId: null, selected: new Set(), anchorKey: null }),
   createProject: async (name) => {
@@ -461,6 +466,8 @@ export const useApp = create<AppState>((set, get) => ({
     await window.api.deleteProject(id)
   },
   setActiveProject: (id) => get().updateSettings({ activeProjectId: id }),
+  navBack: () => stepHistory(-1),
+  navForward: () => stepHistory(1),
 
   select: (key, mode) =>
     set((s) => {
@@ -750,6 +757,70 @@ useApp.subscribe((s, prev) => {
   const current = s.user.settings.savedFilters ?? toSavedFilters(DEFAULT_SAVED_FILTERS)
   if (JSON.stringify(next) !== JSON.stringify(current)) s.updateSettings({ savedFilters: next })
 })
+
+// ---- Back and forward. Every place you land on is remembered, so the mouse side buttons (and
+// Alt+Left and Alt+Right) can walk back through them. Settings is not part of it, it just closes.
+interface Place {
+  view: 'library' | 'projects' | 'player'
+  projectId: string | null
+  playerKey: string | null
+  playerList: string[]
+}
+const MAX_PLACES = 50
+let places: Place[] = []
+let placeIndex = -1
+let travelling = false
+
+function placeOf(s: AppState): Place | null {
+  if (s.view === 'settings') return null
+  return { view: s.view, projectId: s.projectId, playerKey: s.playerKey, playerList: s.playerList }
+}
+
+function samePlace(a: Place, b: Place): boolean {
+  return a.view === b.view && a.projectId === b.projectId && a.playerKey === b.playerKey
+}
+
+useApp.subscribe((s) => {
+  if (travelling || !s.ready) return
+  const here = placeOf(s)
+  if (!here) return
+  const last = places[placeIndex]
+  if (last && samePlace(last, here)) return
+  places = places.slice(0, placeIndex + 1)
+  // Going to the next clip in the player replaces the clip instead of adding a step.
+  if (last?.view === 'player' && here.view === 'player') places[placeIndex] = here
+  else places.push(here)
+  if (places.length > MAX_PLACES) places = places.slice(-MAX_PLACES)
+  placeIndex = places.length - 1
+})
+
+function stepHistory(dir: 1 | -1): void {
+  const s = useApp.getState()
+  if (s.view === 'settings') {
+    if (dir === -1) s.setView('library')
+    return
+  }
+  const clips = s.clips
+  for (let i = placeIndex + dir; i >= 0 && i < places.length; i += dir) {
+    const p = places[i]
+    // Skip places that are gone: a deleted project, or a clip that left the library.
+    if (p.projectId && !s.user.projects.some((x) => x.id === p.projectId)) continue
+    if (p.view === 'player' && (!p.playerKey || !clips.has(p.playerKey))) continue
+    placeIndex = i
+    travelling = true
+    useApp.setState({
+      view: p.view,
+      projectId: p.projectId,
+      playerKey: p.view === 'player' ? p.playerKey : null,
+      playerList: p.view === 'player' ? p.playerList : s.playerList,
+      focusKey: s.view === 'player' ? s.playerKey : null,
+      selected: new Set(),
+      anchorKey: null
+    })
+    travelling = false
+    return
+  }
+}
 
 export function useSettings(): Settings {
   return useApp((s) => s.user.settings)

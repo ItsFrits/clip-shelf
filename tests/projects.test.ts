@@ -100,14 +100,43 @@ describe('syncUsed', () => {
     expect(out.b).toMatchObject({ used: true })
   })
   it('clears used when the clip left every project, and drops empty entries', () => {
-    const clips = { a: { ...tagged, used: true }, b: { ...EMPTY_CLIP_USER, used: true } }
+    // Used only because of a project: the switch was never set by hand.
+    const clips = {
+      a: { ...tagged, used: true, usedManual: false },
+      b: { ...EMPTY_CLIP_USER, used: true, usedManual: false }
+    }
     const out = syncUsed(clips, [], EMPTY_CLIP_USER)
     expect(out.a).toMatchObject({ rating: 3, used: false })
     expect(out.b).toBeUndefined()
   })
   it('keeps used while another project still has the clip', () => {
-    const clips = { a: { ...EMPTY_CLIP_USER, used: true } }
+    const clips = { a: { ...EMPTY_CLIP_USER, used: true, usedManual: false } }
     expect(syncUsed(clips, [proj('2', ['a'])], EMPTY_CLIP_USER)).toBe(clips)
+  })
+  it('keeps a clip you switched to used by hand, in a project or not', () => {
+    const clips = { a: { ...tagged, used: true, usedManual: true } }
+    expect(syncUsed(clips, [], EMPTY_CLIP_USER)).toBe(clips)
+    const inProject = syncUsed(clips, [proj('1', ['a'])], EMPTY_CLIP_USER)
+    expect(inProject.a).toMatchObject({ used: true, usedManual: true })
+    const out = syncUsed(inProject, [], EMPTY_CLIP_USER)
+    expect(out.a).toMatchObject({ used: true, usedManual: true })
+  })
+  it('treats old data that is used but in no project as set by hand', () => {
+    const clips = { a: { ...tagged, used: true }, b: { ...tagged, used: true } }
+    const out = syncUsed(clips, [proj('1', ['b'])], EMPTY_CLIP_USER)
+    expect(out.a).toMatchObject({ used: true, usedManual: true })
+    // In a project already: that is where "used" came from.
+    expect(out.b).toMatchObject({ used: true, usedManual: false })
+    expect(syncUsed(out, [], EMPTY_CLIP_USER).b).toMatchObject({ used: false })
+  })
+  it('a clip that only got used through a project is not used any more after it leaves', () => {
+    const added = syncUsed({}, [proj('1', ['a'])], EMPTY_CLIP_USER)
+    expect(added.a).toMatchObject({ used: true, usedManual: false })
+    expect(syncUsed(added, [], EMPTY_CLIP_USER).a).toBeUndefined()
+  })
+  it('does not touch clips that were never used', () => {
+    const clips = { a: tagged }
+    expect(syncUsed(clips, [], EMPTY_CLIP_USER)).toBe(clips)
   })
 })
 

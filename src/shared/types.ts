@@ -115,7 +115,10 @@ export interface ClipUser {
   /** 0 means not rated. */
   rating: number
   watched: boolean
+  /** Used in a video: set by hand, or because the clip is in a project (see usedManual). */
   used: boolean
+  /** The "already used" switch, for clips used before Clip Shelf. A clip in a project counts as used either way. */
+  usedManual?: boolean
   note: string
   ignoredHints: string[]
 }
@@ -283,6 +286,8 @@ export interface ApiEvents {
   'jobs:progress': JobProgress
   'user:replaced': UserData
   'updater:status': UpdateStatus
+  /** The back (-1) or forward (1) button of the mouse, as the system reports it. */
+  'nav:step': 1 | -1
 }
 
 export type ApiEventName = keyof ApiEvents

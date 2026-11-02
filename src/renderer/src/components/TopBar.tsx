@@ -1,4 +1,4 @@
-import { LayoutGrid, Play, Search, Settings, Shuffle } from 'lucide-react'
+import { House, LayoutGrid, Play, Search, Settings, Shuffle } from 'lucide-react'
 import { useMemo } from 'react'
 import { formatChord, effectiveKeymap } from '@shared/keymap'
 import { useApp } from '../lib/store'
@@ -39,18 +39,24 @@ export function TopBar(): React.JSX.Element {
         <KeyHint>{chord('search')}</KeyHint>
       </label>
       <div className="topbar-actions">
-        <button className="btn lg primary" onClick={randomClip}>
-          <Shuffle size={18} strokeWidth={2} />
-          Random clip
-          <KeyHint style={ON_ACCENT}>{chord('random')}</KeyHint>
-        </button>
-        <button
-          className={'btn lg' + (view === 'projects' || projectId ? ' on' : '')}
-          onClick={() => (view === 'projects' ? setView('library') : openProjects())}
-        >
-          <LayoutGrid size={18} strokeWidth={1.75} />
-          <span className="lbl">Projects</span>
-        </button>
+        {view === 'projects' ? (
+          <button className="btn lg" onClick={() => setView('library')}>
+            <House size={18} strokeWidth={1.75} />
+            <span className="lbl">Home</span>
+          </button>
+        ) : (
+          <>
+            <button className="btn lg primary" onClick={randomClip}>
+              <Shuffle size={18} strokeWidth={2} />
+              Random clip
+              <KeyHint style={ON_ACCENT}>{chord('random')}</KeyHint>
+            </button>
+            <button className={'btn lg' + (projectId ? ' on' : '')} onClick={openProjects}>
+              <LayoutGrid size={18} strokeWidth={1.75} />
+              <span className="lbl">Projects</span>
+            </button>
+          </>
+        )}
         <button className="btn lg icon" aria-label="Settings" onClick={() => openSettings()}>
           <Settings size={18} strokeWidth={1.75} />
         </button>

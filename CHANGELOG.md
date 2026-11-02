@@ -9,7 +9,11 @@ All notable changes to Clip Shelf. Newest first.
 - Select clips and choose Add to project in the bar at the bottom. You can pick a project or type a new name. A clip can be in more than one project, and every add has an Undo.
 - Open a project to see only its clips. Sorting, grouping and search work like in the library. Remove from project takes selected clips out again (the clips themselves stay in your library). Esc goes back to the projects page.
 - Make a project the active project (the pin button), then press P to add the open clip, or the selected clips, to it. You can change the key under Hotkeys.
-- A clip that is in a project now gets the Used status. Hover over the status on a card to see which projects it is in.
+- The back and forward buttons of your mouse (and Alt+Left and Alt+Right) now walk back and forward through the places you have been: the library, the projects page, a project and the player. You can change the keys under Hotkeys.
+- The player has a Projects section. It shows the projects the clip is in (click one to open it, and Back brings you to the clip again), a cross to take the clip out, and Add to a project.
+- On the projects page the Projects button turns into Home, and the Random clip button is hidden there.
+- The active project comes first on the projects page and in the Add to project lists.
+- A clip that is in a project now gets the Used status. Hover over the status on a card to see which projects it is in. The switch "Already used in a video" in the player stays for clips you used before Clip Shelf, and it is not changed by projects.
 
 ## 0.6.0
 

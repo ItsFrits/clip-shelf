@@ -59,6 +59,12 @@ export function runAction(id: string): boolean {
       else if (s.projectId) s.leaveProject()
       else return false
       return true
+    case 'navBack':
+      s.navBack()
+      return true
+    case 'navForward':
+      s.navForward()
+      return true
     case 'addToProject':
       if (s.view !== 'library' && s.view !== 'player') return false
       addToActiveProject()
@@ -133,7 +139,35 @@ export function useHotkeys(): void {
         }
       }
     }
+    // The side buttons of the mouse: button 3 is back, button 4 is forward. On Windows the main
+    // process reports the same buttons too, so a press that arrives twice counts once.
+    let lastNav = 0
+    const go = (dir: 1 | -1): void => {
+      const now = Date.now()
+      if (now - lastNav < 200) return
+      lastNav = now
+      const s = useApp.getState()
+      if (s.confirm || s.capturingKey) return
+      if (dir === -1) s.navBack()
+      else s.navForward()
+    }
+    const onMouseDown = (e: MouseEvent): void => {
+      if (e.button === 3 || e.button === 4) e.preventDefault()
+    }
+    const onMouseUp = (e: MouseEvent): void => {
+      if (e.button !== 3 && e.button !== 4) return
+      e.preventDefault()
+      go(e.button === 3 ? -1 : 1)
+    }
+    const offNav = window.api.on('nav:step', go)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      offNav()
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
   }, [])
 }
