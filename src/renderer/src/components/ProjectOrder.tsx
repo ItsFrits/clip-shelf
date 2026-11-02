@@ -19,6 +19,7 @@ import { fmtDay, fmtDuration, fmtSeconds, fmtTime, plural } from '../lib/format'
 import { motionMs } from '../lib/motion'
 import { useApp, useSettings } from '../lib/store'
 import { SortMenu } from './SortMenu'
+import { TagPills } from './TagPills'
 
 /** How far the pointer has to move before a press becomes a drag. */
 const DRAG_START = 4
@@ -269,16 +270,7 @@ function OrderRow({
                 </span>
               )}
             </span>
-            {tags.length > 0 && (
-              <span className="ord-tags">
-                {tags.slice(0, 3).map((t) => (
-                  <span key={t} className="pill">
-                    {t}
-                  </span>
-                ))}
-                {tags.length > 3 && <span className="pill">+{tags.length - 3}</span>}
-              </span>
-            )}
+            {tags.length > 0 && <TagPills tags={tags} className="ord-tags" />}
             {note && <span className="ord-note">{note}</span>}
           </>
         ) : (

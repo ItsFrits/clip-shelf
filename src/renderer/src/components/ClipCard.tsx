@@ -5,6 +5,7 @@ import { clipStatus, EMPTY_CLIP_USER } from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
 import { fmtBytes, fmtDay, fmtDuration, fmtTime } from '../lib/format'
 import { useApp } from '../lib/store'
+import { TagPills } from './TagPills'
 
 interface Props {
   clip: Clip
@@ -134,13 +135,7 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
           </span>
         )}
       </div>
-      <div className="card-tags">
-        {tags.slice(0, 2).map((t) => (
-          <span key={t} className="pill">
-            {t}
-          </span>
-        ))}
-        {tags.length > 2 && <span className="pill">+{tags.length - 2}</span>}
+      <TagPills tags={tags} className="card-tags">
         {suggestion && (
           <span
             className="pill suggest"
@@ -160,7 +155,7 @@ function ClipCardBase({ clip, showDate }: Props): React.JSX.Element {
             + {suggestion}
           </span>
         )}
-      </div>
+      </TagPills>
       <div className="card-file" title={clip.files[0]?.path}>
         <span className={'cf-name' + (sortedOnName ? ' sorted' : '')}>{clip.name}</span>
         <span className={'cf-size' + (sortedOnSize ? ' sorted' : '')}>{fmtBytes(clip.size)}</span>

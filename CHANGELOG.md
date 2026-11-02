@@ -19,6 +19,7 @@ All notable changes to Clip Shelf. Newest first.
 - Drag order to your editor drags the clips of the order, first to last. When you drag selected clips out of a project, the clips that have a place go first, in the order of the project. On the Clips tab a clip that has a place shows its number.
 - Clips you add to a project later start on the left, without a place. A clip that is not in your library right now (for example an offline drive) keeps its place in the order.
 - Moving a clip to the recycle bin now also takes it out of all its projects, so the numbers stay right. For a clip that is missing from a project already, the projects page and the project header have a Remove button, and the cross on a missing row in the Order tab removes it too. The numbers on the two tabs only count the clips that are there.
+- Tags on a clip card and on a row of the Order tab now fill the whole width of the row. Only the tags that do not fit are counted in a "+N" pill, and when you hover over it a tooltip lists those tags under each other.
 - Coming back from the player to the Order tab brings both lists back to where they were, and scrolls to the clip you watched when it is out of view.
 
 ## 0.6.0
