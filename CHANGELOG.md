@@ -4,6 +4,8 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+## 0.7.0
+
 ### Added
 - Projects. The Projects button in the top bar now opens a page where you make projects for your videos. Each project shows a few thumbnails, how many clips it has and how long they are together. You can open, rename, duplicate and delete a project there.
 - Select clips and choose Add to project in the bar at the bottom. You can pick a project or type a new name. A clip can be in more than one project, and every add has an Undo.
