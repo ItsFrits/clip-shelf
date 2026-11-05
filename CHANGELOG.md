@@ -4,6 +4,8 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+## 0.8.0
+
 ### Added
 - Every project has a status: Working or Published. The button next to the tabs opens a panel with the status, a link to the video (for example your YouTube link, with a Watch button) and notes. A published project shows a Published badge on the projects page, and the published projects are listed below the ones you are working on.
 - Mark as published asks which clips ended up in the video. It starts with the clips that are in the video (the ticked ones on the Order tab), and you can add the link right there. The clips you did not use move to a new project by default (named like "Oktober part 2", with the same order), or you can keep them in the project or take them out of it. You can move a project back to Working at any time.
