@@ -4,12 +4,16 @@ Electron desktop app (Windows first) to browse, tag and organize gameplay clips 
 
 ## How we work (read this first)
 
-- Chat with Frits in casual Dutch, honest, modest, no m-dashes. Everything in the repo (code, comments, commits, UI text, docs, changelog) is English.
+- Chat with Frits in casual Dutch, honest, modest, no m-dashes.
+- Language: code, comments, UI text, docs and the changelog are English. Commit messages, PR titles and PR descriptions are Dutch, in the past tense, without m-dashes (for example "Rangschikmodus toegevoegd", "Volgorde na annuleren hersteld"). Only exception: the release commit made by `scripts/release.mjs` ("Release X.Y.Z") stays English, and the script is not changed.
+- Commit per group of files that belong together. Several commits per branch is fine, not one big commit.
+- Branches are never deleted, not locally and not on GitHub, so we can always find where something came from. No `--delete-branch`, no `git branch -d` / `-D`, no `git push origin --delete`. Some of this is blocked in `.claude/settings.json`.
+- Never rewrite existing commits or history.
 - The general workflow lives in the user-level skills: `project-kickoff`, `feature-spec`, `feature-build`, `feature-ship`, `release`, `bug-fix`. Use them. The short version:
   1. Idea chat: work out the feature, write `docs/specs/<name>.md`, Frits adjusts and says OK. Nothing is built before that.
   2. Build chat (one new chat per feature): read the spec, branch `feat/<name>`, build, commit, lint + typecheck + test, start `npm run dev`, send Frits a checklist of what to test. Then stop and wait.
   3. Iterate on the same branch until Frits says everything is perfect.
-  4. Ship: push, PR via `gh`, merge, delete branch. Update ROADMAP and this file in the same PR.
+  4. Ship: push, PR via `gh` (Dutch title and description), then a normal merge with `gh pr merge --merge` (never squash, the separate commits stay in the history). The branch stays. Update ROADMAP and this file in the same PR.
   5. Release: decide when a release is worth it and which version number.
 - Lint, typecheck, tests, git add/commit and the dev app may run without asking. Always ask before `git push`, merging a PR, and `npm run release`. Proposing to do these when it is time is fine. (Enforced in `.claude/settings.json`.)
 - Always verify before saying something works: run the checks, run the app.
@@ -72,7 +76,7 @@ Every feature or fix adds user-facing lines under `## Unreleased` in `CHANGELOG.
 ## Releases
 
 - Pick the version (semver: new feature = minor, fix only = patch) and ask Frits before running it.
-- On a clean `main`: `git switch main && git pull && npm run release -- X.Y.Z`. The script bumps package.json, package-lock.json and the changelog, runs typecheck and tests, commits, pushes and tags `vX.Y.Z`. The tag starts the GitHub Actions build (Windows runner), which publishes the installer. Installed apps update themselves.
+- On a clean `main`: `git switch main && git pull && npm run release -- X.Y.Z`. The script bumps package.json, package-lock.json and the changelog, runs typecheck and tests, commits ("Release X.Y.Z", English, the one exception to the Dutch commit rule), pushes and tags `vX.Y.Z`. The tag starts the GitHub Actions build (Windows runner), which publishes the installer. Installed apps update themselves.
 - The tag must equal the package.json version or CI stops on purpose.
 - Watch the run with `gh run watch`. If it failed on a download problem (for example the Electron binary download returning HTTP 504), `gh run rerun <id> --failed` fixes it. If it failed on real code, fix it and move the tag (see `COMMANDS.md`, "Als de build faalt"), after asking Frits.
 - The installer is unsigned, so Windows SmartScreen warns on first install.
