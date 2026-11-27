@@ -1,0 +1,20 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)", "Bash(npm run typecheck)", "Bash(npm test)", "Bash(npm test *)",
+      "Bash(npm run dev)", "Bash(npm run format)", "Bash(npx prettier *)",
+      "Bash(git status *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git branch *)",
+      "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git pull)",
+      "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh run *)"
+    ],
+    "ask": [
+      "Bash(git push *)", "Bash(git merge *)", "Bash(git tag *)",
+      "Bash(gh pr merge *)", "Bash(npm run release *)"
+    ]
+  }
+}
