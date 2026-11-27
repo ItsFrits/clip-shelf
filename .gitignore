@@ -5,3 +5,5 @@ out
 .eslintcache
 *.log*
 COMMANDS.md
+
+.claude/settings.local.json
