@@ -10,11 +10,18 @@
       "Bash(npm run dev)", "Bash(npm run format)", "Bash(npx prettier *)",
       "Bash(git status *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git branch *)",
       "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git pull)",
-      "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh run *)"
+      "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh run *)",
+      "PowerShell(npm run lint)", "PowerShell(npm run typecheck)", "PowerShell(npm test)", "PowerShell(npm test *)",
+      "PowerShell(npm run dev)", "PowerShell(npm run format)", "PowerShell(npx prettier *)",
+      "PowerShell(git status *)", "PowerShell(git diff *)", "PowerShell(git log *)", "PowerShell(git branch *)",
+      "PowerShell(git switch *)", "PowerShell(git add *)", "PowerShell(git commit *)", "PowerShell(git pull)",
+      "PowerShell(gh pr create *)", "PowerShell(gh pr view *)", "PowerShell(gh run *)"
     ],
     "ask": [
-      "Bash(git push *)", "Bash(git merge *)", "Bash(git tag *)",
-      "Bash(gh pr merge *)", "Bash(npm run release *)"
+      "Bash(git push)", "Bash(git push *)", "Bash(git merge *)", "Bash(git tag *)",
+      "Bash(gh pr merge *)", "Bash(npm run release *)",
+      "PowerShell(git push)", "PowerShell(git push *)", "PowerShell(git merge *)", "PowerShell(git tag *)",
+      "PowerShell(gh pr merge *)", "PowerShell(npm run release *)"
     ]
   }
 }
