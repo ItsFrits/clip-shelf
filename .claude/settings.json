@@ -21,7 +21,18 @@
       "Bash(git push)", "Bash(git push *)", "Bash(git merge *)", "Bash(git tag *)",
       "Bash(gh pr merge *)", "Bash(npm run release *)",
       "PowerShell(git push)", "PowerShell(git push *)", "PowerShell(git merge *)", "PowerShell(git tag *)",
-      "PowerShell(gh pr merge *)", "PowerShell(npm run release *)"
+      "PowerShell(gh pr merge *)", "PowerShell(npm run release *)",
+      "Bash(git push * :*)", "PowerShell(git push * :*)"
+    ],
+    "deny": [
+      "Bash(git branch -d *)", "Bash(git branch -D *)", "Bash(git branch --delete *)",
+      "Bash(git branch * -d *)", "Bash(git branch * -D *)", "Bash(git branch * --delete *)",
+      "Bash(gh pr merge *--delete-branch*)", "Bash(gh pr merge * -d*)",
+      "Bash(git push *--delete *)", "Bash(git push * -d *)", "Bash(git push * :refs/heads/*)",
+      "PowerShell(git branch -d *)", "PowerShell(git branch -D *)", "PowerShell(git branch --delete *)",
+      "PowerShell(git branch * -d *)", "PowerShell(git branch * -D *)", "PowerShell(git branch * --delete *)",
+      "PowerShell(gh pr merge *--delete-branch*)", "PowerShell(gh pr merge * -d*)",
+      "PowerShell(git push *--delete *)", "PowerShell(git push * -d *)", "PowerShell(git push * :refs/heads/*)"
     ]
   }
 }
