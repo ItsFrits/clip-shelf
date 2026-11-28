@@ -4,6 +4,11 @@ All notable changes to Clip Shelf. Newest first.
 
 ## Unreleased
 
+### Added
+- Rank mode: the Rank button on the Order tab puts clips in order by comparing two at a time. It ranks the clips you selected, or every clip that has no place yet. Both videos loop without sound, and clicking one turns its sound on (the first audio track of the clip). Press Left or Right for the better clip, Down when they are equal, Up to skip, Ctrl+Z to go back one answer and Esc to stop. The new keys can be changed under Hotkeys.
+- Every clip gets its place as soon as it is known, so you can stop at any time and go on later. The order is best first.
+- With star ratings, rank mode only compares a clip with clips around the same rating, which saves a lot of questions. Clips without stars are compared with everything. The switch Use star ratings on the rank screen turns this off.
+
 ## 0.8.0
 
 ### Added
