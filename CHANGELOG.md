@@ -6,6 +6,7 @@ All notable changes to Clip Shelf. Newest first.
 
 ### Added
 - Rank mode: the Rank button on the Order tab puts clips in order by comparing two at a time. It ranks the clips you selected, or every clip that has no place yet. A video plays when you click it, with all its audio tracks at the volumes you set for its folder, and pauses when you click it again. The two are separate, so you can also play both at once. Each has a progress bar to jump back and watch the shot again. Press Left or Right for the better clip, Down when they are equal, Up to skip, Ctrl+Z to go back one answer and Esc to stop. The new keys can be changed under Hotkeys.
+- Rank mode works with only the mouse and with only the keyboard. Q, W and E go 5 seconds back, play or pause, and go 5 seconds forward in the left video, A, S and D do the same for the right one. Tab stays on the rank screen.
 - Every clip gets its place as soon as it is known, so you can stop at any time and go on later. The order is best first.
 - With star ratings, rank mode only compares a clip with clips around the same rating, which saves a lot of questions. Clips without stars are compared with everything. The switch Use star ratings on the rank screen turns this off.
 
