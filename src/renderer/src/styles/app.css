@@ -3531,6 +3531,7 @@ html[data-platform='darwin'] .rank-head {
   border: 2px solid transparent;
   background: #000;
   cursor: pointer;
+  --press: 0.99; /* it is large, so the usual press would shrink it a lot */
 }
 .rank-video.on {
   border-color: var(--accent);
@@ -3542,15 +3543,25 @@ html[data-platform='darwin'] .rank-head {
   height: 100%;
   object-fit: contain;
 }
-.rank-sound {
+.rank-play {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
   display: flex;
-  padding: 7px;
+  padding: 16px;
   border-radius: 999px;
   background: rgba(8, 10, 14, 0.7);
   color: var(--text);
+}
+.rank-side .timeline-row {
+  flex: none;
+}
+.rank-side .timeline-row .t {
+  width: 40px;
+}
+.rank-side .rank-total {
+  text-align: right;
 }
 .rank-failed {
   position: absolute;

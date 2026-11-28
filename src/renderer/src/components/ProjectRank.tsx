@@ -1,4 +1,4 @@
-import { Check, Film, Star, Undo2, Volume2, VolumeX, X } from 'lucide-react'
+import { Check, Film, Play, Star, Undo2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { effectiveKeymap, formatChord } from '@shared/keymap'
 import {
@@ -13,37 +13,66 @@ import {
   undoRank
 } from '@shared/ranking'
 import type { Clip, Project } from '@shared/types'
-import { fmtDay, fmtDuration, fmtTime, plural } from '../lib/format'
+import { trackLevels } from '@shared/userLogic'
+import { fmtDay, fmtSeconds, fmtTime, plural } from '../lib/format'
 import { registerRankMode } from '../lib/hotkeys'
+import { Mixer } from '../lib/mixer'
 import { useApp, useSettings } from '../lib/store'
 import { KeyHint } from './KeyHint'
 import { TagPills } from './TagPills'
 
-/** One of the two clips: a looping video that is silent until you click it. */
+/**
+ * One of the two clips: a looping video with all its audio tracks. It plays only after you click it,
+ * each clip on its own, and has a bar to jump back and forth.
+ */
 function RankClip({
   clipKey,
-  clip,
-  sound,
-  volume,
-  onSound
+  clip
 }: {
   clipKey: string
   clip: Clip | undefined
-  sound: boolean
-  volume: number
-  onSound: () => void
 }): React.JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fillRef = useRef<HTMLDivElement>(null)
+  const headRef = useRef<HTMLDivElement>(null)
+  const timeRef = useRef<HTMLSpanElement>(null)
+  // The video stays silent until its audio tracks are there, so you never hear only a part.
+  const [ready, setReady] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [duration, setDuration] = useState(0)
   const [failed, setFailed] = useState(false)
 
+  // The video with a mixer for its tracks, at the volumes the player uses for this clip.
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
-    v.muted = true
+    let gone = false
+    const mixer = new Mixer(v)
+    mixer.setMaster(useApp.getState().user.settings.masterVolume)
     v.src = `clip://video/${clipKey}`
-    void v.play().catch(() => undefined)
-    // Let go of the file when the clip leaves the screen.
+    window.api
+      .prepareAudio(clipKey)
+      .then(async (p) => {
+        if (gone) return
+        const s = useApp.getState()
+        const levels = trackLevels(
+          s.user.settings,
+          s.clips.get(clipKey)?.files[0]?.path ?? '',
+          p.tracks.map((t) => t.label)
+        )
+        await mixer.load(p, Object.fromEntries(p.tracks.map((t, i) => [t.label, levels[i].volume])))
+        if (gone) return
+        levels.forEach((l, i) => l.muted && mixer.setMuted(i, true))
+        setReady(true)
+      })
+      // Without the tracks the video's own sound still works.
+      .catch(() => {
+        if (!gone) setReady(true)
+      })
+    // Let go of the files when the clip leaves the screen.
     return () => {
+      gone = true
+      mixer.destroy()
       v.pause()
       v.removeAttribute('src')
       v.load()
@@ -52,34 +81,96 @@ function RankClip({
 
   useEffect(() => {
     const v = videoRef.current
+    if (v) v.muted = !ready
+  }, [ready])
+
+  // The progress bar, drawn straight into the DOM so it does not re-render the screen.
+  useEffect(() => {
+    let raf = 0
+    const tick = (): void => {
+      const v = videoRef.current
+      if (v) {
+        const pct = v.duration > 0 ? Math.min(100, (v.currentTime / v.duration) * 100) : 0
+        if (fillRef.current) fillRef.current.style.width = `${pct}%`
+        if (headRef.current) headRef.current.style.left = `${pct}%`
+        if (timeRef.current) timeRef.current.textContent = fmtSeconds(v.currentTime)
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const toggle = (): void => {
+    const v = videoRef.current
     if (!v) return
-    v.muted = !sound
-    v.volume = Math.max(0, Math.min(1, volume))
-  }, [sound, volume])
+    if (v.paused) void v.play().catch(() => undefined)
+    else v.pause()
+  }
+
+  const seek = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const v = videoRef.current
+    if (!v || !v.duration) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    v.currentTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * v.duration
+  }
 
   return (
-    <button
-      type="button"
-      className={'rank-video' + (sound ? ' on' : '')}
-      aria-label={sound ? 'Turn the sound off' : 'Turn the sound on'}
-      aria-pressed={sound}
-      onClick={onSound}
-    >
-      <video
-        ref={videoRef}
-        loop
-        playsInline
-        poster={clip?.hasThumb ? `clip://thumb/${clipKey}` : undefined}
-        onError={() => setFailed(true)}
-      />
-      {(failed || !clip) && (
-        <span className="rank-failed">
-          <Film size={28} strokeWidth={1.5} />
-          {clip ? 'This video cannot be played' : 'Clip not in your library right now'}
+    <>
+      <button
+        type="button"
+        className={'rank-video' + (playing ? ' on' : '')}
+        aria-label={playing ? 'Pause clip' : 'Play clip'}
+        onClick={toggle}
+      >
+        <video
+          ref={videoRef}
+          crossOrigin="anonymous"
+          preload="auto"
+          loop
+          playsInline
+          poster={clip?.hasThumb ? `clip://thumb/${clipKey}` : undefined}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+          onError={() => setFailed(true)}
+        />
+        {(failed || !clip) && (
+          <span className="rank-failed">
+            <Film size={28} strokeWidth={1.5} />
+            {clip ? 'This video cannot be played' : 'Clip not in your library right now'}
+          </span>
+        )}
+        {!playing && !failed && clip && (
+          <span className="rank-play">
+            <Play size={26} fill="currentColor" strokeWidth={0} />
+          </span>
+        )}
+      </button>
+      <div className="timeline-row">
+        <span ref={timeRef} className="t">
+          0:00
         </span>
-      )}
-      <span className="rank-sound">{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</span>
-    </button>
+        <div
+          className="seek"
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId)
+            seek(e)
+          }}
+          onPointerMove={(e) => {
+            if (e.buttons === 1) seek(e)
+          }}
+        >
+          <div className="track">
+            <div ref={fillRef} className="fill" />
+          </div>
+          <div ref={headRef} className="head" />
+        </div>
+        <span className="t muted rank-total">
+          {fmtSeconds(duration || (clip?.durationMs ?? 0) / 1000)}
+        </span>
+      </div>
+    </>
   )
 }
 
@@ -100,12 +191,9 @@ function RankInfo({
     <div className="rank-info">
       <span className="rank-line">
         {clip && (
-          <>
-            <b>
-              {fmtDay(clip.date)}, {fmtTime(clip.date)}
-            </b>
-            <span className="muted">{fmtDuration(clip.durationMs)}</span>
-          </>
+          <b>
+            {fmtDay(clip.date)}, {fmtTime(clip.date)}
+          </b>
         )}
         {rating > 0 && (
           <span className="rating-mini">
@@ -149,7 +237,6 @@ export function ProjectRank({
       useRatings: s.user.settings.rankUseRatings
     })
   })
-  const [soundKey, setSoundKey] = useState<string | null>(null)
 
   useEffect(() => {
     setOrder(project.id, state.order)
@@ -191,14 +278,7 @@ export function ProjectRank({
       <h2>
         {which === 'left' ? 'New clip' : `Number ${state.order.indexOf(key) + 1} in the order`}
       </h2>
-      <RankClip
-        key={key}
-        clipKey={key}
-        clip={clips.get(key)}
-        sound={soundKey === key}
-        volume={settings.masterVolume}
-        onSound={() => setSoundKey((k) => (k === key ? null : key))}
-      />
+      <RankClip key={key} clipKey={key} clip={clips.get(key)} />
       <RankInfo clipKey={key} clip={clips.get(key)} />
       <button
         type="button"
@@ -214,7 +294,7 @@ export function ProjectRank({
   return (
     <div className="rank" role="dialog" aria-label="Rank mode">
       <div className="rank-head">
-        <h1>Rank: {project.name}</h1>
+        <h1>Ranking: {project.name}</h1>
         {match && (
           <span className="muted">
             Clip {state.index + 1} of {state.queue.length} · about {plural(left, 'question')} left
