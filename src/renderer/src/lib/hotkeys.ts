@@ -21,6 +21,14 @@ export function registerPlayerAction(id: string, fn: Handler): () => void {
   }
 }
 
+/** Rank actions that go on while the key is held down. */
+const RANK_REPEATS = new Set([
+  'rankLeftBack',
+  'rankLeftForward',
+  'rankRightBack',
+  'rankRightForward'
+])
+
 /** Set while rank mode is open. It gets the id of the action that was pressed. */
 let rankHandler: ((id: string) => void) | null = null
 
@@ -146,8 +154,8 @@ export function useHotkeys(): void {
         const id = rankAction(map, chord)
         if (!id) return
         e.preventDefault()
-        // Holding a key down must not answer the next questions too.
-        if (!e.repeat) rankHandler(id)
+        // Holding a key down must not answer the next questions too, but it may go on seeking.
+        if (!e.repeat || RANK_REPEATS.has(id)) rankHandler(id)
         return
       }
       const scopes: ActionScope[] = ['global', s.view === 'player' ? 'player' : 'library']

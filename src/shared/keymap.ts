@@ -71,7 +71,18 @@ export const ACTIONS: ActionDef[] = [
   { id: 'rankLeft', label: 'Left clip is better', scope: 'rank', defaults: ['ArrowLeft'] },
   { id: 'rankRight', label: 'Right clip is better', scope: 'rank', defaults: ['ArrowRight'] },
   { id: 'rankEqual', label: 'Both are equal', scope: 'rank', defaults: ['ArrowDown'] },
-  { id: 'rankSkip', label: 'Skip this clip', scope: 'rank', defaults: ['ArrowUp'] }
+  { id: 'rankSkip', label: 'Skip this clip', scope: 'rank', defaults: ['ArrowUp'] },
+  { id: 'rankLeftBack', label: 'Left video: 5 seconds back', scope: 'rank', defaults: ['Q'] },
+  { id: 'rankLeftPlay', label: 'Left video: play or pause', scope: 'rank', defaults: ['W'] },
+  { id: 'rankLeftForward', label: 'Left video: 5 seconds forward', scope: 'rank', defaults: ['E'] },
+  { id: 'rankRightBack', label: 'Right video: 5 seconds back', scope: 'rank', defaults: ['A'] },
+  { id: 'rankRightPlay', label: 'Right video: play or pause', scope: 'rank', defaults: ['S'] },
+  {
+    id: 'rankRightForward',
+    label: 'Right video: 5 seconds forward',
+    scope: 'rank',
+    defaults: ['D']
+  }
 ]
 
 export type Keymap = Record<string, string[]>
