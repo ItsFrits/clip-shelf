@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   presets: null,
   activePresetId: null,
   activeProjectId: null,
+  rankUseRatings: true,
   mergeTagsInPresets: 'ask',
   lastSeenVersion: '',
   masterVolume: 1,
