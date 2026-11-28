@@ -2953,6 +2953,9 @@ select option {
 .ord-card.has-selection .check {
   opacity: 1;
 }
+.ord-card .check:focus-visible {
+  opacity: 1;
+}
 .ord-card.selected .check {
   background: var(--accent);
   border-color: var(--accent);

@@ -165,8 +165,9 @@ function TodoCard({
           aria-label={selected ? 'Deselect clip' : 'Select clip'}
           onClick={(e) => {
             e.stopPropagation()
-            // Let go of the button, so Enter places the selection instead of clicking it again.
-            e.currentTarget.blur()
+            // After a mouse click, let go of the button, so Enter places the selection instead of
+            // clicking it again. With the keyboard the focus stays, to go on to the next clip.
+            if (e.detail > 0) e.currentTarget.blur()
             useApp.getState().select(clip.key, 'toggle')
           }}
         >
