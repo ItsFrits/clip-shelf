@@ -25,6 +25,10 @@ async function orderNames(): Promise<(string | undefined)[]> {
   return keys.map((key) => fixture.clips.find((c) => c.key === key)?.name)
 }
 
+/** The keys of the two clips on the rank screen, left first. Empty when there is no question. */
+const rankPair = (): Promise<(string | null)[]> =>
+  app.page.locator('.rank-side').evaluateAll((all) => all.map((s) => s.getAttribute('data-key')))
+
 async function openProjectOrder(): Promise<void> {
   await button('Projects').click()
   await app.page.getByRole('heading', { name: PROJECT }).click()
@@ -144,6 +148,56 @@ test('order: clips get a place and one moves up', async () => {
     .locator(`.ord-row[data-key="${b.key}"]`)
     .getByRole('button', { name: 'Move up' })
     .click()
+  await expect.poll(orderNames).toEqual([c.name, b.name, a.name])
+  await expect(app.page.getByRole('tab', { name: 'Order (3/3)' })).toBeVisible()
+})
+
+test('rank: comparing two clips gives them their place back', async () => {
+  const [a, b, c] = fixture.clips
+  // The order is c, b, a. Take two out and let rank mode put them back, by answering as if c is the
+  // best clip and a the worst.
+  const best = [c.key, b.key, a.key]
+  for (const clip of [a, b]) {
+    await app.page
+      .locator(`.ord-row[data-key="${clip.key}"]`)
+      .getByRole('button', { name: 'Take out of the order' })
+      .click()
+  }
+  await expect.poll(orderNames).toEqual([c.name])
+
+  await button('Rank').click()
+  const rank = app.page.getByRole('dialog', { name: 'Rank mode' })
+  await expect(rank).toBeVisible()
+  // Both videos play.
+  await expect
+    .poll(() =>
+      rank
+        .locator('video')
+        .evaluateAll((all) =>
+          all.map((v) => (v as HTMLVideoElement).readyState >= 2 && !(v as HTMLVideoElement).paused)
+        )
+    )
+    .toEqual([true, true])
+
+  // Skip a clip, then take that back.
+  const first = await rankPair()
+  await app.page.keyboard.press('ArrowUp')
+  await expect.poll(rankPair).not.toEqual(first)
+  await app.page.keyboard.press('Control+z')
+  await expect.poll(rankPair).toEqual(first)
+
+  // Two clips never need more than a few questions.
+  for (let asked = 0; asked < 6; asked++) {
+    const pair = await rankPair()
+    if (pair.length === 0) break
+    const [left, right] = pair.map((key) => best.indexOf(key!))
+    await app.page.keyboard.press(left < right ? 'ArrowLeft' : 'ArrowRight')
+    await expect.poll(rankPair).not.toEqual(pair)
+  }
+  await expect(rank.getByRole('heading', { name: '2 clips got a place' })).toBeVisible()
+
+  await app.page.keyboard.press('Escape')
+  await expect(rank).toBeHidden()
   await expect.poll(orderNames).toEqual([c.name, b.name, a.name])
   await expect(app.page.getByRole('tab', { name: 'Order (3/3)' })).toBeVisible()
 })
