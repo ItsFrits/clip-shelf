@@ -5,6 +5,14 @@ test-results
 .DS_Store
 .eslintcache
 *.log*
-COMMANDS.md
 
-.claude/settings.local.json
+# Personal notes and planning
+COMMANDS.md
+docs/
+
+# Secrets, exported app data and clips never belong in the repository
+.env
+.env.*
+clip-shelf-backup-*.json
+*.mp4
+*.m4a
