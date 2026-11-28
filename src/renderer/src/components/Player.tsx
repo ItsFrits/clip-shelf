@@ -23,6 +23,7 @@ import {
   EMPTY_CLIP_USER,
   parentDir,
   suggestedTags,
+  trackLevels,
   trackProfileKey
 } from '@shared/userLogic'
 import { STATUS_COLOR, STATUS_LABEL } from '../lib/filter'
@@ -140,19 +141,11 @@ export function Player(): React.JSX.Element {
       .then(async (p) => {
         if (cancelled) return
         const st = useApp.getState()
-        const legacy = st.user.settings.trackVolumes
-        const first = st.clips.get(key)?.files[0]?.path ?? ''
-        const profile =
-          st.user.settings.trackProfiles[
-            trackProfileKey(
-              parentDir(first),
-              p.tracks.map((t) => t.label)
-            )
-          ] ?? {}
-        const levels = p.tracks.map((t) => ({
-          volume: profile[t.label]?.volume ?? legacy[t.label] ?? 1,
-          muted: profile[t.label]?.muted ?? false
-        }))
+        const levels = trackLevels(
+          st.user.settings,
+          st.clips.get(key)?.files[0]?.path ?? '',
+          p.tracks.map((t) => t.label)
+        )
         const volumeByLabel: Record<string, number> = {}
         p.tracks.forEach((t, i) => (volumeByLabel[t.label] = levels[i].volume))
         await m.load(p, volumeByLabel)

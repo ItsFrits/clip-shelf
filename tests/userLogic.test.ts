@@ -9,6 +9,7 @@ import {
   sortTags,
   suggestedTags,
   tagsFirst,
+  trackLevels,
   trackProfileKey,
   whatsNewNotice
 } from '../src/shared/userLogic'
@@ -56,6 +57,27 @@ describe('track profiles', () => {
     expect(trackProfileKey("d:/video's/obs", ['Game audio', 'Discord'])).toBe(a)
     expect(trackProfileKey("D:\\Video's\\OBS", ['Discord', 'Game audio'])).not.toBe(a)
     expect(trackProfileKey("D:\\Video's\\ReLive", ['Game audio', 'Discord'])).not.toBe(a)
+  })
+})
+
+describe('trackLevels', () => {
+  const file = 'D:\\OBS\\clip.mp4'
+  const labels = ['Game audio', 'Microphone']
+
+  it('takes the volumes saved for the folder, then the old ones, then full volume', () => {
+    const settings = {
+      trackProfiles: {
+        [trackProfileKey('D:\\OBS', labels)]: { 'Game audio': { volume: 0.4, muted: true } }
+      },
+      trackVolumes: { 'Game audio': 0.9, Microphone: 0.7 }
+    }
+    expect(trackLevels(settings, file, labels)).toEqual([
+      { volume: 0.4, muted: true },
+      { volume: 0.7, muted: false }
+    ])
+    expect(trackLevels({ trackProfiles: {}, trackVolumes: {} }, file, ['Audio'])).toEqual([
+      { volume: 1, muted: false }
+    ])
   })
 })
 

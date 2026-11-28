@@ -1,4 +1,4 @@
-import type { ClipBulkPatch, ClipUser, Settings, Tag, TagSort } from './types'
+import type { ClipBulkPatch, ClipUser, Settings, Tag, TagSort, TrackLevel } from './types'
 
 export const EMPTY_CLIP_USER: ClipUser = {
   tags: [],
@@ -114,6 +114,19 @@ export function parentDir(path: string): string {
  */
 export function trackProfileKey(folder: string, labels: string[]): string {
   return `${folder.replace(/\\/g, '/').toLowerCase()}|${labels.join('/')}`
+}
+
+/** The volume and mute of each track of a clip, as remembered for its folder and tracks. */
+export function trackLevels(
+  settings: Pick<Settings, 'trackProfiles' | 'trackVolumes'>,
+  filePath: string,
+  labels: string[]
+): TrackLevel[] {
+  const profile = settings.trackProfiles[trackProfileKey(parentDir(filePath), labels)] ?? {}
+  return labels.map((label) => ({
+    volume: profile[label]?.volume ?? settings.trackVolumes[label] ?? 1,
+    muted: profile[label]?.muted ?? false
+  }))
 }
 
 /**
