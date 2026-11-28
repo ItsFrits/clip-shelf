@@ -3455,6 +3455,7 @@ body.ord-dragging * {
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  outline: 0; /* it only takes the focus so Tab starts inside */
 }
 .rank-head {
   flex: none;
@@ -3514,6 +3515,23 @@ html[data-platform='darwin'] .rank-head {
   border-radius: 14px;
   background: var(--panel);
   border: 1px solid var(--border);
+}
+.rank-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.rank-keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.rank-keys .kbd:not(:first-child) {
+  margin-left: 8px;
 }
 .rank-side h2 {
   margin: 0;

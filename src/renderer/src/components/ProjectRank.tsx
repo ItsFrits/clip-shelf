@@ -1,5 +1,5 @@
 import { Check, Film, Play, Star, Undo2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { effectiveKeymap, formatChord } from '@shared/keymap'
 import {
   answerRank,
@@ -21,16 +21,30 @@ import { useApp, useSettings } from '../lib/store'
 import { KeyHint } from './KeyHint'
 import { TagPills } from './TagPills'
 
+/** How far the keys jump back or forward in a video. */
+const SEEK_STEP = 5
+
+/** What the keys can do with one of the two videos. */
+interface VideoControls {
+  toggle: () => void
+  jump: (dir: 1 | -1) => void
+}
+
+/** Everything in rank mode that Tab can go to. */
+const FOCUSABLE = 'button:not(:disabled), input, [href], [tabindex]:not([tabindex="-1"])'
+
 /**
  * One of the two clips: a looping video with all its audio tracks. It plays only after you click it,
  * each clip on its own, and has a bar to jump back and forth.
  */
 function RankClip({
   clipKey,
-  clip
+  clip,
+  controls
 }: {
   clipKey: string
   clip: Clip | undefined
+  controls: React.Ref<VideoControls>
 }): React.JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fillRef = useRef<HTMLDivElement>(null)
@@ -107,6 +121,15 @@ function RankClip({
     if (v.paused) void v.play().catch(() => undefined)
     else v.pause()
   }
+
+  useImperativeHandle(controls, () => ({
+    toggle,
+    jump: (dir) => {
+      const v = videoRef.current
+      if (!v || !v.duration) return
+      v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + dir * SEEK_STEP))
+    }
+  }))
 
   const seek = (e: React.PointerEvent<HTMLDivElement>): void => {
     const v = videoRef.current
@@ -238,6 +261,36 @@ export function ProjectRank({
     })
   })
 
+  const rootRef = useRef<HTMLDivElement>(null)
+  const leftVideo = useRef<VideoControls>(null)
+  const rightVideo = useRef<VideoControls>(null)
+
+  // For the keyboard: the focus moves into rank mode, Tab stays inside it, and closing gives the
+  // focus back.
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const before = document.activeElement as HTMLElement | null
+    root.focus()
+    const onTab = (e: KeyboardEvent): void => {
+      if (e.key !== 'Tab' || useApp.getState().confirm) return
+      const items = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)]
+      if (items.length === 0) return
+      e.preventDefault()
+      const at = items.indexOf(document.activeElement as HTMLElement)
+      const step = e.shiftKey ? -1 : 1
+      const next = at < 0 ? (e.shiftKey ? items.length - 1 : 0) : at + step
+      items[(next + items.length) % items.length].focus()
+    }
+    window.addEventListener('keydown', onTab)
+    return () => {
+      window.removeEventListener('keydown', onTab)
+      // The Rank button is off when everything got a place: then the first row of the order.
+      if (before?.isConnected && !before.matches(':disabled, body')) before.focus()
+      else document.querySelector<HTMLElement>('.ord-row')?.focus()
+    }
+  }, [])
+
   useEffect(() => {
     setOrder(project.id, state.order)
   }, [state.order, project.id, setOrder])
@@ -257,6 +310,12 @@ export function ProjectRank({
         else if (id === 'rankRight') setState((s) => answerRank(s, 'right'))
         else if (id === 'rankEqual') setState((s) => answerRank(s, 'equal'))
         else if (id === 'rankSkip') setState(skipRank)
+        else if (id === 'rankLeftBack') leftVideo.current?.jump(-1)
+        else if (id === 'rankLeftPlay') leftVideo.current?.toggle()
+        else if (id === 'rankLeftForward') leftVideo.current?.jump(1)
+        else if (id === 'rankRightBack') rightVideo.current?.jump(-1)
+        else if (id === 'rankRightPlay') rightVideo.current?.toggle()
+        else if (id === 'rankRightForward') rightVideo.current?.jump(1)
       }),
     [onClose]
   )
@@ -275,10 +334,24 @@ export function ProjectRank({
       aria-label={which === 'left' ? 'Left clip' : 'Right clip'}
       data-key={key}
     >
-      <h2>
-        {which === 'left' ? 'New clip' : `Number ${state.order.indexOf(key) + 1} in the order`}
-      </h2>
-      <RankClip key={key} clipKey={key} clip={clips.get(key)} />
+      <div className="rank-title">
+        <h2>
+          {which === 'left' ? 'New clip' : `Number ${state.order.indexOf(key) + 1} in the order`}
+        </h2>
+        {settings.showKeyHints && (
+          <span className="rank-keys">
+            {hint(which === 'left' ? 'rankLeftBack' : 'rankRightBack')} 5 s back
+            {hint(which === 'left' ? 'rankLeftPlay' : 'rankRightPlay')} play
+            {hint(which === 'left' ? 'rankLeftForward' : 'rankRightForward')} 5 s forward
+          </span>
+        )}
+      </div>
+      <RankClip
+        key={key}
+        clipKey={key}
+        clip={clips.get(key)}
+        controls={which === 'left' ? leftVideo : rightVideo}
+      />
       <RankInfo clipKey={key} clip={clips.get(key)} />
       <button
         type="button"
@@ -292,7 +365,7 @@ export function ProjectRank({
   )
 
   return (
-    <div className="rank" role="dialog" aria-label="Rank mode">
+    <div ref={rootRef} className="rank" role="dialog" aria-label="Rank mode" tabIndex={-1}>
       <div className="rank-head">
         <h1>Ranking: {project.name}</h1>
         {match && (
@@ -377,7 +450,7 @@ export function ProjectRank({
               : ''}
             The order is best first. Reverse turns it around.
           </span>
-          <button type="button" className="btn primary lg" onClick={onClose}>
+          <button type="button" className="btn primary lg" autoFocus onClick={onClose}>
             Back to the order
           </button>
         </div>

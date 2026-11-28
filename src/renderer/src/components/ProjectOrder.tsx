@@ -898,11 +898,7 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
                   className="btn"
                   disabled={rankable.length === 0}
                   data-tip="Put clips in order by comparing two at a time. Ranks the selected clips, or every clip without a place."
-                  onClick={(e) => {
-                    // So that Space and Enter do not press it again from under rank mode.
-                    e.currentTarget.blur()
-                    startRank()
-                  }}
+                  onClick={startRank}
                 >
                   <ListOrdered size={16} />
                   {picked.length > 0 ? 'Rank selected' : 'Rank'}
