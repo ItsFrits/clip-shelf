@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 
-// The end to end smoke test drives the built app, see docs/specs/e2e-smoke.md.
+// The end to end smoke test drives the built app on a temporary data folder.
 export default defineConfig({
   testDir: 'e2e',
   outputDir: 'test-results',
