@@ -198,6 +198,21 @@ test('rank: comparing two clips gives them their place back', async () => {
     leftSide.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime / v.duration)
   await expect.poll(time).toBeCloseTo(0.5, 1)
 
+  // The same with only the keyboard: the left video was paused, the right one still plays.
+  await app.page.keyboard.press('q')
+  await expect.poll(time).toBe(0)
+  await app.page.keyboard.press('w')
+  await expect.poll(state).toEqual([playing, playing])
+  await app.page.keyboard.press('s')
+  await expect.poll(state).toEqual([playing, idle])
+  await app.page.keyboard.press('w')
+  await expect.poll(state).toEqual([idle, idle])
+  // Tab never leaves rank mode.
+  for (let i = 0; i < 12; i++) {
+    await app.page.keyboard.press('Tab')
+    expect(await rank.evaluate((el) => el.contains(document.activeElement))).toBe(true)
+  }
+
   // Skip a clip, then take that back.
   const first = await rankPair()
   await app.page.keyboard.press('ArrowUp')
