@@ -895,7 +895,7 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
               <div className="ord-col-tools">
                 <button
                   type="button"
-                  className="btn small"
+                  className="btn"
                   disabled={rankable.length === 0}
                   data-tip="Put clips in order by comparing two at a time. Ranks the selected clips, or every clip without a place."
                   onClick={(e) => {
@@ -904,7 +904,7 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
                     startRank()
                   }}
                 >
-                  <ListOrdered size={14} />
+                  <ListOrdered size={16} />
                   {picked.length > 0 ? 'Rank selected' : 'Rank'}
                 </button>
                 <SortMenu />
