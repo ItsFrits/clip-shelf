@@ -25,6 +25,10 @@ async function orderNames(): Promise<(string | undefined)[]> {
   return keys.map((key) => fixture.clips.find((c) => c.key === key)?.name)
 }
 
+/** The keys of the two clips on the rank screen, left first. Empty when there is no question. */
+const rankPair = (): Promise<(string | null)[]> =>
+  app.page.locator('.rank-side').evaluateAll((all) => all.map((s) => s.getAttribute('data-key')))
+
 async function openProjectOrder(): Promise<void> {
   await button('Projects').click()
   await app.page.getByRole('heading', { name: PROJECT }).click()
@@ -144,6 +148,90 @@ test('order: clips get a place and one moves up', async () => {
     .locator(`.ord-row[data-key="${b.key}"]`)
     .getByRole('button', { name: 'Move up' })
     .click()
+  await expect.poll(orderNames).toEqual([c.name, b.name, a.name])
+  await expect(app.page.getByRole('tab', { name: 'Order (3/3)' })).toBeVisible()
+})
+
+test('rank: comparing two clips gives them their place back', async () => {
+  const [a, b, c] = fixture.clips
+  // The order is c, b, a. Take two out and let rank mode put them back, by answering as if c is the
+  // best clip and a the worst.
+  const best = [c.key, b.key, a.key]
+  for (const clip of [a, b]) {
+    await app.page
+      .locator(`.ord-row[data-key="${clip.key}"]`)
+      .getByRole('button', { name: 'Take out of the order' })
+      .click()
+  }
+  await expect.poll(orderNames).toEqual([c.name])
+
+  await button('Rank').click()
+  const rank = app.page.getByRole('dialog', { name: 'Rank mode' })
+  await expect(rank).toBeVisible()
+  // Both videos load, and neither plays by itself.
+  const videos = rank.locator('video')
+  const state = (): Promise<{ loaded: boolean; paused: boolean; muted: boolean }[]> =>
+    videos.evaluateAll((all) =>
+      (all as HTMLVideoElement[]).map((v) => ({
+        loaded: v.readyState >= 2,
+        paused: v.paused,
+        muted: v.muted
+      }))
+    )
+  const idle = { loaded: true, paused: true, muted: false }
+  await expect.poll(state).toEqual([idle, idle])
+
+  // Each one is started on its own, so both can play at once.
+  const leftSide = rank.getByRole('region', { name: 'Left clip' })
+  const rightSide = rank.getByRole('region', { name: 'Right clip' })
+  const playing = { ...idle, paused: false }
+  await leftSide.getByRole('button', { name: 'Play clip' }).click()
+  await expect.poll(state).toEqual([playing, idle])
+  await rightSide.getByRole('button', { name: 'Play clip' }).click()
+  await expect.poll(state).toEqual([playing, playing])
+  await leftSide.getByRole('button', { name: 'Pause clip' }).click()
+  await expect.poll(state).toEqual([idle, playing])
+
+  // A click on the progress bar jumps to that moment.
+  await leftSide.locator('.seek').click()
+  const time = (): Promise<number> =>
+    leftSide.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime / v.duration)
+  await expect.poll(time).toBeCloseTo(0.5, 1)
+
+  // The same with only the keyboard: the left video was paused, the right one still plays.
+  await app.page.keyboard.press('q')
+  await expect.poll(time).toBe(0)
+  await app.page.keyboard.press('w')
+  await expect.poll(state).toEqual([playing, playing])
+  await app.page.keyboard.press('s')
+  await expect.poll(state).toEqual([playing, idle])
+  await app.page.keyboard.press('w')
+  await expect.poll(state).toEqual([idle, idle])
+  // Tab never leaves rank mode.
+  for (let i = 0; i < 12; i++) {
+    await app.page.keyboard.press('Tab')
+    expect(await rank.evaluate((el) => el.contains(document.activeElement))).toBe(true)
+  }
+
+  // Skip a clip, then take that back.
+  const first = await rankPair()
+  await app.page.keyboard.press('ArrowUp')
+  await expect.poll(rankPair).not.toEqual(first)
+  await app.page.keyboard.press('Control+z')
+  await expect.poll(rankPair).toEqual(first)
+
+  // Two clips never need more than a few questions.
+  for (let asked = 0; asked < 6; asked++) {
+    const pair = await rankPair()
+    if (pair.length === 0) break
+    const [left, right] = pair.map((key) => best.indexOf(key!))
+    await app.page.keyboard.press(left < right ? 'ArrowLeft' : 'ArrowRight')
+    await expect.poll(rankPair).not.toEqual(pair)
+  }
+  await expect(rank.getByRole('heading', { name: '2 clips got a place' })).toBeVisible()
+
+  await app.page.keyboard.press('Escape')
+  await expect(rank).toBeHidden()
   await expect.poll(orderNames).toEqual([c.name, b.name, a.name])
   await expect(app.page.getByRole('tab', { name: 'Order (3/3)' })).toBeVisible()
 })

@@ -7,12 +7,13 @@ import {
   Film,
   GripVertical,
   LayoutGrid,
+  ListOrdered,
   Plus,
   Repeat2,
   Star,
   X
 } from 'lucide-react'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   markSent,
   orderTimes,
@@ -30,6 +31,7 @@ import { fmtDay, fmtDuration, fmtSeconds, fmtTime, plural } from '../lib/format'
 import { motionMs } from '../lib/motion'
 import { useApp, useSettings } from '../lib/store'
 import { ProjectDetails } from './ProjectDetails'
+import { ProjectRank } from './ProjectRank'
 import { SortMenu } from './SortMenu'
 import { TagPills } from './TagPills'
 
@@ -163,8 +165,9 @@ function TodoCard({
           aria-label={selected ? 'Deselect clip' : 'Select clip'}
           onClick={(e) => {
             e.stopPropagation()
-            // Let go of the button, so Enter places the selection instead of clicking it again.
-            e.currentTarget.blur()
+            // After a mouse click, let go of the button, so Enter places the selection instead of
+            // clicking it again. With the keyboard the focus stays, to go on to the next clip.
+            if (e.detail > 0) e.currentTarget.blur()
             useApp.getState().select(clip.key, 'toggle')
           }}
         >
@@ -409,6 +412,9 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
   const [atText, setAtText] = useState('')
   const [firstText, setFirstText] = useState('10')
   const lastPick = useRef<string | null>(null)
+  // Rank mode: the clips it was opened for, or null when it is closed.
+  const [ranking, setRanking] = useState<{ project: string; queue: string[] } | null>(null)
+  const closeRank = useCallback(() => setRanking(null), [])
 
   // Dragging: what is held, the order a row would get, and where clips from the left would go.
   const [held, setHeld] = useState<{
@@ -507,6 +513,24 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
   }
   const picked = useMemo(() => todoKeys.filter((k) => selected.has(k)), [todoKeys, selected])
   const unplacedTotal = project.clipKeys.filter((k) => !placed.has(k)).length
+  // The selected clips, or else every clip without a place: first those shown, in the order of the
+  // sort menu, then the ones the search box hides.
+  const rankable = useMemo(
+    () =>
+      picked.length > 0
+        ? picked
+        : [
+            ...new Set([
+              ...todoKeys,
+              ...project.clipKeys.filter((k) => !placed.has(k) && clips.has(k))
+            ])
+          ],
+    [picked, todoKeys, project.clipKeys, placed, clips]
+  )
+  const startRank = (): void => {
+    clearSelection()
+    setRanking({ project: project.id, queue: rankable })
+  }
 
   // Coming back from the player: both lists go back to where they were, and the clip you were just
   // watching is brought into view when it is not.
@@ -869,7 +893,19 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
               <h2>
                 To place <span className="muted">({todo.length})</span>
               </h2>
-              <SortMenu />
+              <div className="ord-col-tools">
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={rankable.length === 0}
+                  data-tip="Put clips in order by comparing two at a time. Ranks the selected clips, or every clip without a place."
+                  onClick={startRank}
+                >
+                  <ListOrdered size={16} />
+                  {picked.length > 0 ? 'Rank selected' : 'Rank'}
+                </button>
+                <SortMenu />
+              </div>
             </div>
             {todo.length === 0 ? (
               <div className="ord-hint">
@@ -1059,6 +1095,9 @@ export function ProjectOrder({ project }: { project: Project }): React.JSX.Eleme
           </span>
           {held.keys.length > 1 && <span className="ord-ghost-count">{held.keys.length}</span>}
         </div>
+      )}
+      {ranking?.project === project.id && (
+        <ProjectRank project={project} queue={ranking.queue} onClose={closeRank} />
       )}
     </div>
   )

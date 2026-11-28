@@ -1,5 +1,11 @@
 import { useEffect } from 'react'
-import { ACTIONS, type ActionScope, chordFromEvent, effectiveKeymap } from '@shared/keymap'
+import {
+  ACTIONS,
+  type ActionScope,
+  chordFromEvent,
+  effectiveKeymap,
+  type Keymap
+} from '@shared/keymap'
 import { presetForKey } from '@shared/presets'
 import { useApp } from './store'
 
@@ -13,6 +19,34 @@ export function registerPlayerAction(id: string, fn: Handler): () => void {
   return () => {
     if (playerHandlers.get(id) === fn) playerHandlers.delete(id)
   }
+}
+
+/** Rank actions that go on while the key is held down. */
+const RANK_REPEATS = new Set([
+  'rankLeftBack',
+  'rankLeftForward',
+  'rankRightBack',
+  'rankRightForward'
+])
+
+/** Set while rank mode is open. It gets the id of the action that was pressed. */
+let rankHandler: ((id: string) => void) | null = null
+
+export function registerRankMode(fn: (id: string) => void): () => void {
+  rankHandler = fn
+  return () => {
+    if (rankHandler === fn) rankHandler = null
+  }
+}
+
+/** The action of rank mode that a chord stands for: its own, or the app wide undo and back. */
+function rankAction(map: Keymap, chord: string): string | null {
+  const found = ACTIONS.find(
+    (a) =>
+      (a.scope === 'rank' || a.id === 'undo' || a.id === 'back') &&
+      (map[a.id] ?? []).includes(chord)
+  )
+  return found?.id ?? null
 }
 
 function focusSearch(): void {
@@ -116,6 +150,14 @@ export function useHotkeys(): void {
       const hasMod = e.ctrlKey || e.metaKey || e.altKey
       if (typing && !hasMod && chord !== 'Escape') return
       const map = effectiveKeymap(s.user.settings.keymap)
+      if (rankHandler) {
+        const id = rankAction(map, chord)
+        if (!id) return
+        e.preventDefault()
+        // Holding a key down must not answer the next questions too, but it may go on seeking.
+        if (!e.repeat || RANK_REPEATS.has(id)) rankHandler(id)
+        return
+      }
       const scopes: ActionScope[] = ['global', s.view === 'player' ? 'player' : 'library']
       for (const a of ACTIONS) {
         if (!scopes.includes(a.scope) || !(map[a.id] ?? []).includes(chord)) continue
@@ -148,7 +190,10 @@ export function useHotkeys(): void {
       lastNav = now
       const s = useApp.getState()
       if (s.confirm || s.capturingKey) return
-      if (dir === -1) s.navBack()
+      // In rank mode the back button closes it, and the forward button does nothing.
+      if (rankHandler) {
+        if (dir === -1) rankHandler('back')
+      } else if (dir === -1) s.navBack()
       else s.navForward()
     }
     const onMouseDown = (e: MouseEvent): void => {

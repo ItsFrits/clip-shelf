@@ -189,6 +189,8 @@ export interface Settings {
   activePresetId: string | null
   /** The project that the Add to project key puts clips in. */
   activeProjectId: string | null
+  /** Rank mode only compares a clip with clips around the same star rating. */
+  rankUseRatings: boolean
   /** When a tag is merged into another: ask whether presets that used the old tag get the new one. */
   mergeTagsInPresets: MergeTagsInPresets
   /** The app version the user last saw, to show a "what's new" notice after an update. */
