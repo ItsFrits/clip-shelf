@@ -24,6 +24,7 @@ Other scripts:
 | ------------------- | -------------------------------------------------------------------------------- |
 | `npm run typecheck` | Type check main process and interface                                            |
 | `npm test`          | Unit and integration tests (they make small test videos with the bundled ffmpeg) |
+| `npm run e2e`       | Build the app and click through the main flows on a temporary library            |
 | `npm run build:win` | Build the Windows installer into `dist/`                                         |
 
 If `npm run dev` says the Electron binary is missing, run `node node_modules/electron/install.js` once.
