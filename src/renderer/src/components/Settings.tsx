@@ -565,7 +565,12 @@ function PlaybackTab(): React.JSX.Element {
 
 // ------------------------------------------------------------------ hotkeys
 
-const SCOPE_TITLE = { global: 'Everywhere', library: 'Library', player: 'Player' } as const
+const SCOPE_TITLE = {
+  global: 'Everywhere',
+  library: 'Library',
+  player: 'Player',
+  rank: 'Rank mode'
+} as const
 
 function HotkeysTab(): React.JSX.Element {
   const settings = useSettings()
@@ -672,9 +677,12 @@ function HotkeysTab(): React.JSX.Element {
           </button>
         </Row>
       </div>
-      {(['global', 'library', 'player'] as const).map((scope) => (
+      {(['global', 'library', 'player', 'rank'] as const).map((scope) => (
         <div key={scope} className="sec-card">
           <h2 className="h-label">{SCOPE_TITLE[scope]}</h2>
+          {scope === 'rank' && (
+            <p className="muted">Undo and Back (under Everywhere) also undo and close rank mode.</p>
+          )}
           <div>{ACTIONS.filter((a) => a.scope === scope).map(renderAction)}</div>
         </div>
       ))}
@@ -717,7 +725,10 @@ function PresetsTab(): React.JSX.Element {
       if (!chord) return
       const other = presetForKey(presets, chord)
       const map = effectiveKeymap(settings.keymap)
-      const action = ACTIONS.find((a) => a.scope !== 'player' && (map[a.id] ?? []).includes(chord))
+      // The keys of the presets only work in the library, so player and rank keys are free.
+      const action = ACTIONS.find(
+        (a) => a.scope !== 'player' && a.scope !== 'rank' && (map[a.id] ?? []).includes(chord)
+      )
       if (other && other.id !== capturing) {
         setError({
           id: capturing,

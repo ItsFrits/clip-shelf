@@ -1,6 +1,7 @@
 // Every keyboard action in the app. Users can rebind all of them in Settings.
 
-export type ActionScope = 'global' | 'library' | 'player'
+/** Rank mode takes over the keyboard: only its own actions work, plus `undo` and `back`. */
+export type ActionScope = 'global' | 'library' | 'player' | 'rank'
 
 export interface ActionDef {
   id: string
@@ -65,7 +66,12 @@ export const ACTIONS: ActionDef[] = [
   { id: 'focusNote', label: 'Edit the note', scope: 'player', defaults: ['N'] },
   { id: 'toggleWatched', label: 'Mark as watched / not watched', scope: 'player', defaults: ['W'] },
   { id: 'muteMaster', label: 'Mute / unmute everything', scope: 'player', defaults: ['M'] },
-  { id: 'toggleLoop', label: 'Toggle loop', scope: 'player', defaults: ['O'] }
+  { id: 'toggleLoop', label: 'Toggle loop', scope: 'player', defaults: ['O'] },
+
+  { id: 'rankLeft', label: 'Left clip is better', scope: 'rank', defaults: ['ArrowLeft'] },
+  { id: 'rankRight', label: 'Right clip is better', scope: 'rank', defaults: ['ArrowRight'] },
+  { id: 'rankEqual', label: 'Both are equal', scope: 'rank', defaults: ['ArrowDown'] },
+  { id: 'rankSkip', label: 'Skip this clip', scope: 'rank', defaults: ['ArrowUp'] }
 ]
 
 export type Keymap = Record<string, string[]>
