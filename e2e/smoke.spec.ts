@@ -168,16 +168,35 @@ test('rank: comparing two clips gives them their place back', async () => {
   await button('Rank').click()
   const rank = app.page.getByRole('dialog', { name: 'Rank mode' })
   await expect(rank).toBeVisible()
-  // Both videos play.
-  await expect
-    .poll(() =>
-      rank
-        .locator('video')
-        .evaluateAll((all) =>
-          all.map((v) => (v as HTMLVideoElement).readyState >= 2 && !(v as HTMLVideoElement).paused)
-        )
+  // Both videos load, and neither plays by itself.
+  const videos = rank.locator('video')
+  const state = (): Promise<{ loaded: boolean; paused: boolean; muted: boolean }[]> =>
+    videos.evaluateAll((all) =>
+      (all as HTMLVideoElement[]).map((v) => ({
+        loaded: v.readyState >= 2,
+        paused: v.paused,
+        muted: v.muted
+      }))
     )
-    .toEqual([true, true])
+  const idle = { loaded: true, paused: true, muted: false }
+  await expect.poll(state).toEqual([idle, idle])
+
+  // Each one is started on its own, so both can play at once.
+  const leftSide = rank.getByRole('region', { name: 'Left clip' })
+  const rightSide = rank.getByRole('region', { name: 'Right clip' })
+  const playing = { ...idle, paused: false }
+  await leftSide.getByRole('button', { name: 'Play clip' }).click()
+  await expect.poll(state).toEqual([playing, idle])
+  await rightSide.getByRole('button', { name: 'Play clip' }).click()
+  await expect.poll(state).toEqual([playing, playing])
+  await leftSide.getByRole('button', { name: 'Pause clip' }).click()
+  await expect.poll(state).toEqual([idle, playing])
+
+  // A click on the progress bar jumps to that moment.
+  await leftSide.locator('.seek').click()
+  const time = (): Promise<number> =>
+    leftSide.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime / v.duration)
+  await expect.poll(time).toBeCloseTo(0.5, 1)
 
   // Skip a clip, then take that back.
   const first = await rankPair()
